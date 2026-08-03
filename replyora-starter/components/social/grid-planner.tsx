@@ -1,0 +1,206 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { GripVertical, ImageIcon, Instagram, Plus, SlidersHorizontal } from "lucide-react";
+
+import type { PostStatus } from "@/lib/social/types";
+import { Button } from "@/components/ui/button";
+
+export interface GridTile {
+  id: string;
+  caption: string;
+  status: PostStatus;
+  pillar: string;
+}
+
+/** Warm brand-tinted placeholder colour, deterministic per tile. */
+const TINTS = ["#5C1A1A", "#7A2E2A", "#B26B62", "#3F1011", "#8A4A42", "#D9AFA6"];
+function tintFor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
+  return TINTS[h % TINTS.length];
+}
+
+function firstWords(s: string, n = 6): string {
+  return s.replace(/\s+/g, " ").trim().split(" ").slice(0, n).join(" ");
+}
+
+const STATUS_DOT: Record<PostStatus, string> = {
+  draft: "bg-slate-400",
+  scheduled: "bg-sky-500",
+  published: "bg-emerald-500",
+};
+
+export function GridPlanner({
+  brand,
+  tiles: initial,
+  published,
+}: {
+  brand: string;
+  tiles: GridTile[];
+  published: number;
+}) {
+  const [tiles, setTiles] = useState(initial);
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const drafts = useMemo(() => tiles.filter((t) => t.status === "draft"), [tiles]);
+  const scheduled = useMemo(() => tiles.filter((t) => t.status === "scheduled"), [tiles]);
+
+  function onDrop(targetId: string) {
+    if (!dragId || dragId === targetId) return;
+    setTiles((prev) => {
+      const from = prev.findIndex((t) => t.id === dragId);
+      const to = prev.findIndex((t) => t.id === targetId);
+      if (from < 0 || to < 0) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved!);
+      return next;
+    });
+    setDragId(null);
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,340px)_1fr]">
+      {/* Left — platform + profile controls */}
+      <aside className="space-y-6">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Platform</p>
+          <p className="mt-1 flex items-center gap-2 font-medium text-ink">
+            <Instagram className="h-4 w-4 text-oxblood" /> Instagram
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Profile preview</p>
+          <p className="mt-1 text-xs text-ink/50">Username, bio, followers &amp; photo shown on the Instagram mock.</p>
+          <Button variant="outline" size="sm" className="mt-3 w-full rounded-full">
+            <SlidersHorizontal className="h-3.5 w-3.5" /> Edit profile preview
+          </Button>
+        </div>
+        <div className="rounded-xl border border-oxblood/10 bg-oat/20 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose">The plan</p>
+          <p className="mt-1 text-xs text-ink/60">
+            Arrange how the feed will look, then turn each tile into a scheduled
+            post. Drag tiles to reorder.
+          </p>
+        </div>
+      </aside>
+
+      {/* Centre — iPhone mock with the grid */}
+      <div>
+        <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2rem] border border-oxblood/15 bg-white shadow-sm">
+          <div className="flex items-center justify-between px-4 pt-3 text-[10px] text-ink/50">
+            <span>9:41</span>
+            <span>Instagram</span>
+          </div>
+          {/* profile header */}
+          <div className="flex items-center gap-4 px-4 py-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
+              {brand.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex flex-1 justify-around text-center">
+              <div>
+                <p className="font-semibold text-ink">{published}</p>
+                <p className="text-[10px] text-ink/50">Posts</p>
+              </div>
+              <div>
+                <p className="font-semibold text-ink">0</p>
+                <p className="text-[10px] text-ink/50">Followers</p>
+              </div>
+              <div>
+                <p className="font-semibold text-ink">0</p>
+                <p className="text-[10px] text-ink/50">Following</p>
+              </div>
+            </div>
+          </div>
+          <p className="px-4 pb-3 text-[12px] font-medium text-ink">{brand.toLowerCase().replace(/\s+/g, "")}</p>
+
+          {/* the grid */}
+          {tiles.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 border-t border-oxblood/10 px-4 py-12 text-center">
+              <ImageIcon className="h-6 w-6 text-ink/30" />
+              <p className="text-xs text-ink/50">Add a post to start planning your feed.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
+              {tiles.map((t) => (
+                <div
+                  key={t.id}
+                  draggable
+                  onDragStart={() => setDragId(t.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onDrop(t.id)}
+                  className="group relative aspect-square cursor-grab active:cursor-grabbing"
+                  style={{ backgroundColor: tintFor(t.id) }}
+                  title={firstWords(t.caption, 12)}
+                >
+                  <span className={`absolute right-1 top-1 h-2 w-2 rounded-full ${STATUS_DOT[t.status]} ring-1 ring-white/70`} />
+                  <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
+                    {firstWords(t.caption, 6)}
+                  </span>
+                  <GripVertical className="absolute left-1 top-1 h-3 w-3 text-cream/0 transition-colors group-hover:text-cream/70" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex justify-center">
+          <Button asChild size="sm" className="rounded-full">
+            <Link href="/dashboard/studio">
+              <Plus className="h-4 w-4" /> New post
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Right — drafts / scheduled columns */}
+      <div className="grid grid-cols-2 gap-4">
+        <Column title="Drafts" count={drafts.length} tiles={drafts} empty="No drafts yet" />
+        <Column title="Scheduled" count={scheduled.length} tiles={scheduled} empty="Nothing scheduled" />
+      </div>
+    </div>
+  );
+}
+
+function Column({
+  title,
+  count,
+  tiles,
+  empty,
+}: {
+  title: string;
+  count: number;
+  tiles: GridTile[];
+  empty: string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">
+        {title} ({count})
+      </p>
+      {tiles.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] text-ink/40">
+          {empty}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {tiles.map((t) => (
+            <Link
+              key={t.id}
+              href="/dashboard/planner"
+              className="flex items-center gap-2 rounded-xl border border-oxblood/10 bg-white p-2 hover:border-oxblood/30"
+            >
+              <span
+                className="h-9 w-9 shrink-0 rounded-lg"
+                style={{ backgroundColor: tintFor(t.id) }}
+              />
+              <span className="line-clamp-2 text-[11px] text-ink/70">{firstWords(t.caption, 8)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
