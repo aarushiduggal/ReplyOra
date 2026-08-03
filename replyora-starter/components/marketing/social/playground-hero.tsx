@@ -115,7 +115,7 @@ export function PlaygroundHero() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-cream">
+    <section className="relative overflow-hidden bg-white">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-[1.05fr_1fr] lg:py-24">
         {/* Left — pitch + playground input */}
         <div>

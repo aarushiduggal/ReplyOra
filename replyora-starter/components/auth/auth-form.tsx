@@ -8,7 +8,12 @@ import { Loader2 } from "lucide-react";
 import { signIn as authjsSignIn } from "next-auth/react";
 
 import { createClient } from "@/lib/supabase/client";
-import { USE_SUPABASE, HAS_AUTHJS_CLIENT, APP_URL } from "@/lib/data/mode";
+import {
+  USE_SUPABASE,
+  HAS_AUTHJS_CLIENT,
+  HAS_GOOGLE_CLIENT,
+  APP_URL,
+} from "@/lib/data/mode";
 import { PLANS } from "@/lib/stripe/plans";
 import {
   TRIALABLE_PLANS,
@@ -39,6 +44,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [plan, setPlan] = useState<Plan>("growth");
   const isSignup = mode === "signup";
   const redirectTo = `${APP_URL.replace(/\/$/, "")}/auth/callback`;
+
+  // "ReplyOra Social" (Auth.js) has no billing/trial, and Google only shows once
+  // it's configured. On Supabase/mock, keep the full marketing signup.
+  const socialMode = HAS_AUTHJS_CLIENT;
+  const showGoogle = socialMode ? HAS_GOOGLE_CLIENT : true;
+  const showPlanSelector = isSignup && !socialMode;
 
   // Surface any callback error (?error=...) and pre-select the plan (?plan=...).
   useEffect(() => {
@@ -175,16 +186,22 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="w-full max-w-sm">
       <div className="mb-6 text-center">
         <h1 className="font-display text-3xl text-oxblood">
-          {isSignup ? "Start your 7-day free trial" : "Welcome back"}
+          {isSignup
+            ? socialMode
+              ? "Create your account"
+              : "Start your 7-day free trial"
+            : "Welcome back"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {isSignup
-            ? `No card to start. After 7 days, ${PLANS[plan].name} is $${PLANS[plan].priceAud}/mo + a one-time $250 setup fee.`
-            : "Log in to your Replyora workspace."}
+          {!isSignup
+            ? "Log in to your Replyora workspace."
+            : socialMode
+              ? "Plan, create and schedule your social content in one place."
+              : `No card to start. After 7 days, ${PLANS[plan].name} is $${PLANS[plan].priceAud}/mo + a one-time $250 setup fee.`}
         </p>
       </div>
 
-      {isSignup && (
+      {showPlanSelector && (
         <div className="mb-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/60">
             Choose the plan to trial
@@ -225,24 +242,28 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={signInWithGoogle}
-        disabled={loading}
-      >
-        <GoogleIcon />
-        Continue with Google
-      </Button>
+      {showGoogle && (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={signInWithGoogle}
+            disabled={loading}
+          >
+            <GoogleIcon />
+            Continue with Google
+          </Button>
 
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">
-          or
-        </span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              or
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        </>
+      )}
 
       {error && (
         <p className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser, getCurrentWorkspaceId } from "@/lib/auth/session";
-import { USE_SUPABASE } from "@/lib/data/mode";
+import { USE_SUPABASE, USE_AUTHJS } from "@/lib/data/mode";
 
 import { PLANS, type PlanConfig } from "@/lib/stripe/plans";
 import { isCompAccount } from "@/lib/comp-accounts";
@@ -18,6 +18,24 @@ import type {
 /** Current workspace for the signed-in user. */
 export async function getWorkspace(): Promise<Workspace> {
   const workspaceId = await getCurrentWorkspaceId();
+
+  // Auth.js (Netlify/Neon): the user's own workspace from Neon. No billing on
+  // this deploy, so present it as active (no trial/paywall UI).
+  if (USE_AUTHJS) {
+    const { getWorkspaceById } = await import("@/lib/auth/users");
+    const ws = await getWorkspaceById(workspaceId);
+    return {
+      id: workspaceId,
+      name: ws?.name ?? "My workspace",
+      slug: workspaceId,
+      ownerId: "",
+      plan: "growth",
+      planStatus: "active",
+      trialEndsAt: null,
+      createdAt: ws?.createdAt ?? new Date().toISOString(),
+    };
+  }
+
   if (!USE_SUPABASE) return DEMO_WORKSPACE;
 
   const supabase = await createClient();

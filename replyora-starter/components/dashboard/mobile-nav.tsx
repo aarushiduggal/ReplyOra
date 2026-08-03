@@ -6,12 +6,14 @@ import { usePathname } from "next/navigation";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
-import { DASHBOARD_NAV, isNavActive } from "@/components/dashboard/nav-items";
+import { dashboardNav, isNavActive } from "@/components/dashboard/nav-items";
+import { HAS_AUTHJS_CLIENT } from "@/lib/data/mode";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const nav = dashboardNav(HAS_AUTHJS_CLIENT);
 
   // Close the drawer whenever the route changes.
   useEffect(() => {
@@ -61,7 +63,7 @@ export function MobileNav() {
             </div>
 
             <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-              {DASHBOARD_NAV.map((item) => {
+              {nav.map((item) => {
                 const active = isNavActive(pathname, item);
                 return (
                   <Link

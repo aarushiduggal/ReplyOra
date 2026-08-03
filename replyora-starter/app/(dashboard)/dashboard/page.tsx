@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import { ONBOARDED_COOKIE } from "@/lib/data/onboarding-cookie";
-import { USE_SUPABASE } from "@/lib/data/mode";
+import { USE_SUPABASE, USE_AUTHJS } from "@/lib/data/mode";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAssistant } from "@/lib/data/assistant";
 import { getBusinessProfile } from "@/lib/data/business-profile";
@@ -45,6 +45,10 @@ export default async function OverviewPage({
 }: {
   searchParams: Promise<{ empty?: string }>;
 }) {
+  // ReplyOra Social (Netlify/Neon): the legacy product overview isn't part of
+  // this deploy — send users to their content calendar instead.
+  if (USE_AUTHJS) redirect("/dashboard/planner");
+
   const empty = (await searchParams).empty === "1";
 
   const [

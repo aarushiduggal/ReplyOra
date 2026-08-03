@@ -109,6 +109,19 @@ export async function upsertOAuthUser(input: {
   };
 }
 
+/** A workspace's name + created date by id (for getWorkspace under Auth.js). */
+export async function getWorkspaceById(
+  id: string,
+): Promise<{ name: string; createdAt: string } | null> {
+  const rows = (await sql()`
+    SELECT name, created_at FROM workspaces WHERE id = ${id} LIMIT 1
+  `) as { name: string; created_at: string | Date }[];
+  const r = rows[0];
+  return r
+    ? { name: r.name, createdAt: new Date(r.created_at).toISOString() }
+    : null;
+}
+
 /** The user's workspace id, creating a personal workspace on first use. */
 export async function getOrCreateWorkspace(
   userId: string,

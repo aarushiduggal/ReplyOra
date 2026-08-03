@@ -51,6 +51,21 @@ export const DASHBOARD_NAV: NavItem[] = [
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
+/** The pages that belong to the "ReplyOra Social" deploy (Netlify/Neon). The
+ * legacy chat-widget product pages are hidden there. */
+const SOCIAL_HREFS = new Set([
+  "/dashboard/studio",
+  "/dashboard/planner",
+  "/dashboard/settings",
+]);
+
+/** Nav for the current deploy: social-only on Netlify/Neon, full otherwise. */
+export function dashboardNav(socialMode: boolean): NavItem[] {
+  return socialMode
+    ? DASHBOARD_NAV.filter((i) => SOCIAL_HREFS.has(i.href))
+    : DASHBOARD_NAV;
+}
+
 /** Active-state test shared by both navs. */
 export function isNavActive(pathname: string, item: NavItem): boolean {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);

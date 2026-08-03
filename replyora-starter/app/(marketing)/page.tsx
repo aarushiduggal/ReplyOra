@@ -114,7 +114,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="bg-cream">
+      <section id="how" className="bg-white">
         <div className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
           <Reveal className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
@@ -173,7 +173,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="scroll-mt-20 bg-cream">
+      <section id="pricing" className="scroll-mt-20 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">

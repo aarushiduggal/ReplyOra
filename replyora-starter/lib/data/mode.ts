@@ -31,6 +31,14 @@ export const USE_AUTHJS: boolean =
 export const HAS_AUTHJS_CLIENT: boolean =
   process.env.NEXT_PUBLIC_HAS_AUTHJS === "1";
 
+/**
+ * Whether the Google sign-in button should show under Auth.js. Set
+ * NEXT_PUBLIC_HAS_GOOGLE=1 once GOOGLE_CLIENT_ID/SECRET are configured, so the
+ * button doesn't appear (and dead-end) before Google OAuth is set up.
+ */
+export const HAS_GOOGLE_CLIENT: boolean =
+  process.env.NEXT_PUBLIC_HAS_GOOGLE === "1";
+
 /** Absolute app URL — used for OAuth redirects so they work on Vercel. */
 export const APP_URL: string =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100";
