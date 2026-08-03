@@ -1,0 +1,14 @@
+# Repo-root Netlify config.
+# The Next.js app lives in the ./replyora-starter subfolder (this repo's root is
+# the parent ReplyOra folder). `base` tells Netlify to build from there, so it
+# finds package.json, runs `next build`, and applies the Next.js runtime plugin.
+
+[build]
+  base = "replyora-starter"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
