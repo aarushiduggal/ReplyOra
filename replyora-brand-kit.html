@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Replyora — Brand Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --oxblood:#5C1A1A;
+    --wine:#3F1011;
+    --rose:#B26B62;
+    --blush:#D9AFA6;
+    --oat:#EAE3D2;
+    --cream:#FBF7EF;
+    --ink:#2B1413;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--oat);
+    color:var(--ink);
+    font-family:'Montserrat',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:64px 32px 96px;}
+  .eyebrow{
+    font-size:12px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--rose);font-weight:600;margin-bottom:14px;
+  }
+  h1{font-family:'Playfair Display',serif;font-size:54px;line-height:1.1;color:var(--oxblood);font-weight:700;margin-bottom:10px;}
+  h2{font-family:'Playfair Display',serif;font-size:30px;color:var(--oxblood);font-weight:600;margin-bottom:6px;}
+  section{margin-top:72px;}
+  .lead{font-size:17px;max-width:620px;color:#4a2e2b;}
+  .divider{height:1px;background:rgba(92,26,26,.18);margin-top:14px;}
+
+  /* Logo lockups */
+  .logos{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px;}
+  .logocard{border-radius:18px;display:flex;align-items:center;justify-content:center;padding:54px 20px;min-height:230px;}
+  .badge{
+    width:170px;height:170px;border-radius:50%;background:var(--oxblood);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .badge .word{font-family:'Fredoka',sans-serif;font-weight:600;color:var(--cream);font-size:38px;line-height:1;position:relative;}
+  .badge .word::after{content:"";position:absolute;right:-12px;bottom:6px;width:7px;height:7px;border:2px solid var(--cream);border-radius:50%;}
+  .badge .tag{font-family:'Montserrat',sans-serif;font-size:7.5px;letter-spacing:.22em;color:var(--cream);margin-top:8px;text-transform:uppercase;}
+  .horiz .word{font-family:'Fredoka',sans-serif;font-weight:600;color:var(--oxblood);font-size:56px;line-height:1;position:relative;}
+  .horiz .word::after{content:"";position:absolute;right:-14px;bottom:8px;width:9px;height:9px;border:2.5px solid var(--oxblood);border-radius:50%;}
+  .horiz .tag{font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:.30em;color:var(--oxblood);margin-top:10px;text-transform:uppercase;text-align:center;}
+  .horiz{display:flex;flex-direction:column;align-items:center;}
+  .onoat{background:var(--oat);border:1px solid rgba(92,26,26,.15);}
+  .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a6a64;margin-top:10px;text-align:center;}
+
+  /* Colour swatches */
+  .swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px;}
+  .swatch{border-radius:14px;overflow:hidden;border:1px solid rgba(92,26,26,.12);background:#fff;}
+  .chip{height:120px;}
+  .swatch .meta{padding:14px 16px;}
+  .swatch .name{font-weight:600;font-size:15px;color:var(--ink);}
+  .swatch .hex{font-size:13px;color:#7a5a55;letter-spacing:.04em;margin-top:2px;}
+  .swatch .use{font-size:12px;color:#9b7e78;margin-top:6px;line-height:1.4;}
+
+  /* Type specimens */
+  .type{margin-top:18px;border-top:1px solid rgba(92,26,26,.15);padding-top:22px;}
+  .type .roleline{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);font-weight:600;margin-bottom:6px;}
+  .specimen-playfair{font-family:'Playfair Display',serif;}
+  .specimen-fredoka{font-family:'Fredoka',sans-serif;}
+  .specimen-mont{font-family:'Montserrat',sans-serif;}
+  .meta-small{font-size:13px;color:#7a5a55;margin-top:8px;}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px;}
+  .card{background:var(--cream);border:1px solid rgba(92,26,26,.12);border-radius:16px;padding:24px 26px;}
+  .card h3{font-family:'Playfair Display',serif;color:var(--oxblood);font-size:20px;margin-bottom:10px;}
+  ul{list-style:none;}
+  li{padding-left:22px;position:relative;margin-bottom:9px;font-size:14.5px;color:#3f2825;}
+  li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:50%;background:var(--rose);}
+  li.no::before{background:none;content:"✕";color:#b23a2f;top:0;font-size:13px;font-weight:700;}
+  li.yes::before{background:none;content:"✓";color:#4a7a4a;top:0;font-size:13px;font-weight:700;}
+  .voice-pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+  .pill{background:var(--oxblood);color:var(--cream);border-radius:999px;padding:8px 18px;font-size:13px;letter-spacing:.04em;}
+  .note{font-size:12.5px;color:#8a6a64;margin-top:28px;font-style:italic;}
+  footer{margin-top:72px;text-align:center;color:#8a6a64;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Brand Kit · 2026</div>
+  <h1>Replyora</h1>
+  <p class="lead">The visual and verbal identity for Replyora — the AI customer-conversation platform. Use this as the single source of truth for every post, graphic, and asset.</p>
+  <div class="divider"></div>
+
+  <!-- LOGO -->
+  <section>
+    <h2>Logo</h2>
+    <p class="lead">Two primary lockups. The circular badge is the hero mark (profile picture, stamps, avatars). The horizontal wordmark is for headers, footers, and wide spaces. Note the signature <strong>open dot “°”</strong> after the wordmark — it represents a live conversation and should always be kept.</p>
+    <div class="logos">
+      <div class="logocard" style="background:var(--oxblood)">
+        <div class="badge"><span class="word">replyora</span><span class="tag">Customer Conversations</span></div>
+      </div>
+      <div class="logocard onoat">
+        <div class="horiz"><span class="word">replyora</span><span class="tag">— Customer Conversations —</span></div>
+      </div>
+    </div>
+    <div class="logos" style="grid-template-columns:1fr 1fr;margin-top:14px;">
+      <div class="label">Badge — cream on oxblood (primary)</div>
+      <div class="label">Wordmark — oxblood on oat (light)</div>
+    </div>
+    <div class="cols" style="margin-top:36px;">
+      <div class="card">
+        <h3>Clear space &amp; sizing</h3>
+        <ul>
+          <li>Keep clear space around the logo equal to the height of the “o” in <em>replyora</em>.</li>
+          <li>Minimum size: badge no smaller than 40px; wordmark stays legible above ~120px wide.</li>
+          <li>Always keep the open dot “°” — it’s part of the mark.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Don’ts</h3>
+        <ul>
+          <li class="no">Don’t recolour the logo outside the palette.</li>
+          <li class="no">Don’t stretch, rotate, or add drop shadows.</li>
+          <li class="no">Don’t place the burgundy wordmark on a busy photo — use the cream badge instead.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOUR -->
+  <section>
+    <h2>Colour palette</h2>
+    <p class="lead">Burgundy + warm oat is the signature. Lead with oxblood and oat; use rose and blush sparingly as accents. This warm, editorial palette is what makes Replyora look premium — protect it.</p>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#5C1A1A"></div><div class="meta"><div class="name">Oxblood Burgundy</div><div class="hex">#5C1A1A · rgb(92,26,26)</div><div class="use">Primary. Logo badge, headlines, solid backgrounds.</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#3F1011"></div><div class="meta"><div class="name">Deep Wine</div><div class="hex">#3F1011 · rgb(63,16,17)</div><div class="use">Depth &amp; shadow. Gradients, darker sections.</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#B26B62"></div><div class="meta"><div class="name">Dusty Rose</div><div class="hex">#B26B62 · rgb(178,107,98)</div><div class="use">Accent. Eyebrows, highlights, dividers.</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#D9AFA6"></div><div class="meta"><div class="name">Blush</div><div class="hex">#D9AFA6 · rgb(217,175,166)</div><div class="use">Soft accent. Tints, secondary fills.</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#EAE3D2"></div><div class="meta"><div class="name">Oat / Ivory</div><div class="hex">#EAE3D2 · rgb(234,227,210)</div><div class="use">Primary light background.</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#FBF7EF;border-bottom:1px solid rgba(92,26,26,.1)"></div><div class="meta"><div class="name">Cream White</div><div class="hex">#FBF7EF · rgb(251,247,239)</div><div class="use">Text/elements on dark burgundy.</div></div></div>
+    </div>
+    <p class="note">Hex values are read from your logo files and feed — accurate to the eye but verify against your source files before printing.</p>
+  </section>
+
+  <!-- TYPOGRAPHY -->
+  <section>
+    <h2>Typography</h2>
+    <p class="lead">A three-part system: a friendly rounded wordmark, an elegant serif for impact, and a clean tracked sans for everything functional. All three are free on Google Fonts.</p>
+
+    <div class="type">
+      <div class="roleline">Logo / Wordmark — Fredoka (SemiBold)</div>
+      <div class="specimen-fredoka" style="font-size:52px;color:var(--oxblood);font-weight:600;">replyora</div>
+      <div class="meta-small">Rounded geometric sans. Use only for the logo — not for body copy. (Closest match to your mark; Baloo 2 is a near alternative.)</div>
+    </div>
+
+    <div class="type">
+      <div class="roleline">Headlines — Playfair Display</div>
+      <div class="specimen-playfair" style="font-size:40px;color:var(--oxblood);line-height:1.15;">How long will customers wait?</div>
+      <div class="specimen-playfair" style="font-size:26px;font-style:italic;color:var(--ink);margin-top:6px;">Drop the worst “we’ll get back to you” you’ve received.</div>
+      <div class="meta-small">High-contrast editorial serif. Use for hooks, big statements, quote-style posts. Mix roman + italic for elegance.</div>
+    </div>
+
+    <div class="type">
+      <div class="roleline">Eyebrows &amp; labels — Montserrat (uppercase, tracked)</div>
+      <div class="specimen-mont" style="font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:var(--rose);font-weight:600;">Save this · Your turn · Without replyora</div>
+      <div class="meta-small">All-caps with wide letter-spacing. Use for kickers, tags, and small callouts.</div>
+    </div>
+
+    <div class="type">
+      <div class="roleline">Body &amp; captions — Montserrat (Regular/Light)</div>
+      <div class="specimen-mont" style="font-size:16px;color:var(--ink);max-width:560px;">Replyora replies to every enquiry instantly, in your brand voice, around the clock — turning “just asking” into a booking. Clean, readable, modern.</div>
+      <div class="meta-small">Use 300–400 weight for paragraphs, 500–600 for emphasis.</div>
+    </div>
+  </section>
+
+  <!-- VOICE -->
+  <section>
+    <h2>Brand voice</h2>
+    <p class="lead">Premium, modern, and helpful — never gimmicky or pushy. We teach and demonstrate. We sound like a sharp, calm expert who happens to have built brilliant tech.</p>
+    <div class="voice-pills">
+      <span class="pill">Confident, not loud</span>
+      <span class="pill">Clear &amp; concise</span>
+      <span class="pill">Helpful first</span>
+      <span class="pill">Premium</span>
+      <span class="pill">Human</span>
+      <span class="pill">Quietly bold</span>
+    </div>
+    <div class="cols" style="margin-top:28px;">
+      <div class="card">
+        <h3>Do</h3>
+        <ul>
+          <li class="yes">Lead with the customer’s pain, then the fix.</li>
+          <li class="yes">Use real numbers and short, punchy lines.</li>
+          <li class="yes">Show the product working; let proof do the selling.</li>
+          <li class="yes">Stay warm and plain-spoken.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Don’t</h3>
+        <ul>
+          <li class="no">Don’t use hype words (“revolutionary”, “game-changer”).</li>
+          <li class="no">Don’t hard-sell or stack exclamation marks.</li>
+          <li class="no">Don’t sound like a generic chatbot.</li>
+          <li class="no">Don’t over-explain — cut every spare word.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISUAL STYLE -->
+  <section>
+    <h2>Visual style</h2>
+    <div class="cols" style="margin-top:8px;">
+      <div class="card">
+        <h3>Layout</h3>
+        <ul>
+          <li>Generous whitespace — let the oat background breathe.</li>
+          <li>One idea per graphic; centre-set serif headlines.</li>
+          <li>Tracked uppercase eyebrow above each headline.</li>
+          <li>Logo discreetly in a corner, never crowded.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Imagery</h3>
+        <ul>
+          <li>Warm, minimal flat-lays (cream paper, soft shadows).</li>
+          <li>Real chat screenshots styled in brand colours.</li>
+          <li>Founder shots with warm, natural light.</li>
+          <li>Avoid cold, blue, “techy” stock imagery.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Replyora Brand Kit · Burgundy &amp; Oat · Sydney<br>
+    Keep this consistent across every post and the brand will feel twice its size.
+  </footer>
+
+</div>
+</body>
+</html>

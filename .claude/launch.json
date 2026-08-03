@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "replyora",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/private/tmp/claude-501/-Users-neerajduggal-Desktop-ReplyOra/88769f43-a799-47ca-b51c-14844244b9f5/scratchpad/node-v22.12.0-darwin-arm64/bin:$PATH\"; cd /Users/neerajduggal/Desktop/ReplyOra/replyora-starter && exec npm run dev -- --port 3100"
+      ],
+      "port": 3100
+    }
+  ]
+}

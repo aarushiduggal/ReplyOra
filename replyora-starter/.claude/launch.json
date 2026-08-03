@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "/private/tmp/claude-501/-Users-neerajduggal-Desktop-ReplyOra/88769f43-a799-47ca-b51c-14844244b9f5/scratchpad/node-v22.12.0-darwin-arm64/bin/npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    }
+  ]
+}

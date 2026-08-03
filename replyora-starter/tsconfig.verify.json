@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false, "tsBuildInfoFile": "/tmp/v.json" },
+  "include": [
+    "next-env.d.ts",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "components/**/*.tsx",
+    "app/admin/**/*.tsx",
+    "app/api/**/*.ts",
+    "app/(marketing)/roadmap/**/*.tsx",
+    "types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

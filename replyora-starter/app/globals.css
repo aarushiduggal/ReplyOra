@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ============================================================
+   Replyora brand tokens — burgundy & oat.
+   Oxblood #5C1A1A · Deep Wine #3F1011 · Rose #B26B62 · Blush #D9AFA6
+   Oat #EAE3D2 · Cream #FBF7EF · Ink #2B1413
+   Fonts wired as CSS vars by next/font in app/layout.tsx.
+   ============================================================ */
+
+:root {
+  --brand-oxblood: #5c1a1a;
+  --brand-wine: #3f1011;
+  --brand-rose: #b26b62;
+  --brand-blush: #d9afa6;
+  --brand-oat: #eae3d2;
+  --brand-cream: #fbf7ef;
+  --brand-ink: #2b1413;
+
+  --radius: 0.625rem;
+
+  /* shadcn/ui semantic tokens mapped onto the brand palette */
+  --background: var(--brand-cream);
+  --foreground: var(--brand-ink);
+  --card: #ffffff;
+  --card-foreground: var(--brand-ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--brand-ink);
+  --primary: var(--brand-oxblood);
+  --primary-foreground: var(--brand-cream);
+  --secondary: var(--brand-oat);
+  --secondary-foreground: var(--brand-wine);
+  --muted: var(--brand-oat);
+  /* Darkened for WCAG AA (>=4.5:1) on oat/cream backgrounds. */
+  --muted-foreground: #574840;
+  --accent: var(--brand-blush);
+  --accent-foreground: var(--brand-wine);
+  --destructive: #b3261e;
+  --destructive-foreground: var(--brand-cream);
+  --border: #e3d8c6;
+  --input: #e3d8c6;
+  --ring: var(--brand-rose);
+}
+
+.dark {
+  --background: var(--brand-ink);
+  --foreground: var(--brand-cream);
+  --card: var(--brand-wine);
+  --card-foreground: var(--brand-cream);
+  --popover: var(--brand-wine);
+  --popover-foreground: var(--brand-cream);
+  --primary: var(--brand-blush);
+  --primary-foreground: var(--brand-wine);
+  --secondary: #3a201f;
+  --secondary-foreground: var(--brand-cream);
+  --muted: #3a201f;
+  --muted-foreground: var(--brand-blush);
+  --accent: var(--brand-rose);
+  --accent-foreground: var(--brand-cream);
+  --destructive: #e5544b;
+  --destructive-foreground: var(--brand-ink);
+  --border: #4a2a28;
+  --input: #4a2a28;
+  --ring: var(--brand-rose);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-oxblood: var(--brand-oxblood);
+  --color-wine: var(--brand-wine);
+  --color-rose: var(--brand-rose);
+  --color-blush: var(--brand-blush);
+  --color-oat: var(--brand-oat);
+  --color-cream: var(--brand-cream);
+  --color-ink: var(--brand-ink);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-wordmark: var(--font-fredoka), var(--font-montserrat), sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Marketing hero ambience ---- */
+@keyframes rly-odpulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92, 26, 26, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(92, 26, 26, 0); }
+}
+@keyframes rly-dotjump {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+@keyframes rly-bookglow {
+  0% { box-shadow: 0 0 0 0 rgba(47, 125, 95, 0.45); }
+  100% { box-shadow: 0 0 0 16px rgba(47, 125, 95, 0); }
+}
+@keyframes rly-pop {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+.rly-odot { animation: rly-odpulse 2.4s ease-in-out infinite; }
+.rly-pop { animation: rly-pop 0.32s ease both; }
+.rly-book { animation: rly-pop 0.35s ease both, rly-bookglow 1.6s ease-out; }
+.rly-dot { animation: rly-dotjump 1s infinite; }
+.rly-dot:nth-child(2) { animation-delay: 0.15s; }
+.rly-dot:nth-child(3) { animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  .rly-odot, .rly-book, .rly-dot, .rly-pop { animation: none !important; }
+}

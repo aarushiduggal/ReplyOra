@@ -1,0 +1,18 @@
+# Netlify configuration for the ReplyOra Next.js app.
+# Hosting: Netlify (free, always-on). Database: Neon Postgres (see
+# ReplyOra_Social_GoLive_Netlify_Neon.md). Not Vercel, not Supabase.
+
+[build]
+  # Standard Next.js build. The Next.js runtime plugin (below) wires up the
+  # publish directory, serverless functions and image handling automatically —
+  # do not set `publish` manually when using the plugin.
+  command = "npm run build"
+
+[build.environment]
+  # Pin an LTS Node that Next 15 + the plugin support (matches local dev).
+  NODE_VERSION = "20"
+
+# Official Next.js runtime for Netlify. Declaring it here makes Netlify install
+# it automatically on every build — nothing to add to package.json.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
