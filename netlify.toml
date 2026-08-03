@@ -6,6 +6,9 @@
 [build]
   base = "replyora-starter"
   command = "npm run build"
+  # Next's build output (relative to base). Without this, Netlify defaults the
+  # publish dir to the base dir, which the Next.js plugin rejects.
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
