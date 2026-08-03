@@ -38,7 +38,7 @@ const TINTS = ["#5C1A1A", "#7A2E2A", "#B26B62", "#3F1011", "#8A4A42", "#D9AFA6"]
 function tintFor(id: string): string {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
-  return TINTS[h % TINTS.length]!;
+  return TINTS[h % TINTS.length] ?? "#5C1A1A";
 }
 function firstWords(s: string, n = 6): string {
   return s.replace(/\s+/g, " ").trim().split(" ").slice(0, n).join(" ");
@@ -92,15 +92,15 @@ export function GridPlanner({
       {/* Left — platform + profile controls */}
       <aside className="space-y-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Platform</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/55">Platform</p>
           <p className="mt-1 flex items-center gap-2 font-medium text-ink">
             <Instagram className="h-4 w-4 text-oxblood" /> Instagram
           </p>
-          <p className="mt-1 text-xs text-ink/50">{published} posts · 0 highlights</p>
+          <p className="mt-1 text-xs text-ink/65">{published} posts · 0 highlights</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Profile preview</p>
-          <p className="mt-1 text-xs text-ink/50">Username, bio, followers &amp; photo shown on the Instagram mock.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/55">Profile preview</p>
+          <p className="mt-1 text-xs text-ink/65">Username, bio, followers &amp; photo shown on the Instagram mock.</p>
           <Button variant="outline" size="sm" className="mt-3 w-full rounded-full" onClick={() => setEditOpen(true)}>
             <SlidersHorizontal className="h-3.5 w-3.5" /> Edit profile preview
           </Button>
@@ -117,7 +117,7 @@ export function GridPlanner({
       {/* Centre — iPhone mock with the grid */}
       <div>
         <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2rem] border border-oxblood/15 bg-white shadow-sm">
-          <div className="flex items-center justify-between px-4 pt-3 text-[10px] text-ink/50">
+          <div className="flex items-center justify-between px-4 pt-3 text-[10px] text-ink/65">
             <span>9:41</span>
             <span>{profile.username || "instagram"}</span>
           </div>
@@ -136,7 +136,7 @@ export function GridPlanner({
             {profile.bio && <p className="whitespace-pre-line text-[11px] text-ink/60">{profile.bio}</p>}
           </div>
           {/* tab row */}
-          <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/50">
+          <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/65">
             <Grid3x3 className="h-4 w-4 text-oxblood" />
             <Play className="h-4 w-4" />
             <Square className="h-4 w-4" />
@@ -145,8 +145,8 @@ export function GridPlanner({
 
           {tiles.length === 0 ? (
             <div className="flex flex-col items-center gap-2 border-t border-oxblood/10 px-4 py-12 text-center">
-              <ImageIcon className="h-6 w-6 text-ink/30" />
-              <p className="text-xs text-ink/50">Add a post to start planning your feed.</p>
+              <ImageIcon className="h-6 w-6 text-ink/45" />
+              <p className="text-xs text-ink/65">Add a post to start planning your feed.</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
@@ -183,7 +183,7 @@ export function GridPlanner({
       {/* Right — assets + drafts/scheduled */}
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Assets</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/55">Assets</p>
           <Link href="/dashboard/approvals" className="text-[11px] font-medium uppercase tracking-widest text-oxblood">
             Approval queue →
           </Link>
@@ -213,7 +213,7 @@ export function GridPlanner({
               <Field label="Following" value={profile.following} onChange={(v) => setProfile((p) => ({ ...p, following: v }))} placeholder="e.g. 850" />
             </div>
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/50">Bio</label>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/65">Bio</label>
               <textarea
                 value={profile.bio}
                 onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
@@ -237,7 +237,7 @@ export function GridPlanner({
               <QrCode className="h-24 w-24 text-oxblood/70" />
             </div>
             <p className="text-xs text-ink/60">Scan with your phone camera to send photos or videos straight to this brand&apos;s library.</p>
-            <p className="text-[11px] uppercase tracking-widest text-ink/40">Connect storage to enable · coming soon</p>
+            <p className="text-[11px] uppercase tracking-widest text-ink/55">Connect storage to enable · coming soon</p>
           </div>
         </Modal>
       )}
@@ -249,7 +249,7 @@ function Stat({ n, label }: { n: string; label: string }) {
   return (
     <div>
       <p className="font-semibold text-ink">{n}</p>
-      <p className="text-[10px] text-ink/50">{label}</p>
+      <p className="text-[10px] text-ink/65">{label}</p>
     </div>
   );
 }
@@ -267,7 +267,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/50">{label}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/65">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -295,7 +295,7 @@ function Modal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-xl text-oxblood">{title}</h3>
-          <button onClick={onClose} className="text-ink/40 hover:text-oxblood">
+          <button onClick={onClose} className="text-ink/55 hover:text-oxblood">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -318,11 +318,11 @@ function Column({
 }) {
   return (
     <div>
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/55">
         {title} ({count})
       </p>
       {tiles.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] text-ink/40">
+        <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] text-ink/55">
           {empty}
         </p>
       ) : (

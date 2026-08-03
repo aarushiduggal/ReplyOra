@@ -1,0 +1,38 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { Wordmark } from "@/components/brand/wordmark";
+import { footerTag } from "@/components/social/portal-nav";
+
+/** Portal footer: wordmark left, legal links centre, "( CLIENT / SECTION )" right. */
+export function PortalFooter() {
+  const pathname = usePathname();
+
+  return (
+    <footer className="border-t border-ink/10">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8">
+        <Wordmark href="/clients" className="text-base" />
+
+        <nav className="flex items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-ink/60">
+          <Link href="/terms" className="transition-colors hover:text-oxblood">
+            Terms of Service
+          </Link>
+          <span className="text-ink/35">·</span>
+          <Link href="/privacy" className="transition-colors hover:text-oxblood">
+            Privacy Policy
+          </Link>
+          <span className="text-ink/35">·</span>
+          <Link href="/faq" className="transition-colors hover:text-oxblood">
+            Guide
+          </Link>
+        </nav>
+
+        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink/50">
+          ( {footerTag(pathname)} )
+        </span>
+      </div>
+    </footer>
+  );
+}
