@@ -76,6 +76,14 @@ export async function createUser(input: {
   return { id, email, passwordHash: hash, name: input.name, image: null };
 }
 
+/** Update a user's display name. Reflected in the session on next sign-in. */
+export async function updateUserName(
+  userId: string,
+  name: string,
+): Promise<void> {
+  await sql()`UPDATE users SET name = ${name} WHERE id = ${userId}`;
+}
+
 /** Verify a plaintext password against a stored bcrypt hash. */
 export async function verifyPassword(
   password: string,

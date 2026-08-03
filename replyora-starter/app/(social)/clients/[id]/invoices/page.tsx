@@ -1,12 +1,35 @@
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { InvoicesWorkspace } from "@/components/social/invoices/invoices-workspace";
+import { clientName as sampleName } from "@/components/social/portal-nav";
+import { getClient } from "@/lib/social/clients";
+import { listClientInvoices } from "@/lib/social/invoices";
+import { getWorkspaceBilling } from "@/lib/social/billing";
 
-export default function ClientInvoicesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientInvoicesPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [client, invoices, billing] = await Promise.all([
+    getClient(id),
+    listClientInvoices(id),
+    getWorkspaceBilling(),
+  ]);
+  const name = client?.name ?? sampleName(id);
+
   return (
-    <SectionScaffold
-      num="09"
-      label="Invoices"
-      headline="Bill this client — branded and tracked."
-      blurb="Draft, send and mark paid, with branded PDF exports and per-client billing settings."
+    <InvoicesWorkspace
+      clientId={id}
+      clientName={name}
+      invoices={invoices}
+      defaults={{
+        taxRate: billing.taxRate,
+        terms: billing.terms,
+        currency: billing.currency,
+        billToName: name,
+      }}
     />
   );
 }

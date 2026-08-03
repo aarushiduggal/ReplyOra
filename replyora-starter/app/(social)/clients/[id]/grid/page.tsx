@@ -1,13 +1,29 @@
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { GridWorkspace } from "@/components/social/grid/grid-workspace";
+import { clientName as sampleName } from "@/components/social/portal-nav";
+import { getClient } from "@/lib/social/clients";
+import { getProfilePreview, listClientTiles } from "@/lib/social/grid";
 
-export default function ClientGridPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientGridPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [client, tiles, profile] = await Promise.all([
+    getClient(id),
+    listClientTiles(id),
+    getProfilePreview(id),
+  ]);
+  const name = client?.name ?? sampleName(id);
+
   return (
-    <SectionScaffold
-      num="02"
-      label="Grid"
-      headline="Curate the feed before anything goes live."
-      blurb="Visual Instagram planner with an iPhone profile mock, drag-in assets, drafts and carousels."
-      blocks={6}
+    <GridWorkspace
+      clientId={id}
+      clientName={name}
+      tiles={tiles}
+      profile={profile}
     />
   );
 }

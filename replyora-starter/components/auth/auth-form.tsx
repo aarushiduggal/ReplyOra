@@ -102,7 +102,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
+      router.push("/clients");
       router.refresh();
       return;
     }
@@ -162,7 +162,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setLoading(true);
     // Auth.js (Netlify/Neon): hand off to the Google provider.
     if (HAS_AUTHJS_CLIENT) {
-      await authjsSignIn("google", { redirectTo: "/dashboard" });
+      await authjsSignIn("google", { redirectTo: "/clients" });
       return;
     }
     if (!USE_SUPABASE) {

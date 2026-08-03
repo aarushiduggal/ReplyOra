@@ -28,18 +28,18 @@ export function ClientSubNav({
     <div className="border-b border-ink/10">
       <div className="mx-auto max-w-6xl px-6 py-5">
         {/* breadcrumb */}
-        <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-ink/60">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <Link href="/clients" className="transition-colors hover:text-oxblood">
             ← Clients
           </Link>
-          <span className="text-ink/40">/</span>
-          <span className="text-ink/70">{clientName}</span>
-          <span className="text-ink/40">/</span>
+          <span className="text-ink/50">/</span>
+          <span className="text-ink">{clientName}</span>
+          <span className="text-ink/50">/</span>
           <span className="text-oxblood">{current?.label}</span>
         </div>
 
         {/* sub-nav */}
-        <nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-medium uppercase tracking-[0.16em]">
+        <nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.16em]">
           {CLIENT_NAV.map((item) => {
             const href = item.slug ? `${base}/${item.slug}` : base;
             const active = item.slug === (current?.slug ?? "");
@@ -51,7 +51,7 @@ export function ClientSubNav({
                   "pb-1 transition-colors",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
-                    : "text-ink/60 hover:text-oxblood",
+                    : "text-ink/85 hover:text-oxblood",
                 )}
               >
                 {item.label}

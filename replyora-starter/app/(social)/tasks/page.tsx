@@ -1,15 +1,14 @@
 import { PageShell } from "@/components/social/page-shell";
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { TasksWorkspace } from "@/components/social/tasks/tasks-workspace";
+import { listTasks } from "@/lib/social/tasks";
 
-export default function TasksPage() {
+export const dynamic = "force-dynamic";
+
+export default async function TasksPage() {
+  const tasks = await listTasks();
   return (
     <PageShell>
-      <SectionScaffold
-        num="02"
-        label="To-Do"
-        headline="Everything on your plate, across every client."
-        blurb="Cross-client task tracking for the agency — to-do, in progress, done."
-      />
+      <TasksWorkspace tasks={tasks} />
     </PageShell>
   );
 }

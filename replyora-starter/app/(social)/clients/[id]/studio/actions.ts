@@ -1,0 +1,41 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import { createClientPost } from "@/lib/social/posts";
+import { generatePosts, type GeneratedPost } from "@/lib/social/generate";
+import type { Platform } from "@/lib/social/types";
+
+/** Generate caption variations for a batch (template generator — no API cost). */
+export async function generateDraftsAction(input: {
+  businessName: string;
+  industry: string;
+  platform: Platform;
+  pillar: string;
+  topic: string;
+  count: number;
+}): Promise<GeneratedPost[]> {
+  return generatePosts(input);
+}
+
+/** Save selected drafts to the client — they appear on Grid + Calendar. */
+export async function saveDraftsAction(
+  clientId: string,
+  drafts: { caption: string; hashtags: string[]; pillar: string; platform: Platform }[],
+): Promise<void> {
+  for (const d of drafts) {
+    await createClientPost({
+      clientId,
+      platform: d.platform,
+      pillar: d.pillar,
+      topic: d.caption.slice(0, 80),
+      caption: d.caption,
+      hashtags: d.hashtags,
+      status: "draft",
+      scheduledFor: null,
+    });
+  }
+  revalidatePath(`/clients/${clientId}/studio`);
+  revalidatePath(`/clients/${clientId}/grid`);
+  revalidatePath(`/clients/${clientId}/calendar`);
+}

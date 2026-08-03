@@ -24,7 +24,7 @@ export function SectionScaffold({
       <h2 className="mt-6 max-w-xl font-display text-3xl leading-tight text-oxblood sm:text-4xl">
         {headline}
       </h2>
-      {blurb && <p className="mt-3 max-w-md text-sm leading-relaxed text-ink/70">{blurb}</p>}
+      {blurb && <p className="mt-3 max-w-md text-sm font-medium leading-relaxed text-ink/90">{blurb}</p>}
 
       <div className="mt-10 h-px w-full bg-ink/10" />
 
@@ -34,7 +34,7 @@ export function SectionScaffold({
             key={i}
             className="flex h-44 items-end rounded-xl border border-ink/[0.08] bg-ink/[0.015] p-4"
           >
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-ink/40">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/60">
               Coming together
             </span>
           </div>

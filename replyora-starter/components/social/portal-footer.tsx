@@ -15,7 +15,7 @@ export function PortalFooter() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8">
         <Wordmark href="/clients" className="text-base" />
 
-        <nav className="flex items-center gap-4 text-[11px] uppercase tracking-[0.16em] text-ink/60">
+        <nav className="flex items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/80">
           <Link href="/terms" className="transition-colors hover:text-oxblood">
             Terms of Service
           </Link>
@@ -29,7 +29,7 @@ export function PortalFooter() {
           </Link>
         </nav>
 
-        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink/50">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/80">
           ( {footerTag(pathname)} )
         </span>
       </div>

@@ -1,13 +1,29 @@
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { AssetsWorkspace } from "@/components/social/assets/assets-workspace";
+import { clientName as sampleName } from "@/components/social/portal-nav";
+import { getClient } from "@/lib/social/clients";
+import { listClientAssets } from "@/lib/social/assets";
+import { hasStorage } from "@/lib/social/storage";
 
-export default function ClientAssetsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientAssetsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [client, assets] = await Promise.all([
+    getClient(id),
+    listClientAssets(id),
+  ]);
+  const name = client?.name ?? sampleName(id);
+
   return (
-    <SectionScaffold
-      num="05"
-      label="Assets"
-      headline="This client's media, ready to place."
-      blurb="Per-client library of photos, videos and graphics that flow into the grid and calendar."
-      blocks={6}
+    <AssetsWorkspace
+      clientId={id}
+      clientName={name}
+      assets={assets}
+      storageReady={hasStorage()}
     />
   );
 }

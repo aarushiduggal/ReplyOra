@@ -1,0 +1,131 @@
+import { neon } from "@neondatabase/serverless";
+
+import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import {
+  EMPTY_ADDRESS,
+  SOCIAL_PRICE_ENV,
+  type Address,
+  type BillingInterval,
+  type SocialPlan,
+  type WorkspaceBilling,
+} from "@/lib/social/plans";
+
+/**
+ * ReplyOra Social — agency workspace billing & branding (workspace_billing).
+ * Feeds invoice defaults (tax/terms/currency), the report title, and the
+ * business identity shown on client portals, invoices and reports.
+ *
+ * Client-safe constants & types live in ./plans (re-exported here for server
+ * callers). This module adds the Neon-backed read/write functions.
+ */
+
+export * from "@/lib/social/plans";
+
+const DEFAULTS: WorkspaceBilling = {
+  businessName: "",
+  logoUrl: "",
+  address: EMPTY_ADDRESS,
+  reportTitle: "Performance Analytics",
+  taxRate: 0,
+  terms: "Payment due within 14 days.",
+  currency: "AUD",
+  businessEmail: "",
+  businessPhone: "",
+};
+
+export function socialPriceId(plan: SocialPlan, interval: BillingInterval): string | null {
+  const envName = SOCIAL_PRICE_ENV[plan][interval];
+  return process.env[envName] ?? null;
+}
+
+const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
+
+let _sql: ReturnType<typeof neon> | null = null;
+function sql() {
+  if (!_sql) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is not set");
+    _sql = neon(url);
+  }
+  return _sql;
+}
+
+const MEM = new Map<string, WorkspaceBilling>();
+
+// Contact (email/phone) is packed into the address JSONB so no schema change
+// is needed beyond migration 0003's workspace_billing table.
+interface AddressJson extends Partial<Address> {
+  email?: string;
+  phone?: string;
+}
+interface Row {
+  business_name: string | null;
+  logo_url: string | null;
+  address: AddressJson | null;
+  report_title: string | null;
+  tax_rate: string | number | null;
+  terms: string | null;
+  currency: string | null;
+}
+
+export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return MEM.get(workspaceId) ?? { ...DEFAULTS };
+  const rows = (await sql()`
+    SELECT business_name, logo_url, address, report_title, tax_rate, terms, currency
+    FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as Row[];
+  const r = rows[0];
+  if (!r) return { ...DEFAULTS };
+  const addr = r.address ?? {};
+  return {
+    businessName: r.business_name ?? "",
+    logoUrl: r.logo_url ?? "",
+    address: {
+      street: addr.street ?? "",
+      city: addr.city ?? "",
+      state: addr.state ?? "",
+      zip: addr.zip ?? "",
+      country: addr.country ?? "Australia",
+    },
+    reportTitle: r.report_title ?? "Performance Analytics",
+    taxRate: Number(r.tax_rate ?? 0),
+    terms: r.terms ?? "",
+    currency: r.currency ?? "AUD",
+    businessEmail: addr.email ?? "",
+    businessPhone: addr.phone ?? "",
+  };
+}
+
+export async function saveWorkspaceBilling(
+  patch: Partial<WorkspaceBilling>,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  const current = await getWorkspaceBilling();
+  const next = { ...current, ...patch };
+  if (!hasDb()) {
+    MEM.set(workspaceId, next);
+    return;
+  }
+  const addressJson: AddressJson = {
+    ...next.address,
+    email: next.businessEmail,
+    phone: next.businessPhone,
+  };
+  await sql()`
+    INSERT INTO workspace_billing
+      (workspace_id, business_name, logo_url, address, report_title, tax_rate, terms, currency)
+    VALUES
+      (${workspaceId}, ${next.businessName}, ${next.logoUrl},
+       ${JSON.stringify(addressJson)}, ${next.reportTitle}, ${next.taxRate},
+       ${next.terms}, ${next.currency})
+    ON CONFLICT (workspace_id) DO UPDATE SET
+      business_name = EXCLUDED.business_name,
+      logo_url = EXCLUDED.logo_url,
+      address = EXCLUDED.address,
+      report_title = EXCLUDED.report_title,
+      tax_rate = EXCLUDED.tax_rate,
+      terms = EXCLUDED.terms,
+      currency = EXCLUDED.currency
+  `;
+}

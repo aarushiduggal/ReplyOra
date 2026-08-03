@@ -1,12 +1,37 @@
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { CalendarWorkspace } from "@/components/social/calendar/calendar-workspace";
+import { clientName as sampleName } from "@/components/social/portal-nav";
+import { getClient } from "@/lib/social/clients";
+import { listClientPosts } from "@/lib/social/posts";
+import { getClientApprovals, type ApprovalStatus } from "@/lib/social/approvals";
 
-export default function ClientCalendarPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientCalendarPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [client, posts, approvalMap] = await Promise.all([
+    getClient(id),
+    listClientPosts(id),
+    getClientApprovals(id),
+  ]);
+  const name = client?.name ?? sampleName(id);
+
+  const approvals: Record<string, ApprovalStatus> = {};
+  for (const [postId, a] of approvalMap) approvals[postId] = a.status;
+
+  const now = new Date();
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
   return (
-    <SectionScaffold
-      num="03"
-      label="Calendar"
-      headline="Plan the month — and share it with the client."
-      blurb="Planner, Month, Spreadsheet and Approval Queue views, with a share-month toggle."
+    <CalendarWorkspace
+      clientId={id}
+      clientName={name}
+      posts={posts}
+      approvals={approvals}
+      todayISO={todayISO}
     />
   );
 }

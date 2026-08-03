@@ -1,13 +1,23 @@
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { IntegrationsWorkspace } from "@/components/social/integrations/integrations-workspace";
+import { clientName as sampleName } from "@/components/social/portal-nav";
+import { getClient } from "@/lib/social/clients";
 
-export default function ClientIntegrationsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ClientIntegrationsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const client = await getClient(id);
+  const name = client?.name ?? sampleName(id);
+
   return (
-    <SectionScaffold
-      num="10"
-      label="Integrations"
-      headline="Connect the platforms — publish for real."
-      blurb="Connect Instagram and TikTok (more to come); published posts flow back onto the grid."
-      blocks={2}
+    <IntegrationsWorkspace
+      clientId={id}
+      clientName={name}
+      platforms={client?.platforms ?? []}
     />
   );
 }

@@ -17,7 +17,7 @@ export function PortalTopNav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Wordmark href="/clients" className="text-xl" />
 
-        <nav className="flex items-center gap-6 text-[11px] font-medium uppercase tracking-[0.2em]">
+        <nav className="flex items-center gap-6 text-[11px] font-semibold uppercase tracking-[0.2em]">
           {WORKSPACE_NAV.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(item.href + "/");
@@ -29,7 +29,7 @@ export function PortalTopNav() {
                   "pb-1 transition-colors",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
-                    : "text-ink/65 hover:text-oxblood",
+                    : "text-ink/85 hover:text-oxblood",
                 )}
               >
                 {item.label}
@@ -39,7 +39,7 @@ export function PortalTopNav() {
           <button
             type="button"
             onClick={() => void signOut({ redirectTo: "/login" })}
-            className="pb-1 uppercase tracking-[0.2em] text-ink/65 transition-colors hover:text-oxblood"
+            className="pb-1 uppercase tracking-[0.2em] text-ink/85 transition-colors hover:text-oxblood"
           >
             Logout
           </button>

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { USE_AUTHJS } from "@/lib/data/mode";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getWorkspace } from "@/lib/data/workspace";
 import { applyIntendedPlan } from "@/lib/data/apply-plan-intent";
@@ -21,6 +23,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // On the social (Auth.js/Neon) deploy the agency portal at /clients is the
+  // product — the legacy chat-widget dashboard is retired here, so send every
+  // /dashboard/* hit to /clients. (Vercel/Supabase deploy is unaffected.)
+  if (USE_AUTHJS) redirect("/clients");
+
   // First-load: apply the plan chosen at signup so they trial THAT plan.
   await applyIntendedPlan();
 
