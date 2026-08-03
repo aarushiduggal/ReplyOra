@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
+import { signIn as authjsSignIn } from "next-auth/react";
+
 import { createClient } from "@/lib/supabase/client";
-import { USE_SUPABASE, APP_URL } from "@/lib/data/mode";
+import { USE_SUPABASE, HAS_AUTHJS_CLIENT, APP_URL } from "@/lib/data/mode";
 import { PLANS } from "@/lib/stripe/plans";
 import {
   TRIALABLE_PLANS,
@@ -57,6 +59,42 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setError(null);
     setNotice(null);
     setLoading(true);
+
+    // Auth.js (Netlify/Neon): email + password.
+    if (HAS_AUTHJS_CLIENT) {
+      if (isSignup) {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name }),
+        });
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          setError(data.error ?? "Couldn't create your account.");
+          setLoading(false);
+          return;
+        }
+      }
+      const result = await authjsSignIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (result?.error) {
+        setError(
+          isSignup
+            ? "Account created, but sign-in failed. Try logging in."
+            : "Wrong email or password.",
+        );
+        setLoading(false);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
 
     // Local dev without Supabase: keep the fast mock flow.
     if (!USE_SUPABASE) {
@@ -111,6 +149,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   async function signInWithGoogle() {
     setError(null);
     setLoading(true);
+    // Auth.js (Netlify/Neon): hand off to the Google provider.
+    if (HAS_AUTHJS_CLIENT) {
+      await authjsSignIn("google", { redirectTo: "/dashboard" });
+      return;
+    }
     if (!USE_SUPABASE) {
       setTimeout(() => router.push("/dashboard"), 500);
       return;

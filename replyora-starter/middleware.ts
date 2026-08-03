@@ -1,9 +1,14 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
+import { USE_SUPABASE } from "@/lib/data/mode";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  // Supabase (Vercel) needs its session cookie refreshed here. Auth.js
+  // (Netlify/Neon) uses stateless JWT cookies and guards routes via
+  // getCurrentUser() → redirect in server components, so no refresh is needed.
+  if (USE_SUPABASE) return await updateSession(request);
+  return NextResponse.next();
 }
 
 export const config = {

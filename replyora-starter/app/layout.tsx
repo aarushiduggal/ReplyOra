@@ -25,9 +25,9 @@ const fredoka = Fredoka({
 });
 
 const TITLE =
-  "Replyora — AI that replies, captures leads, and books customers 24/7";
+  "Replyora — the done-for-you social media platform";
 const DESCRIPTION =
-  "An AI customer-conversation platform for small & medium service businesses. Replyora replies instantly, captures leads, qualifies enquiries, and books customers — around the clock.";
+  "Replyora is the done-for-you social media management platform for local businesses. We create your content, write your captions, and schedule a full month of posts for Instagram & TikTok — on brand, every time.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

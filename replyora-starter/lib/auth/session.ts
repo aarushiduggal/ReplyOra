@@ -2,16 +2,29 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_USER, DEMO_WORKSPACE } from "@/lib/data/seed";
-import { USE_SUPABASE } from "@/lib/data/mode";
+import { USE_SUPABASE, USE_AUTHJS } from "@/lib/data/mode";
 import { getImpersonation } from "@/lib/admin/access";
 import type { User } from "@/lib/data/types";
 
 /**
  * The signed-in user.
- * LIVE: reads the Supabase session; redirects to /login if none.
- * MOCK (local dev): the demo owner.
+ * Auth.js (Netlify/Neon): reads the Auth.js session; redirects to /login if none.
+ * Supabase (Vercel): reads the Supabase session.
+ * MOCK (local dev, neither configured): the demo owner.
  */
 export async function getCurrentUser(): Promise<User> {
+  if (USE_AUTHJS) {
+    const { auth } = await import("@/auth");
+    const session = await auth();
+    if (!session?.user?.id) redirect("/login");
+    return {
+      id: session.user.id,
+      email: session.user.email ?? "",
+      fullName:
+        session.user.name || session.user.email?.split("@")[0] || "there",
+      avatarUrl: session.user.image ?? null,
+    };
+  }
   if (!USE_SUPABASE) return DEMO_USER;
 
   const supabase = await createClient();
@@ -46,6 +59,13 @@ export async function getCurrentWorkspaceId(): Promise<string> {
   const imp = await getImpersonation();
   if (imp) return imp.workspaceId;
 
+  if (USE_AUTHJS) {
+    const { auth } = await import("@/auth");
+    const session = await auth();
+    if (!session?.user?.workspaceId) redirect("/login");
+    return session.user.workspaceId;
+  }
+
   if (!USE_SUPABASE) return DEMO_WORKSPACE.id;
 
   const supabase = await createClient();
@@ -67,6 +87,11 @@ export async function getCurrentWorkspaceId(): Promise<string> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
+  if (USE_AUTHJS) {
+    const { auth } = await import("@/auth");
+    const session = await auth();
+    return Boolean(session?.user?.id);
+  }
   if (!USE_SUPABASE) return true;
   const supabase = await createClient();
   const {
