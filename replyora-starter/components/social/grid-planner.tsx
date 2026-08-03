@@ -2,7 +2,19 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { GripVertical, ImageIcon, Instagram, Plus, SlidersHorizontal } from "lucide-react";
+import {
+  Grid3x3,
+  ImageIcon,
+  Instagram,
+  Play,
+  Plus,
+  QrCode,
+  SlidersHorizontal,
+  Square,
+  Upload,
+  UserSquare,
+  X,
+} from "lucide-react";
 
 import type { PostStatus } from "@/lib/social/types";
 import { Button } from "@/components/ui/button";
@@ -14,18 +26,23 @@ export interface GridTile {
   pillar: string;
 }
 
-/** Warm brand-tinted placeholder colour, deterministic per tile. */
+interface Profile {
+  username: string;
+  displayName: string;
+  followers: string;
+  following: string;
+  bio: string;
+}
+
 const TINTS = ["#5C1A1A", "#7A2E2A", "#B26B62", "#3F1011", "#8A4A42", "#D9AFA6"];
 function tintFor(id: string): string {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
-  return TINTS[h % TINTS.length];
+  return TINTS[h % TINTS.length]!;
 }
-
 function firstWords(s: string, n = 6): string {
   return s.replace(/\s+/g, " ").trim().split(" ").slice(0, n).join(" ");
 }
-
 const STATUS_DOT: Record<PostStatus, string> = {
   draft: "bg-slate-400",
   scheduled: "bg-sky-500",
@@ -43,6 +60,15 @@ export function GridPlanner({
 }) {
   const [tiles, setTiles] = useState(initial);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile>({
+    username: brand.toLowerCase().replace(/\s+/g, ""),
+    displayName: brand,
+    followers: "0",
+    following: "0",
+    bio: "",
+  });
 
   const drafts = useMemo(() => tiles.filter((t) => t.status === "draft"), [tiles]);
   const scheduled = useMemo(() => tiles.filter((t) => t.status === "scheduled"), [tiles]);
@@ -62,7 +88,7 @@ export function GridPlanner({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,340px)_1fr]">
+    <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,320px)_1fr]">
       {/* Left — platform + profile controls */}
       <aside className="space-y-6">
         <div>
@@ -70,11 +96,12 @@ export function GridPlanner({
           <p className="mt-1 flex items-center gap-2 font-medium text-ink">
             <Instagram className="h-4 w-4 text-oxblood" /> Instagram
           </p>
+          <p className="mt-1 text-xs text-ink/50">{published} posts · 0 highlights</p>
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Profile preview</p>
           <p className="mt-1 text-xs text-ink/50">Username, bio, followers &amp; photo shown on the Instagram mock.</p>
-          <Button variant="outline" size="sm" className="mt-3 w-full rounded-full">
+          <Button variant="outline" size="sm" className="mt-3 w-full rounded-full" onClick={() => setEditOpen(true)}>
             <SlidersHorizontal className="h-3.5 w-3.5" /> Edit profile preview
           </Button>
         </div>
@@ -92,31 +119,30 @@ export function GridPlanner({
         <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2rem] border border-oxblood/15 bg-white shadow-sm">
           <div className="flex items-center justify-between px-4 pt-3 text-[10px] text-ink/50">
             <span>9:41</span>
-            <span>Instagram</span>
+            <span>{profile.username || "instagram"}</span>
           </div>
-          {/* profile header */}
           <div className="flex items-center gap-4 px-4 py-3">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
               {brand.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-1 justify-around text-center">
-              <div>
-                <p className="font-semibold text-ink">{published}</p>
-                <p className="text-[10px] text-ink/50">Posts</p>
-              </div>
-              <div>
-                <p className="font-semibold text-ink">0</p>
-                <p className="text-[10px] text-ink/50">Followers</p>
-              </div>
-              <div>
-                <p className="font-semibold text-ink">0</p>
-                <p className="text-[10px] text-ink/50">Following</p>
-              </div>
+              <Stat n={String(published)} label="Posts" />
+              <Stat n={profile.followers || "0"} label="Followers" />
+              <Stat n={profile.following || "0"} label="Following" />
             </div>
           </div>
-          <p className="px-4 pb-3 text-[12px] font-medium text-ink">{brand.toLowerCase().replace(/\s+/g, "")}</p>
+          <div className="px-4 pb-2">
+            <p className="text-[12px] font-semibold text-ink">{profile.displayName}</p>
+            {profile.bio && <p className="whitespace-pre-line text-[11px] text-ink/60">{profile.bio}</p>}
+          </div>
+          {/* tab row */}
+          <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/50">
+            <Grid3x3 className="h-4 w-4 text-oxblood" />
+            <Play className="h-4 w-4" />
+            <Square className="h-4 w-4" />
+            <UserSquare className="h-4 w-4" />
+          </div>
 
-          {/* the grid */}
           {tiles.length === 0 ? (
             <div className="flex flex-col items-center gap-2 border-t border-oxblood/10 px-4 py-12 text-center">
               <ImageIcon className="h-6 w-6 text-ink/30" />
@@ -139,7 +165,6 @@ export function GridPlanner({
                   <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
                     {firstWords(t.caption, 6)}
                   </span>
-                  <GripVertical className="absolute left-1 top-1 h-3 w-3 text-cream/0 transition-colors group-hover:text-cream/70" />
                 </div>
               ))}
             </div>
@@ -155,10 +180,126 @@ export function GridPlanner({
         </div>
       </div>
 
-      {/* Right — drafts / scheduled columns */}
-      <div className="grid grid-cols-2 gap-4">
-        <Column title="Drafts" count={drafts.length} tiles={drafts} empty="No drafts yet" />
-        <Column title="Scheduled" count={scheduled.length} tiles={scheduled} empty="Nothing scheduled" />
+      {/* Right — assets + drafts/scheduled */}
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/40">Assets</p>
+          <Link href="/dashboard/approvals" className="text-[11px] font-medium uppercase tracking-widest text-oxblood">
+            Approval queue →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild variant="outline" size="sm" className="rounded-lg">
+            <Link href="/dashboard/assets"><Upload className="h-3.5 w-3.5" /> Upload assets</Link>
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setQrOpen(true)}>
+            <QrCode className="h-3.5 w-3.5" /> From phone
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Column title="Drafts" count={drafts.length} tiles={drafts} empty="No drafts yet" />
+          <Column title="Scheduled" count={scheduled.length} tiles={scheduled} empty="Nothing scheduled" />
+        </div>
+      </div>
+
+      {editOpen && (
+        <Modal title="Edit profile" onClose={() => setEditOpen(false)}>
+          <div className="space-y-4">
+            <Field label="Username" value={profile.username} onChange={(v) => setProfile((p) => ({ ...p, username: v }))} placeholder="e.g. yourbrand" />
+            <Field label="Display name" value={profile.displayName} onChange={(v) => setProfile((p) => ({ ...p, displayName: v }))} placeholder="e.g. Your Brand" />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Followers" value={profile.followers} onChange={(v) => setProfile((p) => ({ ...p, followers: v }))} placeholder="e.g. 10.5K" />
+              <Field label="Following" value={profile.following} onChange={(v) => setProfile((p) => ({ ...p, following: v }))} placeholder="e.g. 850" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/50">Bio</label>
+              <textarea
+                value={profile.bio}
+                onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
+                rows={3}
+                placeholder="A few lines about the brand."
+                className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button size="sm" onClick={() => setEditOpen(false)}>Save profile</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {qrOpen && (
+        <Modal title="Upload from phone" onClose={() => setQrOpen(false)}>
+          <div className="flex flex-col items-center gap-3 py-2 text-center">
+            <div className="flex h-40 w-40 items-center justify-center rounded-xl border border-oxblood/15 bg-oat/20">
+              <QrCode className="h-24 w-24 text-oxblood/70" />
+            </div>
+            <p className="text-xs text-ink/60">Scan with your phone camera to send photos or videos straight to this brand&apos;s library.</p>
+            <p className="text-[11px] uppercase tracking-widest text-ink/40">Connect storage to enable · coming soon</p>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Stat({ n, label }: { n: string; label: string }) {
+  return (
+    <div>
+      <p className="font-semibold text-ink">{n}</p>
+      <p className="text-[10px] text-ink/50">{label}</p>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/50">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+      />
+    </div>
+  );
+}
+
+function Modal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl border border-oxblood/15 bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-xl text-oxblood">{title}</h3>
+          <button onClick={onClose} className="text-ink/40 hover:text-oxblood">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {children}
       </div>
     </div>
   );
@@ -192,10 +333,7 @@ function Column({
               href="/dashboard/planner"
               className="flex items-center gap-2 rounded-xl border border-oxblood/10 bg-white p-2 hover:border-oxblood/30"
             >
-              <span
-                className="h-9 w-9 shrink-0 rounded-lg"
-                style={{ backgroundColor: tintFor(t.id) }}
-              />
+              <span className="h-9 w-9 shrink-0 rounded-lg" style={{ backgroundColor: tintFor(t.id) }} />
               <span className="line-clamp-2 text-[11px] text-ink/70">{firstWords(t.caption, 8)}</span>
             </Link>
           ))}

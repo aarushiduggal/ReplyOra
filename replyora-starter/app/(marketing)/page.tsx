@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarClock,
-  Check,
   Instagram,
   LayoutGrid,
   Music2,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { PlaygroundHero } from "@/components/marketing/social/playground-hero";
+import { SocialPricing } from "@/components/marketing/social/social-pricing";
 import { Reveal } from "@/components/marketing/motion";
 import { Button } from "@/components/ui/button";
 
@@ -32,33 +32,6 @@ const PROOF = [
   { quote: "I stopped dreading content. It just shows up on brand every week and I approve it in two minutes.", name: "Bianca Rossi", role: "Rossi Hair Studio" },
   { quote: "A whole month of posts, planned and ready to go. I finally got my Sundays back.", name: "Amara Nguyen", role: "Coastal Glow Skin Clinic" },
   { quote: "It sounds like us, not a template. That's the thing that actually sold me.", name: "Sam Whitfield", role: "Northside Physio" },
-];
-
-const PLANS = [
-  {
-    name: "Free",
-    price: "$0",
-    tagline: "Get your socials moving.",
-    features: ["1 brand", "Instagram & TikTok", "AI captions & post ideas", "10 scheduled posts / mo", "Content calendar"],
-    cta: "Start free",
-    featured: false,
-  },
-  {
-    name: "Growth",
-    price: "$49",
-    tagline: "A full feed, fully managed.",
-    features: ["Everything in Free", "Unlimited scheduling", "Carousels, stories & reels planning", "Your brand kit & voice", "Remove ReplyOra badge"],
-    cta: "Start free trial",
-    featured: true,
-  },
-  {
-    name: "Studio",
-    price: "$149",
-    tagline: "For agencies & multi-brand.",
-    features: ["Everything in Growth", "Multiple client brands", "Approvals & client sign-off", "Performance reports", "Priority support"],
-    cta: "Talk to us",
-    featured: false,
-  },
 ];
 
 export default function LandingPage() {
@@ -180,59 +153,15 @@ export default function LandingPage() {
               Pricing
             </p>
             <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">
-              Start free. Upgrade when it&apos;s working.
+              Simple plans. Free to try.
             </h2>
-            <p className="mt-3 text-sm text-ink/60">Prices in AUD. Cancel anytime.</p>
+            <p className="mt-3 text-sm text-ink/60">
+              One brand or a whole client roster — start with a 7-day free trial.
+            </p>
           </Reveal>
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {PLANS.map((plan, i) => (
-              <Reveal key={plan.name} delay={i * 0.08}>
-                <div
-                  className={`flex h-full flex-col rounded-3xl border p-7 ${
-                    plan.featured
-                      ? "border-oxblood bg-oxblood text-cream shadow-lg"
-                      : "border-oxblood/15 bg-white text-ink"
-                  }`}
-                >
-                  {plan.featured && (
-                    <span className="mb-3 inline-flex w-fit rounded-full bg-cream/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-widest">
-                      Most popular
-                    </span>
-                  )}
-                  <h3 className={`font-display text-2xl ${plan.featured ? "text-cream" : "text-oxblood"}`}>
-                    {plan.name}
-                  </h3>
-                  <p className={`mt-1 text-sm ${plan.featured ? "text-cream/80" : "text-ink/60"}`}>
-                    {plan.tagline}
-                  </p>
-                  <p className="mt-5 font-display text-4xl">
-                    {plan.price}
-                    <span className={`font-sans text-base ${plan.featured ? "text-cream/70" : "text-ink/50"}`}>
-                      {plan.price === "$0" ? "" : " /mo"}
-                    </span>
-                  </p>
-                  <ul className="mt-6 flex-1 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm">
-                        <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.featured ? "text-blush" : "text-rose"}`} />
-                        <span className={plan.featured ? "text-cream/90" : "text-ink/75"}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    asChild
-                    className={`mt-7 rounded-full ${plan.featured ? "bg-cream text-oxblood hover:bg-cream/90" : ""}`}
-                    variant={plan.featured ? "default" : "outline"}
-                  >
-                    <Link href="/signup">{plan.cta}</Link>
-                  </Button>
-                </div>
-              </Reveal>
-            ))}
+          <div className="mt-12">
+            <SocialPricing />
           </div>
-          <p className="mt-8 text-center text-sm text-ink/50">
-            Optional add-on: an AI assistant that answers enquiries on your website.
-          </p>
         </div>
       </section>
 
@@ -252,7 +181,7 @@ export default function LandingPage() {
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <p className="mt-4 text-sm text-cream/70">No card to start · cancel anytime</p>
+            <p className="mt-4 text-sm text-cream/70">7-day free trial · no card to start</p>
           </Reveal>
         </div>
       </section>

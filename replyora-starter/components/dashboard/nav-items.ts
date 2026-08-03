@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   CalendarDays,
   GraduationCap,
+  Grid3x3,
   LayoutDashboard,
   MessagesSquare,
   PenLine,
@@ -30,6 +31,7 @@ export interface NavItem {
  * sidebar and the mobile drawer so they never drift. */
 export const DASHBOARD_NAV: NavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard, exact: true },
+  { label: "Grid", href: "/dashboard/grid", icon: Grid3x3 },
   { label: "Content Studio", href: "/dashboard/studio", icon: PenLine },
   { label: "Content Calendar", href: "/dashboard/planner", icon: CalendarDays },
   { label: "Business profile", href: "/dashboard/business", icon: Store },
@@ -54,6 +56,7 @@ export const DASHBOARD_NAV: NavItem[] = [
 /** The pages that belong to the "ReplyOra Social" deploy (Netlify/Neon). The
  * legacy chat-widget product pages are hidden there. */
 const SOCIAL_HREFS = new Set([
+  "/dashboard/grid",
   "/dashboard/studio",
   "/dashboard/planner",
   "/dashboard/settings",
