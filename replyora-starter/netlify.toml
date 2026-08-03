@@ -3,10 +3,11 @@
 # ReplyOra_Social_GoLive_Netlify_Neon.md). Not Vercel, not Supabase.
 
 [build]
-  # Standard Next.js build. The Next.js runtime plugin (below) wires up the
-  # publish directory, serverless functions and image handling automatically —
-  # do not set `publish` manually when using the plugin.
   command = "npm run build"
+  # Next's build output. Because a base directory is set, Netlify reads THIS
+  # file and otherwise defaults publish to the base dir — which the Next.js
+  # plugin rejects ("publish cannot equal base"). Point it at .next explicitly.
+  publish = ".next"
 
 [build.environment]
   # Pin an LTS Node that Next 15 + the plugin support (matches local dev).
