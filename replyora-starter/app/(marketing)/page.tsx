@@ -156,7 +156,7 @@ export default function LandingPage() {
               Simple plans. Free to try.
             </h2>
             <p className="mt-3 text-sm text-ink/60">
-              One brand or a whole client roster — start with a 7-day free trial.
+              One brand or a whole client roster — start with a free trial.
             </p>
           </Reveal>
           <div className="mt-12">
@@ -181,7 +181,7 @@ export default function LandingPage() {
                 Start free <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <p className="mt-4 text-sm text-cream/70">7-day free trial · no card to start</p>
+            <p className="mt-4 text-sm text-cream/70">Free trial · no card to start</p>
           </Reveal>
         </div>
       </section>

@@ -63,6 +63,20 @@ export async function getCurrentWorkspaceId(): Promise<string> {
     const { auth } = await import("@/auth");
     const session = await auth();
     if (!session?.user?.id) redirect("/login");
+
+    // Staff/owner "Enter as": a valid, signed impersonation cookie whose actor
+    // matches the signed-in staff user resolves to the impersonated workspace.
+    const { readImpersonation } = await import("@/lib/admin/impersonate");
+    const { isStaff } = await import("@/lib/auth/owner");
+    const imp = await readImpersonation();
+    if (
+      imp &&
+      imp.actorUserId === session.user.id &&
+      isStaff(session.user.email)
+    ) {
+      return imp.workspaceId;
+    }
+
     if (session.user.workspaceId) return session.user.workspaceId;
     // First request right after sign-up (or a transient Neon error in the jwt
     // callback) can leave the token without a workspace id. Resolve/create it

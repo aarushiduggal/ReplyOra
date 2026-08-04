@@ -7,6 +7,11 @@ import {
   getRevenue,
   type AttentionSeverity,
 } from "@/lib/admin/data";
+import { USE_AUTHJS } from "@/lib/data/mode";
+import { listWorkspaces } from "@/lib/admin/social-data";
+import { AdminOverview } from "@/components/admin/admin-overview";
+
+export const dynamic = "force-dynamic";
 
 const SEV: Record<AttentionSeverity, string> = {
   high: "border-rose-200 bg-rose-50 text-rose-800",
@@ -19,6 +24,13 @@ function money(n: number): string {
 }
 
 export default async function AdminHome() {
+  // Social (Auth.js): the new Neon workspace overview.
+  if (USE_AUTHJS) {
+    const workspaces = await listWorkspaces();
+    return <AdminOverview workspaces={workspaces} />;
+  }
+
+  // Legacy (Supabase): the original command center.
   const [kpis, attention, revenue] = await Promise.all([
     getPlatformKpis(),
     getAttentionQueue(),

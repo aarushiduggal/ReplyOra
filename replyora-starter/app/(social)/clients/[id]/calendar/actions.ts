@@ -8,12 +8,25 @@ import {
   deleteClientPost,
 } from "@/lib/social/posts";
 import { sendForApproval } from "@/lib/social/approvals";
+import { publishPost } from "@/lib/social/publish";
+import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import type { Platform, PostStatus } from "@/lib/social/types";
 
 function revalidate(clientId: string) {
   revalidatePath(`/clients/${clientId}/calendar`);
   revalidatePath(`/clients/${clientId}/grid`);
   revalidatePath(`/clients/${clientId}/approvals`);
+}
+
+/** Publish a post to its platform right now (Instagram / TikTok). */
+export async function publishNowAction(
+  clientId: string,
+  postId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const workspaceId = await getCurrentWorkspaceId();
+  const res = await publishPost(workspaceId, postId);
+  revalidate(clientId);
+  return { ok: res.ok, error: res.error };
 }
 
 export async function createCalendarPostAction(

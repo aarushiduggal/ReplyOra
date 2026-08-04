@@ -8,14 +8,14 @@ import {
   type BillingInterval,
   type SocialPlan,
 } from "@/lib/social/billing";
-import { TRIAL_DAYS } from "@/lib/stripe/plans";
 
 export const runtime = "nodejs";
 
 /**
  * POST /api/social/checkout — Stripe Checkout for the social plans.
  * Body: { plan: "personal"|"agency", interval: "monthly"|"yearly" }
- * 7-day trial. Dormant until STRIPE_SECRET_KEY + the price ids are set.
+ * Trial: 7 days monthly, 14 days yearly. Dormant until STRIPE_SECRET_KEY +
+ * the price ids are set.
  */
 export async function POST(request: Request) {
   if (!HAS_STRIPE) {
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: TRIAL_DAYS,
+      trial_period_days: interval === "yearly" ? 14 : 7,
       metadata: { workspace_id: workspaceId, social_plan: plan, interval },
     },
     success_url: `${base}/settings?billing=success`,

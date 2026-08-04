@@ -33,6 +33,7 @@ const DEFAULTS: WorkspaceBilling = {
   businessPhone: "",
   plan: "personal",
   planStatus: "trialing",
+  accountType: null,
 };
 
 export function socialPriceId(plan: SocialPlan, interval: BillingInterval): string | null {
@@ -61,6 +62,7 @@ interface AddressJson extends Partial<Address> {
   phone?: string;
   plan?: SocialPlan;
   planStatus?: string;
+  accountType?: SocialPlan | null;
 }
 interface Row {
   business_name: string | null;
@@ -100,6 +102,7 @@ export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
     businessPhone: addr.phone ?? "",
     plan: addr.plan ?? "personal",
     planStatus: addr.planStatus ?? "trialing",
+    accountType: addr.accountType ?? null,
   };
 }
 
@@ -119,6 +122,7 @@ export async function saveWorkspaceBilling(
     phone: next.businessPhone,
     plan: next.plan,
     planStatus: next.planStatus,
+    accountType: next.accountType,
   };
   await sql()`
     INSERT INTO workspace_billing
@@ -135,6 +139,54 @@ export async function saveWorkspaceBilling(
       tax_rate = EXCLUDED.tax_rate,
       terms = EXCLUDED.terms,
       currency = EXCLUDED.currency
+  `;
+}
+
+/** Set the current workspace's account type (onboarding + owner switch). */
+export async function setAccountType(type: SocialPlan | null): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
+    MEM.set(workspaceId, { ...cur, accountType: type });
+    return;
+  }
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), accountType: type };
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
+  `;
+}
+
+/**
+ * Owner "reset my account": wipe THIS workspace's demo data and clear the
+ * account type so onboarding runs again. Deleting clients cascades their posts,
+ * assets, approvals, invoices, pillars, assistants and knowledge; we also clear
+ * workspace-level rows (tasks, any client-less posts/assets/invoices).
+ */
+export async function resetMyWorkspaceData(): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const cur = MEM.get(workspaceId);
+    if (cur) MEM.set(workspaceId, { ...cur, accountType: null });
+    return;
+  }
+  await sql()`DELETE FROM clients WHERE workspace_id = ${workspaceId}`;
+  await sql()`DELETE FROM social_posts WHERE workspace_id = ${workspaceId}`;
+  await sql()`DELETE FROM assets WHERE workspace_id = ${workspaceId}`;
+  await sql()`DELETE FROM invoices WHERE workspace_id = ${workspaceId}`;
+  await sql()`DELETE FROM tasks WHERE workspace_id = ${workspaceId}`;
+  // Clear the chosen account type (packed in the address JSONB) → re-onboard.
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), accountType: null };
+  await sql()`
+    UPDATE workspace_billing SET address = ${JSON.stringify(addressJson)}
+    WHERE workspace_id = ${workspaceId}
   `;
 }
 

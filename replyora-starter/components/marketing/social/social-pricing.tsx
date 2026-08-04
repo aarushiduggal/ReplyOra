@@ -14,7 +14,6 @@ interface Plan {
   monthly: number;
   yearly: number;
   features: string[];
-  cta: string;
   featured: boolean;
 }
 
@@ -33,7 +32,6 @@ const PLANS: Plan[] = [
       "Unlimited scheduling",
       "Brand kit",
     ],
-    cta: "Start 7-day free trial",
     featured: false,
   },
   {
@@ -49,7 +47,6 @@ const PLANS: Plan[] = [
       "Performance reports",
       "Priority support",
     ],
-    cta: "Start 7-day free trial",
     featured: true,
   },
 ];
@@ -71,11 +68,6 @@ export function SocialPricing() {
               }`}
             >
               {c}
-              {c === "yearly" && (
-                <span className={`ml-1.5 text-[11px] ${cycle === c ? "text-blush" : "text-rose"}`}>
-                  2 months free
-                </span>
-              )}
             </button>
           ))}
         </div>
@@ -129,7 +121,11 @@ export function SocialPricing() {
                 className={`mt-7 rounded-full ${plan.featured ? "bg-cream text-oxblood hover:bg-cream/90" : ""}`}
                 variant={plan.featured ? "default" : "outline"}
               >
-                <Link href="/signup">{plan.cta}</Link>
+                <Link href="/signup">
+                  {cycle === "yearly"
+                    ? "Start 2-week free trial"
+                    : "Start 7-day free trial"}
+                </Link>
               </Button>
             </div>
           );
@@ -137,8 +133,8 @@ export function SocialPricing() {
       </div>
 
       <p className="mt-8 text-center text-sm text-ink/50">
-        7-day free trial on every plan · no card to start · cancel anytime.
-        Optional add-on: an AI assistant that answers enquiries on your website.
+        No card to start · cancel anytime. Optional add-on: an AI assistant that
+        answers enquiries on your website.
       </p>
     </div>
   );

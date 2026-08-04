@@ -39,4 +39,4 @@ I'm building Replyora **in public** — sharing the wins, the setbacks, and ever
 
 Replyora is early — and that's the exciting part. The mission is simple: help small and medium service businesses stop losing customers to slow replies, and turn every enquiry into a booking.
 
-**Want to follow along or work with us?** Follow **[@replyora](https://www.instagram.com/replyora/)** on Instagram, or [book a demo](/book-a-demo) and we'll build a sample assistant for your business.
+**Want to follow along or work with us?** Follow **[@replyora](https://www.instagram.com/replyora/)** on Instagram, or [book a demo](/demo) and we'll walk you through how we'd run your socials.

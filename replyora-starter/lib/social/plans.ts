@@ -27,6 +27,8 @@ export interface WorkspaceBilling {
   /** Active social plan + Stripe status (synced by the webhook). */
   plan: SocialPlan;
   planStatus: string;
+  /** Chosen at onboarding. null = not onboarded yet → send to /onboarding. */
+  accountType: SocialPlan | null;
 }
 
 export const EMPTY_ADDRESS: Address = {

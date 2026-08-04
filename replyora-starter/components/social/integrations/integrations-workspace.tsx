@@ -4,24 +4,37 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Instagram, Music2 } from "lucide-react";
 
-import { toggleIntegrationAction } from "@/app/(social)/clients/[id]/integrations/actions";
+import {
+  disconnectAction,
+  toggleIntegrationAction,
+} from "@/app/(social)/clients/[id]/integrations/actions";
 import { GuideTrigger } from "@/components/social/guide";
 
 export function IntegrationsWorkspace({
   clientId,
   clientName,
   platforms,
+  metaReady,
+  tiktokReady,
 }: {
   clientId: string;
   clientName: string;
   platforms: string[];
+  metaReady: boolean;
+  tiktokReady: boolean;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  function toggle(platform: "instagram" | "tiktok", connected: boolean) {
+  function stubConnect(platform: "instagram" | "tiktok") {
     startTransition(async () => {
-      await toggleIntegrationAction(clientId, platform, connected);
+      await toggleIntegrationAction(clientId, platform, true);
+      router.refresh();
+    });
+  }
+  function disconnect(platform: "instagram" | "tiktok") {
+    startTransition(async () => {
+      await disconnectAction(clientId, platform);
       router.refresh();
     });
   }
@@ -45,21 +58,26 @@ export function IntegrationsWorkspace({
           name="Instagram"
           note="Paid feature"
           connected={platforms.includes("instagram")}
-          onConnect={() => toggle("instagram", true)}
-          onDisconnect={() => toggle("instagram", false)}
+          oauthReady={metaReady}
+          connectHref={`/api/social/connect/instagram?client=${clientId}`}
+          onStubConnect={() => stubConnect("instagram")}
+          onDisconnect={() => disconnect("instagram")}
         />
         <Card
           icon={<Music2 className="h-5 w-5" />}
           name="TikTok"
           connected={platforms.includes("tiktok")}
-          onConnect={() => toggle("tiktok", true)}
-          onDisconnect={() => toggle("tiktok", false)}
+          oauthReady={tiktokReady}
+          connectHref={`/api/social/connect/tiktok?client=${clientId}`}
+          onStubConnect={() => stubConnect("tiktok")}
+          onDisconnect={() => disconnect("tiktok")}
         />
       </div>
 
       <p className="mt-6 text-[11px] text-ink/75">
-        More networks coming soon. OAuth token exchange activates once the Meta &amp;
-        TikTok app credentials are configured.
+        {metaReady || tiktokReady
+          ? "Connect authorises this client's account so scheduled posts publish for real."
+          : "Add the Meta & TikTok app credentials in Netlify to turn on real publishing. Until then, Connect just marks the platform as active."}
       </p>
     </div>
   );
@@ -70,14 +88,18 @@ function Card({
   name,
   note,
   connected,
-  onConnect,
+  oauthReady,
+  connectHref,
+  onStubConnect,
   onDisconnect,
 }: {
   icon: React.ReactNode;
   name: string;
   note?: string;
   connected: boolean;
-  onConnect: () => void;
+  oauthReady: boolean;
+  connectHref: string;
+  onStubConnect: () => void;
   onDisconnect: () => void;
 }) {
   return (
@@ -105,10 +127,17 @@ function Card({
           >
             Disconnect
           </button>
+        ) : oauthReady ? (
+          <a
+            href={connectHref}
+            className="inline-block rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
+          >
+            Connect {name}
+          </a>
         ) : (
           <button
             type="button"
-            onClick={onConnect}
+            onClick={onStubConnect}
             className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
           >
             Connect {name}
