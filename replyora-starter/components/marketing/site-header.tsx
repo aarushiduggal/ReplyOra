@@ -5,9 +5,8 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { NavMenu } from "@/components/marketing/nav-menu";
 import { MobileMenu } from "@/components/marketing/mobile-menu";
-import { NAV_GROUPS, TOP_LINKS } from "@/components/marketing/nav-config";
+import { TOP_LINKS } from "@/components/marketing/nav-config";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -40,28 +39,19 @@ export function SiteHeader() {
           aria-label="Main"
           className="hidden items-center gap-1 md:flex"
         >
-          {NAV_GROUPS.map((group) => (
-            <NavMenu key={group.label} group={group} />
-          ))}
           {TOP_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-2 py-1.5 text-sm font-medium text-ink/70 transition-colors hover:text-oxblood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-ink/70 transition-colors hover:text-oxblood focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {link.label}
             </Link>
           ))}
-        </nav>
-
-        <div className="hidden items-center gap-2 md:flex">
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Log in</Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href="/signup">Start free trial</Link>
-          </Button>
-        </div>
+        </nav>
 
         <MobileMenu />
       </div>

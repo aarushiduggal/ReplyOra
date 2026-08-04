@@ -2,6 +2,11 @@
  * replyora Social portal — navigation model (Entire Socials-style IA).
  * Two levels: the workspace top nav, and the per-client sub-nav.
  * Plain module (no "use client") so client components can import it.
+ *
+ * Client data is read from the Neon `clients` table (lib/social/clients.ts) —
+ * there is no placeholder roster. The current client's real name is provided to
+ * client components (breadcrumb, footer) via ClientNameContext, populated by the
+ * /clients/[id] layout from getClient().
  */
 
 export interface NavItem {
@@ -39,38 +44,26 @@ export const CLIENT_NAV: ClientNavItem[] = [
   { num: "10", label: "Integrations", slug: "integrations" },
 ];
 
-export interface SampleClient {
-  id: string;
-  name: string;
-  handle: string;
-  platforms: string;
-}
-
 /**
- * Placeholder roster so the shell is navigable before the Neon client data
- * layer is wired. No city names, per brief. Swap for `clients` table reads next.
+ * Neutral fallback name used only when a client row can't be loaded (e.g. a bad
+ * id). Real names come from the Neon `clients` table via getClient().
  */
-export const SAMPLE_CLIENTS: SampleClient[] = [
-  { id: "bloom", name: "Bloom Hair Studio", handle: "@bloomhair", platforms: "Instagram · TikTok" },
-  { id: "peak", name: "Peak Physio", handle: "@peakphysio", platforms: "Instagram" },
-  { id: "corner", name: "The Corner Café", handle: "@thecornercafe", platforms: "Instagram · TikTok" },
-];
-
-export function clientName(id: string): string {
-  return SAMPLE_CLIENTS.find((c) => c.id === id)?.name ?? "Client";
+export function clientName(_id: string): string {
+  return "Client";
 }
 
-/** The footer's "( CLIENT / SECTION )" tag, derived from the current path. */
-export function footerTag(pathname: string): string {
-  const parts = pathname.split("/").filter(Boolean); // e.g. ["clients","peak","grid"]
-  const clientId = parts[1];
-  if (parts[0] === "clients" && clientId) {
-    const name = clientName(clientId).toUpperCase();
-    const section = (
-      CLIENT_NAV.find((n) => n.slug === (parts[2] ?? ""))?.label ?? "Overview"
-    ).toUpperCase();
-    return `${name} / ${section}`;
+/** The current client-nav section label for a pathname ("Overview" default). */
+export function sectionLabel(pathname: string): string {
+  const parts = pathname.split("/").filter(Boolean); // ["clients","<id>","grid"]
+  if (parts[0] === "clients" && parts[1]) {
+    return CLIENT_NAV.find((n) => n.slug === (parts[2] ?? ""))?.label ?? "Overview";
   }
   const top = WORKSPACE_NAV.find((n) => n.href === "/" + (parts[0] ?? ""));
-  return (top?.label ?? "Workspace").toUpperCase();
+  return top?.label ?? "Workspace";
+}
+
+/** True when the path is inside a specific client (/clients/[id]/...). */
+export function isClientRoute(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[0] === "clients" && Boolean(parts[1]);
 }

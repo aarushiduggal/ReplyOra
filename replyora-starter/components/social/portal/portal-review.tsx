@@ -31,11 +31,11 @@ export function PortalReview({
     <div className="space-y-10">
       {/* Planned grid */}
       <section>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           Planned grid
         </p>
         {scheduled.length === 0 ? (
-          <p className="mt-3 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] text-ink/60">
+          <p className="mt-3 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] text-ink/80">
             Nothing shared yet — check back soon.
           </p>
         ) : (
@@ -58,12 +58,12 @@ export function PortalReview({
 
       {/* Review queue */}
       <section>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           For your review
         </p>
         <div className="mt-4 space-y-3">
           {posts.filter((p) => approvals[p.id]).length === 0 ? (
-            <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] text-ink/60">
+            <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] text-ink/80">
               No posts are waiting on you right now.
             </p>
           ) : (
@@ -108,7 +108,7 @@ function ReviewRow({
           <p className="text-sm font-semibold text-ink">
             {post.caption ? post.caption.slice(0, 80) : "(untitled)"}
           </p>
-          <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/60">
+          <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/80">
             {post.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[post.platform]}
           </p>
         </div>
@@ -146,7 +146,7 @@ function ReviewRow({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/60"
+                  className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/80"
                 >
                   Cancel
                 </button>

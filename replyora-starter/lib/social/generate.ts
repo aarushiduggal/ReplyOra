@@ -137,3 +137,60 @@ export function generatePosts(input: GenerateInput): GeneratedPost[] {
   }
   return out;
 }
+
+/**
+ * Real caption generation via Google Gemini (free tier), with the local
+ * template generator (generatePosts) as an automatic fallback. Costs nothing:
+ * activates only when GEMINI_API_KEY is set, and any error/timeout/missing key
+ * silently falls back to the deterministic templates — so it always returns.
+ *
+ * Dependency-free (fetch). responseMimeType forces valid JSON back from Gemini.
+ */
+export async function generatePostsSmart(
+  input: GenerateInput,
+): Promise<GeneratedPost[]> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return generatePosts(input);
+
+  const count = input.count ?? 3;
+  const prompt = `You are a senior social media copywriter for a business${input.industry ? ` in the ${input.industry} industry` : ""} called "${input.businessName || "the brand"}".
+Write ${count} distinct ${input.platform} captions about: ${input.topic || "the business"}.
+Content pillar: ${input.pillar}. Voice: warm, human, confident, never salesy or generic. Each caption is 2-4 short lines with an emoji or two and one clear call to action.
+Return ONLY valid JSON — an array of ${count} objects, each {"caption": string, "hashtags": string[]} with 5-8 relevant lowercase hashtags (each starting with #, no duplicates). No markdown, no commentary.`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.9,
+            responseMimeType: "application/json",
+          },
+        }),
+      },
+    );
+    if (!res.ok) return generatePosts(input);
+    const data = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return generatePosts(input);
+
+    const parsed = JSON.parse(text) as { caption?: string; hashtags?: string[] }[];
+    const posts = parsed
+      .filter((p) => p?.caption)
+      .map((p) => ({
+        caption: String(p.caption).trim(),
+        hashtags: (p.hashtags ?? []).map((h) =>
+          h.startsWith("#") ? h : `#${h.replace(/^#+/, "")}`,
+        ),
+      }));
+    return posts.length > 0 ? posts : generatePosts(input);
+  } catch {
+    return generatePosts(input);
+  }
+}

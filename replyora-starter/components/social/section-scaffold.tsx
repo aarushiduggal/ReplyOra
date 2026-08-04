@@ -34,7 +34,7 @@ export function SectionScaffold({
             key={i}
             className="flex h-44 items-end rounded-xl border border-ink/[0.08] bg-ink/[0.015] p-4"
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/60">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/80">
               Coming together
             </span>
           </div>

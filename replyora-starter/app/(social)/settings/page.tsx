@@ -18,8 +18,18 @@ export default async function SettingsPage() {
         fullName={user.fullName}
         email={user.email}
         billing={billing}
-        currentPlan="personal"
-        planStatus="Trial · 7 days"
+        currentPlan={billing.plan}
+        planStatus={
+          billing.planStatus === "active"
+            ? "Active"
+            : billing.planStatus === "trialing"
+              ? "Trial · 7 days"
+              : billing.planStatus === "past_due"
+                ? "Payment overdue"
+                : billing.planStatus === "canceled"
+                  ? "Cancelled"
+                  : billing.planStatus
+        }
         stripeReady={HAS_STRIPE}
       />
     </PageShell>

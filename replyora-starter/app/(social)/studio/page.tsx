@@ -13,13 +13,13 @@ export default async function StudioLauncherPage() {
     <PageShell>
       <SectionHeader num="04" label="Studio" />
       <h2 className="mt-6 font-display text-3xl text-oxblood">Batch content studio</h2>
-      <p className="mt-2 max-w-md text-sm font-medium text-ink/75">
+      <p className="mt-2 max-w-md text-sm font-medium text-ink/90">
         Pick a client to batch-create posts — generate captions, arrange assets,
         and save drafts to their Grid &amp; Calendar.
       </p>
 
       {clients.length === 0 ? (
-        <p className="mt-8 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/60">
+        <p className="mt-8 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/80">
           Add a client first, then open their Studio.
         </p>
       ) : (
@@ -33,7 +33,7 @@ export default async function StudioLauncherPage() {
               <span className="font-display text-xl text-ink transition-colors group-hover:text-oxblood">
                 {c.name}
               </span>
-              <ArrowRight className="h-4 w-4 text-ink/40 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
+              <ArrowRight className="h-4 w-4 text-ink/60 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
             </Link>
           ))}
         </div>

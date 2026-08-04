@@ -7,30 +7,25 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "/#product" },
+      { label: "Features", href: "/#features" },
       { label: "How it works", href: "/#how" },
       { label: "Pricing", href: "/#pricing" },
-      { label: "Compare", href: "/compare" },
-      { label: "ROI calculator", href: "/roi" },
-    ],
-  },
-  {
-    title: "Industries",
-    links: [
-      { label: "Physiotherapy", href: "/for/physio" },
-      { label: "Salons & beauty", href: "/for/salons" },
-      { label: "Real estate", href: "/for/real-estate" },
-      { label: "NDIS providers", href: "/for/ndis" },
+      { label: "Work", href: "/demo" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Our story", href: "/story" },
       { label: "Blog", href: "/blog" },
-      { label: "FAQ", href: "/faq" },
       { label: "Book a demo", href: "/demo" },
-      { label: "Partners", href: "/partners" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Security", href: "/security" },
     ],
   },
 ];

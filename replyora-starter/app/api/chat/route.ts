@@ -14,6 +14,7 @@ import {
   streamClaude,
 } from "@/lib/ai/llm";
 import { withinMessageCap } from "@/lib/usage";
+import { answerFromNeon, getPublicAssistant } from "@/lib/social/public-chat";
 import type { Assistant, Plan } from "@/lib/data/types";
 
 /**
@@ -53,6 +54,25 @@ export async function POST(request: Request) {
   const { publicKey, message } = body;
   if (!publicKey || typeof message !== "string" || message.trim() === "") {
     return new Response("Missing publicKey or message", { status: 400 });
+  }
+
+  // ReplyOra Social chatbox (Neon-backed rk_ keys) — try first, then fall
+  // through to the legacy Supabase assistant if this key isn't a Neon one.
+  const neonAssistant = await getPublicAssistant(publicKey);
+  if (neonAssistant) {
+    const reply = await answerFromNeon(neonAssistant, message);
+    const encoder = new TextEncoder();
+    const parts = reply.split(/(\s+)/);
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        for (const part of parts) {
+          controller.enqueue(encoder.encode(part));
+          await delay(18);
+        }
+        controller.close();
+      },
+    });
+    return new Response(stream, { headers: STREAM_HEADERS });
   }
 
   const assistant = await getAssistantByPublicKey(publicKey);

@@ -38,7 +38,7 @@ export function AddClient() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-ink/60 transition-colors hover:text-oxblood"
+                className="text-ink/80 transition-colors hover:text-oxblood"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -57,7 +57,7 @@ export function AddClient() {
                 required
                 autoFocus
                 placeholder="e.g. Bloom Hair Studio"
-                className="w-full rounded-lg border border-ink/20 bg-white px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-oxblood"
+                className="w-full rounded-lg border border-ink/20 bg-white px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-oxblood"
               />
               <button
                 type="submit"

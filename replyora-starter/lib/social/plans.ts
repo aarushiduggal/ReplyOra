@@ -24,6 +24,9 @@ export interface WorkspaceBilling {
   currency: string;
   businessEmail: string;
   businessPhone: string;
+  /** Active social plan + Stripe status (synced by the webhook). */
+  plan: SocialPlan;
+  planStatus: string;
 }
 
 export const EMPTY_ADDRESS: Address = {
@@ -53,3 +56,17 @@ export const SOCIAL_PLAN_PRICE: Record<SocialPlan, Record<BillingInterval, numbe
   personal: { monthly: 50, yearly: 500 },
   agency: { monthly: 200, yearly: 2000 },
 };
+
+/** Reverse-map a Stripe price id back to a social plan (used by the webhook). */
+export function socialPlanForPriceId(
+  priceId: string,
+): { plan: SocialPlan; interval: BillingInterval } | null {
+  for (const plan of ["personal", "agency"] as SocialPlan[]) {
+    for (const interval of ["monthly", "yearly"] as BillingInterval[]) {
+      if (process.env[SOCIAL_PRICE_ENV[plan][interval]] === priceId) {
+        return { plan, interval };
+      }
+    }
+  }
+  return null;
+}

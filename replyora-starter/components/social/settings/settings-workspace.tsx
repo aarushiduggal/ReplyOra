@@ -9,6 +9,7 @@ import {
   saveProfileNameAction,
   saveWorkspaceBillingAction,
 } from "@/app/(social)/settings/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 const TABS = ["Profile", "Preferences", "Integrations", "Billing", "Workspace", "Data"] as const;
 type Tab = (typeof TABS)[number];
@@ -36,9 +37,10 @@ export function SettingsWorkspace({
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 04 )</span> Settings
-        </p>
+          <GuideTrigger pageKey="settings" />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-5 border-b border-ink/10 pb-3 text-[11px] font-semibold uppercase tracking-[0.16em]">
@@ -114,7 +116,7 @@ function ProfileTab({ fullName, email }: { fullName: string; email: string }) {
       </Card>
 
       <Card title="Password">
-        <p className="text-sm text-ink/70">••••••••</p>
+        <p className="text-sm text-ink/85">••••••••</p>
         <button type="button" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood hover:underline">
           Change password
         </button>
@@ -138,7 +140,7 @@ function WorkspaceTab({ billing }: { billing: WorkspaceBilling }) {
 
   return (
     <Card title="Workspace">
-      <p className="-mt-2 text-[12px] text-ink/65">
+      <p className="-mt-2 text-[12px] text-ink/85">
         How your studio appears across ReplyOra — client portals, invoices and reports.
       </p>
       <Field label="Business name"><input value={b.businessName} onChange={(e) => set("businessName", e.target.value)} className={inp} /></Field>
@@ -148,7 +150,7 @@ function WorkspaceTab({ billing }: { billing: WorkspaceBilling }) {
         <Field label="Business email"><input value={b.businessEmail} onChange={(e) => set("businessEmail", e.target.value)} className={inp} /></Field>
         <Field label="Business phone"><input value={b.businessPhone} onChange={(e) => set("businessPhone", e.target.value)} className={inp} /></Field>
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60">Address</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">Address</p>
       <Field label="Street"><input value={b.address.street} onChange={(e) => setAddr("street", e.target.value)} className={inp} /></Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="City"><input value={b.address.city} onChange={(e) => setAddr("city", e.target.value)} className={inp} /></Field>
@@ -210,7 +212,7 @@ function BillingTab({
         <div className="flex items-center justify-between">
           <div>
             <p className="font-display text-2xl capitalize text-oxblood">{currentPlan}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-ink/65">
+            <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-ink/85">
               {planStatus} · A${SOCIAL_PLAN_PRICE[currentPlan].monthly}/mo
             </p>
           </div>
@@ -218,7 +220,7 @@ function BillingTab({
             <button type="button" className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 hover:border-oxblood hover:text-oxblood">
               Manage billing
             </button>
-            <button type="button" className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:border-rose hover:text-rose">
+            <button type="button" className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:border-rose hover:text-rose">
               Cancel
             </button>
           </div>
@@ -232,7 +234,7 @@ function BillingTab({
               key={iv}
               type="button"
               onClick={() => setInterval(iv)}
-              className={`rounded-full px-4 py-1.5 ${interval === iv ? "bg-oxblood text-cream" : "text-ink/70"}`}
+              className={`rounded-full px-4 py-1.5 ${interval === iv ? "bg-oxblood text-cream" : "text-ink/85"}`}
             >
               {iv}
             </button>
@@ -244,7 +246,7 @@ function BillingTab({
               <p className="font-display text-xl capitalize text-oxblood">{plan}</p>
               <p className="mt-1 text-sm font-semibold text-ink">
                 A${SOCIAL_PLAN_PRICE[plan][interval]}
-                <span className="text-[11px] font-medium text-ink/60">/{interval === "monthly" ? "mo" : "yr"}</span>
+                <span className="text-[11px] font-medium text-ink/80">/{interval === "monthly" ? "mo" : "yr"}</span>
               </p>
               <button
                 type="button"
@@ -258,7 +260,7 @@ function BillingTab({
           ))}
         </div>
         {!stripeReady && (
-          <p className="mt-3 text-[11px] text-ink/60">
+          <p className="mt-3 text-[11px] text-ink/80">
             Add your Stripe keys + the four price IDs in Netlify to enable live switching.
           </p>
         )}
@@ -270,7 +272,7 @@ function BillingTab({
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-ink/10 p-5">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">{title}</p>
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">{title}</p>
       <div className="space-y-3">{children}</div>
     </div>
   );
@@ -279,7 +281,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">{label}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
   );
@@ -287,7 +289,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Placeholder({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-ink/20 px-5 py-10 text-center text-[12px] font-medium text-ink/60">
+    <div className="rounded-2xl border border-dashed border-ink/20 px-5 py-10 text-center text-[12px] font-medium text-ink/80">
       {text}
     </div>
   );

@@ -11,6 +11,7 @@ import {
   deleteKnowledgeAction,
   saveAssistantAction,
 } from "@/app/(social)/clients/[id]/chatbox/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 const TABS = ["Train", "Configure", "Install"] as const;
 type Tab = (typeof TABS)[number];
@@ -40,11 +41,12 @@ export function ChatboxWorkspace({
   return (
     <div>
       <div className="mb-2 flex items-center gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 06 )</span> Chatbox
-        </p>
+          <GuideTrigger pageKey="chatbox" clientId={clientId} />
+        </div>
       </div>
-      <p className="mb-6 max-w-xl text-[12px] font-medium text-ink/70">
+      <p className="mb-6 max-w-xl text-[12px] font-medium text-ink/85">
         The AI assistant that lives on {clientName}&apos;s <strong>website</strong> — it
         answers visitors and captures leads 24/7. This is the website chatbox, not
         Instagram DMs.
@@ -75,12 +77,12 @@ export function ChatboxWorkspace({
       )}
       {tab === "Install" && (
         <div className="mt-6 max-w-xl space-y-3">
-          <p className="text-[12px] font-medium text-ink/75">
+          <p className="text-[12px] font-medium text-ink/90">
             Paste this one line into {clientName}&apos;s website — it installs on any
             website (Wix, Squarespace, WordPress, custom).
           </p>
           <InstallSnippet snippet={snippet} />
-          <p className="text-[11px] text-ink/60">
+          <p className="text-[11px] text-ink/80">
             Public key <code className="rounded bg-ink/5 px-1 py-0.5">{assistant.publicKey}</code> — scoped, rate-limited chat only.
           </p>
         </div>
@@ -119,7 +121,7 @@ function TrainTab({
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
       <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
           Add knowledge
         </p>
         <div className="flex flex-wrap gap-2">
@@ -155,7 +157,7 @@ function TrainTab({
           />
         )}
         {type === "file" && (
-          <p className="rounded-lg border border-dashed border-ink/20 px-3 py-4 text-center text-[11px] text-ink/60">
+          <p className="rounded-lg border border-dashed border-ink/20 px-3 py-4 text-center text-[11px] text-ink/80">
             Choose a PDF or DOC — its text is extracted into the knowledge base.
           </p>
         )}
@@ -169,11 +171,11 @@ function TrainTab({
       </div>
 
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
           Knowledge base ({knowledge.length})
         </p>
         {knowledge.length === 0 ? (
-          <p className="mt-3 rounded-xl border border-dashed border-ink/20 px-4 py-8 text-center text-[12px] font-medium text-ink/60">
+          <p className="mt-3 rounded-xl border border-dashed border-ink/20 px-4 py-8 text-center text-[12px] font-medium text-ink/80">
             Nothing added yet.
           </p>
         ) : (
@@ -186,7 +188,7 @@ function TrainTab({
                     <Icon className="mt-0.5 h-4 w-4 shrink-0 text-oxblood" />
                     <div>
                       <p className="text-[12px] font-semibold text-ink">{k.title}</p>
-                      <p className="line-clamp-2 text-[11px] text-ink/65">{k.preview}</p>
+                      <p className="line-clamp-2 text-[11px] text-ink/85">{k.preview}</p>
                     </div>
                   </div>
                   <button
@@ -195,7 +197,7 @@ function TrainTab({
                       await deleteKnowledgeAction(clientId, k.id);
                       router.refresh();
                     }}
-                    className="text-ink/50 hover:text-rose"
+                    className="text-ink/70 hover:text-rose"
                     aria-label="Remove source"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -266,7 +268,7 @@ function ConfigureTab({
 
       {/* Live preview */}
       <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Live preview</p>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Live preview</p>
         <div className="overflow-hidden rounded-2xl border border-ink/10 shadow-sm">
           <div className="px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: cfg.brandColour }}>
             {cfg.name || "Assistant"}
@@ -295,7 +297,7 @@ const inp =
 function L({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">
         {label}
       </label>
       <div className="mt-1">{children}</div>

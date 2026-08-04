@@ -31,6 +31,8 @@ const DEFAULTS: WorkspaceBilling = {
   currency: "AUD",
   businessEmail: "",
   businessPhone: "",
+  plan: "personal",
+  planStatus: "trialing",
 };
 
 export function socialPriceId(plan: SocialPlan, interval: BillingInterval): string | null {
@@ -57,6 +59,8 @@ const MEM = new Map<string, WorkspaceBilling>();
 interface AddressJson extends Partial<Address> {
   email?: string;
   phone?: string;
+  plan?: SocialPlan;
+  planStatus?: string;
 }
 interface Row {
   business_name: string | null;
@@ -94,6 +98,8 @@ export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
     currency: r.currency ?? "AUD",
     businessEmail: addr.email ?? "",
     businessPhone: addr.phone ?? "",
+    plan: addr.plan ?? "personal",
+    planStatus: addr.planStatus ?? "trialing",
   };
 }
 
@@ -111,6 +117,8 @@ export async function saveWorkspaceBilling(
     ...next.address,
     email: next.businessEmail,
     phone: next.businessPhone,
+    plan: next.plan,
+    planStatus: next.planStatus,
   };
   await sql()`
     INSERT INTO workspace_billing
@@ -127,5 +135,31 @@ export async function saveWorkspaceBilling(
       tax_rate = EXCLUDED.tax_rate,
       terms = EXCLUDED.terms,
       currency = EXCLUDED.currency
+  `;
+}
+
+/**
+ * Session-less plan write for the Stripe webhook (no auth context). Merges the
+ * plan + status into the workspace_billing.address JSONB by workspace_id,
+ * preserving the business/branding fields.
+ */
+export async function setWorkspacePlan(
+  workspaceId: string,
+  plan: SocialPlan,
+  planStatus: string,
+): Promise<void> {
+  if (!hasDb()) {
+    const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
+    MEM.set(workspaceId, { ...cur, plan, planStatus });
+    return;
+  }
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), plan, planStatus };
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
   `;
 }

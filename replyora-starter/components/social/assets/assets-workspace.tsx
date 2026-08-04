@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, FolderPlus, Loader2, Trash2, UploadCloud } f
 
 import type { Asset } from "@/lib/social/assets";
 import { deleteAssetAction, recordAssetAction } from "@/app/(social)/clients/[id]/assets/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 export function AssetsWorkspace({
   clientId,
@@ -77,10 +78,11 @@ export function AssetsWorkspace({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 04 )</span> Assets
-        </p>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+          <GuideTrigger pageKey="assets" clientId={clientId} />
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
           {assets.length} {assets.length === 1 ? "file" : "files"}
         </span>
       </div>
@@ -88,7 +90,7 @@ export function AssetsWorkspace({
       <div className="grid gap-6 md:grid-cols-[180px_1fr]">
         {/* Folders */}
         <aside>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
             Folders
           </p>
           <div className="mt-3 space-y-2">
@@ -97,7 +99,7 @@ export function AssetsWorkspace({
             </div>
             <button
               type="button"
-              className="flex w-full items-center gap-2 rounded-lg border border-dashed border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/70 hover:border-oxblood hover:text-oxblood"
+              className="flex w-full items-center gap-2 rounded-lg border border-dashed border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/85 hover:border-oxblood hover:text-oxblood"
             >
               <FolderPlus className="h-3.5 w-3.5" /> New folder
             </button>
@@ -130,7 +132,7 @@ export function AssetsWorkspace({
             {busy ? (
               <Loader2 className="h-6 w-6 animate-spin text-oxblood" />
             ) : (
-              <UploadCloud className="h-6 w-6 text-ink/50" />
+              <UploadCloud className="h-6 w-6 text-ink/70" />
             )}
             <p className="text-[12px] font-semibold text-ink/80">
               Drop JPG, PNG, or MP4 · up to 200MB
@@ -144,7 +146,7 @@ export function AssetsWorkspace({
               Select
             </button>
             {!storageReady && (
-              <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-ink/55">
+              <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-ink/75">
                 Connect storage · add R2 keys in Netlify to enable uploads
               </p>
             )}
@@ -152,7 +154,7 @@ export function AssetsWorkspace({
           </div>
 
           {assets.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/60">
+            <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/80">
               No assets yet
             </p>
           ) : (
@@ -201,7 +203,7 @@ function Section({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/75"
+        className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/90"
       >
         {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         {title}
@@ -209,7 +211,7 @@ function Section({
       {open && (
         <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
           {assets.length === 0 ? (
-            <p className="col-span-full text-[11px] text-ink/55">Nothing here yet.</p>
+            <p className="col-span-full text-[11px] text-ink/75">Nothing here yet.</p>
           ) : (
             assets.map((a) => (
               <div key={a.id} className="group relative aspect-square overflow-hidden rounded-lg border border-ink/10 bg-ink/[0.03]">
@@ -225,7 +227,7 @@ function Section({
                     await deleteAssetAction(clientId, a.id);
                     onChange();
                   }}
-                  className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-ink/70 opacity-0 transition-opacity hover:text-rose group-hover:opacity-100"
+                  className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-ink/85 opacity-0 transition-opacity hover:text-rose group-hover:opacity-100"
                   aria-label="Delete asset"
                 >
                   <Trash2 className="h-3 w-3" />

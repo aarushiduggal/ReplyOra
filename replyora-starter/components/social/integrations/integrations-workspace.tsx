@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Instagram, Music2 } from "lucide-react";
 
 import { toggleIntegrationAction } from "@/app/(social)/clients/[id]/integrations/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 export function IntegrationsWorkspace({
   clientId,
@@ -28,11 +29,12 @@ export function IntegrationsWorkspace({
   return (
     <div>
       <div className="mb-2 flex items-center gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 10 )</span> Integrations
-        </p>
+          <GuideTrigger pageKey="integrations" clientId={clientId} />
+        </div>
       </div>
-      <p className="mb-6 text-[12px] font-medium text-ink/70">
+      <p className="mb-6 text-[12px] font-medium text-ink/85">
         Connect social accounts for <strong>{clientName}</strong> only. Published posts
         flow back onto the Grid and power Reports.
       </p>
@@ -55,7 +57,7 @@ export function IntegrationsWorkspace({
         />
       </div>
 
-      <p className="mt-6 text-[11px] text-ink/55">
+      <p className="mt-6 text-[11px] text-ink/75">
         More networks coming soon. OAuth token exchange activates once the Meta &amp;
         TikTok app credentials are configured.
       </p>
@@ -92,14 +94,14 @@ function Card({
         )}
       </div>
       {note && (
-        <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/55">{note}</p>
+        <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/75">{note}</p>
       )}
       <div className="mt-4">
         {connected ? (
           <button
             type="button"
             onClick={onDisconnect}
-            className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:border-rose hover:text-rose"
+            className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:border-rose hover:text-rose"
           >
             Disconnect
           </button>

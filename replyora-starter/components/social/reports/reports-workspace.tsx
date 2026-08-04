@@ -6,6 +6,7 @@ import { Instagram, Printer } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import { PLATFORM_LABEL } from "@/lib/social/types";
+import { GuideTrigger } from "@/components/social/guide";
 
 export function ReportsWorkspace({
   clientId,
@@ -76,11 +77,11 @@ export function ReportsWorkspace({
   if (!connected) {
     return (
       <div>
-        <Header title={reportTitle} />
+        <Header title={reportTitle} clientId={clientId} />
         <div className="mt-8 rounded-2xl border border-dashed border-ink/25 px-8 py-16 text-center">
-          <Instagram className="mx-auto h-8 w-8 text-ink/40" />
+          <Instagram className="mx-auto h-8 w-8 text-ink/60" />
           <h3 className="mt-3 font-display text-2xl text-oxblood">Instagram not connected</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-ink/75">
+          <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-ink/90">
             Connect {clientName}&apos;s Instagram to pull live performance data — reach,
             engagement and follower growth.
           </p>
@@ -97,16 +98,16 @@ export function ReportsWorkspace({
 
   return (
     <div>
-      <Header title={reportTitle} />
+      <Header title={reportTitle} clientId={clientId} />
 
       {/* date range */}
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <div>
-          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">From</label>
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">From</label>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block rounded-lg border border-oxblood/20 px-3 py-1.5 text-sm outline-none focus:border-oxblood" />
         </div>
         <div>
-          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">To</label>
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">To</label>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-lg border border-oxblood/20 px-3 py-1.5 text-sm outline-none focus:border-oxblood" />
         </div>
         <button
@@ -124,7 +125,7 @@ export function ReportsWorkspace({
           <Printer className="h-3.5 w-3.5" /> Save as PDF
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-ink/55">Data available for the last 365 days.</p>
+      <p className="mt-1.5 text-[11px] text-ink/75">Data available for the last 365 days.</p>
 
       {/* stat cards */}
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -135,16 +136,16 @@ export function ReportsWorkspace({
 
       {/* pillar breakdown */}
       <div className="mt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Pillar breakdown</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Pillar breakdown</p>
         {pillars.length === 0 ? (
-          <p className="mt-3 text-[12px] text-ink/60">No posts in this period.</p>
+          <p className="mt-3 text-[12px] text-ink/80">No posts in this period.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {pillars.map(([name, n]) => (
               <div key={name} className="flex items-center gap-3">
                 <span className="w-32 shrink-0 text-[12px] font-medium text-ink/80">{name}</span>
                 <span className="h-3 rounded-full bg-oxblood" style={{ width: `${(n / maxPillar) * 100}%`, minWidth: "8px" }} />
-                <span className="text-[11px] text-ink/60">{n}</span>
+                <span className="text-[11px] text-ink/80">{n}</span>
               </div>
             ))}
           </div>
@@ -153,23 +154,23 @@ export function ReportsWorkspace({
 
       {/* top posts */}
       <div className="mt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Top posts</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Top posts</p>
         <div className="mt-3 space-y-2">
           {inRange.slice(0, 5).map((p) => (
             <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 px-4 py-2.5">
               <span className="text-[13px] text-ink">{p.caption ? p.caption.slice(0, 60) : "(untitled)"}</span>
-              <span className="text-[11px] uppercase tracking-[0.12em] text-ink/55">
+              <span className="text-[11px] uppercase tracking-[0.12em] text-ink/75">
                 {p.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[p.platform]}
               </span>
             </div>
           ))}
-          {inRange.length === 0 && <p className="text-[12px] text-ink/60">No posts to rank yet.</p>}
+          {inRange.length === 0 && <p className="text-[12px] text-ink/80">No posts to rank yet.</p>}
         </div>
       </div>
 
       {/* editable exec summary */}
       <div className="mt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Executive summary</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Executive summary</p>
         <textarea
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
@@ -178,7 +179,7 @@ export function ReportsWorkspace({
         />
       </div>
 
-      <p className="mt-6 text-[11px] text-ink/55">
+      <p className="mt-6 text-[11px] text-ink/75">
         Reach, impressions and engagement populate here once Instagram is connected with
         analytics access.
       </p>
@@ -186,12 +187,13 @@ export function ReportsWorkspace({
   );
 }
 
-function Header({ title }: { title: string }) {
+function Header({ title, clientId }: { title: string; clientId: string }) {
   return (
     <div>
-      <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+      <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
         <span className="text-oxblood">( Reports )</span> Instagram
-      </p>
+        <GuideTrigger pageKey="reports" clientId={clientId} />
+      </div>
       <h2 className="mt-3 font-display text-3xl text-oxblood">{title}</h2>
     </div>
   );
@@ -201,8 +203,8 @@ function Stat({ label, value, sub, up }: { label: string; value: string; sub: st
   return (
     <div className="rounded-xl border border-ink/10 px-4 py-3">
       <p className="font-display text-3xl text-oxblood">{value}</p>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">{label}</p>
-      <p className={`mt-0.5 text-[11px] font-medium ${up === undefined ? "text-ink/55" : up ? "text-emerald-700" : "text-rose-700"}`}>{sub}</p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">{label}</p>
+      <p className={`mt-0.5 text-[11px] font-medium ${up === undefined ? "text-ink/75" : up ? "text-emerald-700" : "text-rose-700"}`}>{sub}</p>
     </div>
   );
 }

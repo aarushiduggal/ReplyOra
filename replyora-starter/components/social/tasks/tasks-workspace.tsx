@@ -10,6 +10,7 @@ import {
   deleteTaskAction,
   moveTaskAction,
 } from "@/app/(social)/tasks/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 export function TasksWorkspace({ tasks }: { tasks: AgencyTask[] }) {
   const router = useRouter();
@@ -34,23 +35,24 @@ export function TasksWorkspace({ tasks }: { tasks: AgencyTask[] }) {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 02 )</span> To-Do
-        </p>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+          <GuideTrigger pageKey="tasks" />
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
           {todo.length} open <span className="text-ink/30">|</span> {inProgress.length} in progress{" "}
           <span className="text-ink/30">|</span> {done.length} completed
         </span>
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
           Sort by: Due date
         </span>
       </div>
 
       {tasks.length === 0 && (
-        <p className="mb-6 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/60">
+        <p className="mb-6 rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/80">
           Nothing to do — add your first task below.
         </p>
       )}
@@ -81,7 +83,7 @@ export function TasksWorkspace({ tasks }: { tasks: AgencyTask[] }) {
           onClick={() => setCompletedOpen((o) => !o)}
           onDragOver={(e) => e.preventDefault()}
           onDrop={() => drop("done")}
-          className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70"
+          className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85"
         >
           {completedOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           Completed ({done.length})
@@ -89,7 +91,7 @@ export function TasksWorkspace({ tasks }: { tasks: AgencyTask[] }) {
         {completedOpen && (
           <div className="mt-3 space-y-2">
             {done.length === 0 ? (
-              <p className="text-[11px] text-ink/55">Nothing completed yet.</p>
+              <p className="text-[11px] text-ink/75">Nothing completed yet.</p>
             ) : (
               done.map((t) => (
                 <TaskCard key={t.id} task={t} onDragStart={setDragId} onRefresh={() => router.refresh()} muted />
@@ -145,7 +147,7 @@ function Column({
       onDrop={onDropHere}
       className="rounded-2xl border border-ink/10 bg-ink/[0.01] p-3"
     >
-      <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+      <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
         {title} ({tasks.length})
       </p>
       <div className="space-y-2">
@@ -172,14 +174,14 @@ function Column({
           />
           <div className="flex gap-2">
             <button type="button" onClick={add} className="rounded-full bg-oxblood px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-cream">Add</button>
-            <button type="button" onClick={() => setAdding(false)} className="rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/60">Cancel</button>
+            <button type="button" onClick={() => setAdding(false)} className="rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/80">Cancel</button>
           </div>
         </div>
       ) : (
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/60 hover:text-oxblood"
+          className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/80 hover:text-oxblood"
         >
           <Plus className="h-3.5 w-3.5" /> Add task
         </button>
@@ -209,7 +211,7 @@ function TaskCard({
       <div>
         <p className={`text-[13px] font-medium text-ink ${muted ? "line-through" : ""}`}>{task.title}</p>
         {task.dueAt && (
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/55">
+          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/75">
             Due {task.dueAt.slice(0, 10)}
           </p>
         )}

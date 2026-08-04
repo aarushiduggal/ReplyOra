@@ -7,22 +7,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.com";
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPaths = [
     "",
-    "/compare",
-    "/roi",
-    "/faq",
-    "/story",
     "/demo",
     "/blog",
-    "/partners",
     "/privacy",
     "/terms",
     "/security",
     "/login",
     "/signup",
-    "/for/physio",
-    "/for/salons",
-    "/for/real-estate",
-    "/for/ndis",
   ];
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({

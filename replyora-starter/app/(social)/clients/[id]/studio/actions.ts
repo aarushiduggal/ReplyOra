@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 
 import { createClientPost } from "@/lib/social/posts";
-import { generatePosts, type GeneratedPost } from "@/lib/social/generate";
+import { generatePostsSmart, type GeneratedPost } from "@/lib/social/generate";
 import type { Platform } from "@/lib/social/types";
 
-/** Generate caption variations for a batch (template generator — no API cost). */
+/**
+ * Generate caption variations for a batch. Uses Gemini (free tier) when
+ * GEMINI_API_KEY is set, else the local template generator — no cost either way.
+ */
 export async function generateDraftsAction(input: {
   businessName: string;
   industry: string;
@@ -15,7 +18,7 @@ export async function generateDraftsAction(input: {
   topic: string;
   count: number;
 }): Promise<GeneratedPost[]> {
-  return generatePosts(input);
+  return generatePostsSmart(input);
 }
 
 /** Save selected drafts to the client — they appear on Grid + Calendar. */

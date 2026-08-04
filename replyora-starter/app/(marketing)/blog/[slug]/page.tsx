@@ -23,7 +23,7 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
-    authors: [{ name: FOUNDER.name, url: `${SITE_URL}/story` }],
+    authors: [{ name: FOUNDER.name, url: SITE_URL }],
     openGraph: {
       type: "article",
       title: post.title,
@@ -54,7 +54,7 @@ export default async function BlogPostPage({
     author: {
       "@type": "Person",
       name: FOUNDER.name,
-      url: `${SITE_URL}/story`,
+      url: SITE_URL,
       sameAs: [IG_URL],
     },
     publisher: {

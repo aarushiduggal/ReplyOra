@@ -11,6 +11,7 @@ import {
   generateDraftsAction,
   saveDraftsAction,
 } from "@/app/(social)/clients/[id]/studio/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 interface Draft extends GeneratedPost {
   id: string;
@@ -87,11 +88,12 @@ export function StudioWorkspace({
   return (
     <div>
       <div className="mb-2 flex items-center gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 04 )</span> Studio
-        </p>
+          <GuideTrigger pageKey="studio" clientId={clientId} />
+        </div>
       </div>
-      <p className="mb-6 text-[12px] font-medium text-ink/70">
+      <p className="mb-6 text-[12px] font-medium text-ink/85">
         Batch-create a set of posts for {clientName} — pick assets, generate captions,
         save drafts. They land on the Grid and Calendar.
       </p>
@@ -131,9 +133,9 @@ export function StudioWorkspace({
 
           {/* asset picker */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Library ({assets.length})</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Library ({assets.length})</p>
             {assets.length === 0 ? (
-              <p className="mt-2 text-[11px] text-ink/55">No assets yet — upload some on the Assets tab.</p>
+              <p className="mt-2 text-[11px] text-ink/75">No assets yet — upload some on the Assets tab.</p>
             ) : (
               <div className="mt-2 grid grid-cols-4 gap-1.5">
                 {assets.slice(0, 12).map((a) => {
@@ -164,14 +166,14 @@ export function StudioWorkspace({
         <div>
           {drafts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-ink/20 px-6 py-16 text-center">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/60">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/80">
                 Generate a batch to see draft captions here
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
                   {drafts.filter((d) => d.selected).length} of {drafts.length} selected
                 </p>
                 <button
@@ -194,7 +196,7 @@ export function StudioWorkspace({
                   <div>
                     <p className="whitespace-pre-line text-sm text-ink">{d.caption}</p>
                     <p className="mt-1 text-[11px] text-oxblood">{d.hashtags.join(" ")}</p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/50">
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/70">
                       {PLATFORM_LABEL[d.platform]} · {d.pillar}
                     </p>
                   </div>
@@ -214,7 +216,7 @@ const inp =
 function L({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">{label}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   deleteCalendarPostAction,
   sendForApprovalAction,
 } from "@/app/(social)/clients/[id]/calendar/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -113,10 +114,11 @@ export function CalendarWorkspace({
     <div>
       {/* header row */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 03 )</span> Calendar
-        </p>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+          <GuideTrigger pageKey="calendar" clientId={clientId} />
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
           Tools
         </span>
       </div>
@@ -142,13 +144,13 @@ export function CalendarWorkspace({
       {/* month nav + share */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={prevMonth} className="text-ink/70 hover:text-oxblood" aria-label="Previous month">
+          <button type="button" onClick={prevMonth} className="text-ink/85 hover:text-oxblood" aria-label="Previous month">
             <ChevronLeft className="h-5 w-5" />
           </button>
           <span className="font-display text-2xl text-oxblood">
             {MONTHS[month]} {year}
           </span>
-          <button type="button" onClick={nextMonth} className="text-ink/70 hover:text-oxblood" aria-label="Next month">
+          <button type="button" onClick={nextMonth} className="text-ink/85 hover:text-oxblood" aria-label="Next month">
             <ChevronRight className="h-5 w-5" />
           </button>
           <button
@@ -160,7 +162,7 @@ export function CalendarWorkspace({
           </button>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
             Planner items · {monthPosts.length}
           </span>
           <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
@@ -175,7 +177,7 @@ export function CalendarWorkspace({
           </label>
         </div>
       </div>
-      <p className="mt-2 text-[11px] text-ink/60">
+      <p className="mt-2 text-[11px] text-ink/80">
         {shareMonth
           ? `Shared with ${clientName} — concepts and planned posts appear in their portal automatically.`
           : `Hidden from ${clientName} — add concepts, planned posts, or marketing plans; toggle Share month to reveal them.`}
@@ -184,7 +186,7 @@ export function CalendarWorkspace({
       {/* MONTH */}
       {tab === "Month" && (
         <div className="mt-6 overflow-hidden rounded-2xl border border-ink/10">
-          <div className="grid grid-cols-7 border-b border-ink/10 bg-ink/[0.02] text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+          <div className="grid grid-cols-7 border-b border-ink/10 bg-ink/[0.02] text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
             {WEEKDAYS.map((w) => (
               <div key={w} className="px-2 py-2 text-center">{w}</div>
             ))}
@@ -205,7 +207,7 @@ export function CalendarWorkspace({
                 >
                   {d && (
                     <>
-                      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${isToday ? "bg-oxblood text-cream" : "text-ink/70"}`}>
+                      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${isToday ? "bg-oxblood text-cream" : "text-ink/85"}`}>
                         {d}
                       </span>
                       <span className="mt-1 flex flex-col gap-1">
@@ -218,7 +220,7 @@ export function CalendarWorkspace({
                           </span>
                         ))}
                         {dayPosts.length > 3 && (
-                          <span className="text-[9px] text-ink/60">
+                          <span className="text-[9px] text-ink/80">
                             +{dayPosts.length - 3} more
                           </span>
                         )}
@@ -244,7 +246,7 @@ export function CalendarWorkspace({
                   <p className="text-sm font-semibold text-ink">
                     {p.caption ? p.caption.slice(0, 60) : "(untitled)"}
                   </p>
-                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/65">
+                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
                     {p.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[p.platform]}
                     {p.pillar ? ` · ${p.pillar}` : ""}
                   </p>
@@ -264,7 +266,7 @@ export function CalendarWorkspace({
           ) : (
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-ink/15 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+                <tr className="border-b border-ink/15 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                   <th className="py-2 pr-3">Date</th>
                   <th className="py-2 pr-3">Platform</th>
                   <th className="py-2 pr-3">Pillar</th>
@@ -300,7 +302,7 @@ export function CalendarWorkspace({
                   <p className="text-sm font-semibold text-ink">
                     {p.caption ? p.caption.slice(0, 60) : "(untitled)"}
                   </p>
-                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/65">
+                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
                     {p.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[p.platform]}
                   </p>
                 </div>
@@ -325,7 +327,7 @@ export function CalendarWorkspace({
 
 function Empty({ label }: { label: string }) {
   return (
-    <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/60">
+    <p className="rounded-xl border border-dashed border-ink/20 px-4 py-10 text-center text-[12px] font-medium text-ink/80">
       {label}
     </p>
   );
@@ -334,7 +336,7 @@ function Empty({ label }: { label: string }) {
 function ApprovalBadge({ status }: { status?: ApprovalStatus }) {
   if (!status) {
     return (
-      <span className="rounded-full bg-ink/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/60">
+      <span className="rounded-full bg-ink/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/80">
         Draft
       </span>
     );
@@ -362,9 +364,9 @@ function SpreadsheetRow({
   const [caption, setCaption] = useState(post.caption);
   return (
     <tr className="border-b border-ink/10 align-top">
-      <td className="py-2 pr-3 text-[12px] text-ink/75">{post.scheduledFor?.slice(0, 10)}</td>
-      <td className="py-2 pr-3 text-[12px] text-ink/75">{PLATFORM_LABEL[post.platform]}</td>
-      <td className="py-2 pr-3 text-[12px] text-ink/75">{post.pillar || "—"}</td>
+      <td className="py-2 pr-3 text-[12px] text-ink/90">{post.scheduledFor?.slice(0, 10)}</td>
+      <td className="py-2 pr-3 text-[12px] text-ink/90">{PLATFORM_LABEL[post.platform]}</td>
+      <td className="py-2 pr-3 text-[12px] text-ink/90">{post.pillar || "—"}</td>
       <td className="py-2 pr-3">
         <input
           value={caption}
@@ -426,13 +428,13 @@ function CreatePostModal({
       <div className="w-full max-w-md rounded-2xl border border-oxblood/15 bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-xl text-oxblood">New post · {date}</h3>
-          <button onClick={onClose} className="text-ink/60 hover:text-oxblood" aria-label="Close">
+          <button onClick={onClose} className="text-ink/80 hover:text-oxblood" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Caption</label>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Caption</label>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -443,7 +445,7 @@ function CreatePostModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Pillar</label>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Pillar</label>
               <select value={pillar} onChange={(e) => setPillar(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
                 {PILLARS.map((p) => (
                   <option key={p} value={p}>{p}</option>
@@ -451,7 +453,7 @@ function CreatePostModal({
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Platform</label>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Platform</label>
               <select value={platform} onChange={(e) => setPlatform(e.target.value as Platform)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
                 {PLATFORMS.map((p) => (
                   <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>
@@ -460,11 +462,11 @@ function CreatePostModal({
             </div>
           </div>
           <div>
-            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Time</label>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Time</label>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood">
+            <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:text-oxblood">
               Cancel
             </button>
             <button type="button" onClick={save} className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90">

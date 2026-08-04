@@ -28,11 +28,12 @@ export default function AuthLayout({
         </div>
         <blockquote className="relative max-w-md">
           <p className="font-display text-3xl leading-snug">
-            “It captured eleven leads in our first weekend — bookings we&apos;d
-            have lost to voicemail.”
+            “Every client&apos;s Instagram and TikTok now lives in one place —
+            we plan, get approvals and send the monthly report without the
+            spreadsheet chaos.”
           </p>
           <footer className="mt-6 text-sm text-cream/80">
-            Amara Nguyen · Coastal Glow Skin Clinic, Manly
+            Amara Nguyen · Founder, Lumen Social
           </footer>
         </blockquote>
         <div className="relative text-sm text-cream/70">

@@ -6,7 +6,7 @@ import { listClients } from "@/lib/social/clients";
 import { PageShell } from "@/components/social/page-shell";
 import { SectionHeader } from "@/components/social/section-header";
 import { AddClient } from "@/components/social/add-client";
-import { WelcomeModal } from "@/components/social/welcome-modal";
+import { GuideTrigger } from "@/components/social/guide";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +16,15 @@ export default async function ClientsPage() {
 
   return (
     <PageShell>
-      <WelcomeModal />
-
       {/* Header row: "( 01 ) CLIENTS"  ·  N active · Name · + ADD CLIENT */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <SectionHeader num="01" label="Clients" />
+        <span className="flex items-center gap-2">
+          <SectionHeader num="01" label="Clients" />
+          <GuideTrigger pageKey="clients" />
+        </span>
         <div className="flex items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span>{count} active</span>
-          <span className="text-ink/40">·</span>
+          <span className="text-ink/60">·</span>
           <span className="text-ink">{user.fullName}</span>
           <AddClient />
         </div>
@@ -62,12 +63,12 @@ export default async function ClientsPage() {
                     <p className="font-display text-2xl text-ink transition-colors group-hover:text-oxblood">
                       {c.name}
                     </p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/70">
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
                       {pillars}
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-ink/40 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
+                <ArrowRight className="h-4 w-4 text-ink/60 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
               </Link>
             );
           })}

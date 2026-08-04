@@ -1,6 +1,7 @@
 import { ClientSubNav } from "@/components/social/client-subnav";
 import { PageShell } from "@/components/social/page-shell";
 import { clientName } from "@/components/social/portal-nav";
+import { SetClientName } from "@/components/social/client-name-context";
 import { getClient } from "@/lib/social/clients";
 
 /** Per-client shell: breadcrumb + client sub-nav, then the section content. */
@@ -17,6 +18,7 @@ export default async function ClientLayout({
   const name = client?.name ?? clientName(id);
   return (
     <>
+      <SetClientName name={name} />
       <ClientSubNav clientId={id} clientName={name} />
       <PageShell>{children}</PageShell>
     </>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { SectionHeader } from "@/components/social/section-header";
+import { GuideTrigger } from "@/components/social/guide";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
@@ -52,9 +53,12 @@ export default async function ClientOverviewPage({
 
   return (
     <div>
-      <SectionHeader num="01" label="Overview" />
+      <span className="flex items-center gap-2">
+        <SectionHeader num="01" label="Overview" />
+        <GuideTrigger pageKey="overview" clientId={id} />
+      </span>
       <h2 className="mt-6 font-display text-3xl text-oxblood">{name}</h2>
-      <p className="mt-2 max-w-md text-sm font-medium text-ink/75">
+      <p className="mt-2 max-w-md text-sm font-medium text-ink/90">
         The account cockpit — status at a glance, and a jump to any part of the work.
       </p>
 
@@ -66,7 +70,7 @@ export default async function ClientOverviewPage({
             className="group rounded-xl border border-ink/10 px-4 py-3 transition-colors hover:border-oxblood/30"
           >
             <p className="font-display text-3xl text-oxblood">{s.n}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
               {s.label}
             </p>
           </Link>
@@ -74,7 +78,7 @@ export default async function ClientOverviewPage({
       </div>
 
       <div className="mt-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
           Quick actions
         </p>
         <div className="mt-3 border-t border-ink/10">

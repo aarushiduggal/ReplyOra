@@ -62,8 +62,16 @@ export async function getCurrentWorkspaceId(): Promise<string> {
   if (USE_AUTHJS) {
     const { auth } = await import("@/auth");
     const session = await auth();
-    if (!session?.user?.workspaceId) redirect("/login");
-    return session.user.workspaceId;
+    if (!session?.user?.id) redirect("/login");
+    if (session.user.workspaceId) return session.user.workspaceId;
+    // First request right after sign-up (or a transient Neon error in the jwt
+    // callback) can leave the token without a workspace id. Resolve/create it
+    // here instead of bouncing to /login — this is what makes sign-up land.
+    const { getOrCreateWorkspace } = await import("@/lib/auth/users");
+    return getOrCreateWorkspace(
+      session.user.id,
+      session.user.name ?? session.user.email ?? "My",
+    );
   }
 
   if (!USE_SUPABASE) return DEMO_WORKSPACE.id;

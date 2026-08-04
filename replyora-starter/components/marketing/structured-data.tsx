@@ -33,7 +33,7 @@ export function StructuredData() {
     jobTitle: FOUNDER.jobTitle,
     worksFor: { "@id": `${SITE_URL}/#organization` },
     image: `${SITE_URL}${FOUNDER.photo}`,
-    url: `${SITE_URL}/story`,
+    url: SITE_URL,
     sameAs: [IG_URL],
   };
 

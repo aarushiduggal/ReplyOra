@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import type { GridTile, ProfilePreview } from "@/lib/social/grid";
+import { GuideTrigger } from "@/components/social/guide";
 import {
   reorderTilesAction,
   saveProfilePreviewAction,
@@ -124,11 +125,12 @@ export function GridWorkspace({
     <div>
       {/* sub-title row */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 02 )</span> Grid
-          <span className="text-ink/40">·</span>
-          <span className="text-ink/60">Studio · Instagram</span>
-        </p>
+          <span className="text-ink/60">·</span>
+          <span className="text-ink/80">Studio · Instagram</span>
+          <GuideTrigger pageKey="grid" clientId={clientId} />
+        </div>
         <div className="flex items-center gap-4">
           <Link
             href={`${base}/studio`}
@@ -149,22 +151,22 @@ export function GridWorkspace({
         {/* Left — platform + profile controls */}
         <aside className="space-y-6">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Platform
             </p>
             <p className="mt-1 flex items-center gap-2 font-semibold text-ink">
               <Instagram className="h-4 w-4 text-oxblood" /> Instagram
             </p>
-            <p className="mt-1 text-xs font-medium text-ink/70">
+            <p className="mt-1 text-xs font-medium text-ink/85">
               {tiles.length} posts · 0 highlights
             </p>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Profile preview
             </p>
-            <p className="mt-1 text-xs font-medium text-ink/70">
+            <p className="mt-1 text-xs font-medium text-ink/85">
               Username, bio, followers &amp; photo shown on the mock.
             </p>
             <button
@@ -177,7 +179,7 @@ export function GridWorkspace({
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Account
             </p>
             <button
@@ -186,7 +188,7 @@ export function GridWorkspace({
             >
               <Instagram className="h-3.5 w-3.5" /> Connect Instagram
             </button>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/55">
+            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/75">
               Paid feature
             </p>
           </div>
@@ -210,7 +212,7 @@ export function GridWorkspace({
         {/* Centre — iPhone mock */}
         <div>
           <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2rem] border border-oxblood/15 bg-white shadow-sm">
-            <div className="flex items-center justify-between px-4 pt-3 text-[10px] font-medium text-ink/70">
+            <div className="flex items-center justify-between px-4 pt-3 text-[10px] font-medium text-ink/85">
               <span>9:41</span>
               <span>5G</span>
             </div>
@@ -218,7 +220,7 @@ export function GridWorkspace({
               <span className="text-[13px] font-semibold text-ink">
                 {profile.username || "instagram"}
               </span>
-              <span className="flex items-center gap-3 text-ink/70">
+              <span className="flex items-center gap-3 text-ink/85">
                 <Plus className="h-4 w-4" />
                 <Menu className="h-4 w-4" />
               </span>
@@ -238,7 +240,7 @@ export function GridWorkspace({
                 {profile.displayName}
               </p>
               {profile.bio && (
-                <p className="whitespace-pre-line text-[11px] text-ink/70">
+                <p className="whitespace-pre-line text-[11px] text-ink/85">
                   {profile.bio}
                 </p>
               )}
@@ -248,7 +250,7 @@ export function GridWorkspace({
                 </p>
               )}
             </div>
-            <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/70">
+            <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/85">
               <Grid3x3 className="h-4 w-4 text-oxblood" />
               <Play className="h-4 w-4" />
               <UserSquare className="h-4 w-4" />
@@ -257,8 +259,8 @@ export function GridWorkspace({
 
             {tiles.length === 0 ? (
               <div className="flex flex-col items-center gap-2 border-t border-oxblood/10 px-4 py-12 text-center">
-                <ImageIcon className="h-6 w-6 text-ink/45" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+                <ImageIcon className="h-6 w-6 text-ink/65" />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                   Use Add Post above to get started
                 </p>
               </div>
@@ -305,7 +307,7 @@ export function GridWorkspace({
           </button>
 
           <div>
-            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
               <span>0 assets</span>
               <span className="flex gap-3">
                 <span>Filter</span>
@@ -313,10 +315,10 @@ export function GridWorkspace({
               </span>
             </div>
             <div className="mt-2 flex flex-col items-center gap-1 rounded-xl border border-dashed border-oxblood/20 px-4 py-8 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                 No unplaced assets here
               </p>
-              <p className="text-[11px] text-ink/60">Drop files here</p>
+              <p className="text-[11px] text-ink/80">Drop files here</p>
             </div>
           </div>
 
@@ -342,7 +344,7 @@ export function GridWorkspace({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                   Drafts ({drafts.length})
                 </p>
                 <Link
@@ -355,7 +357,7 @@ export function GridWorkspace({
               <Column tiles={drafts} empty="No drafts yet" base={base} />
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                 Scheduled ({scheduled.length})
               </p>
               <Column tiles={scheduled} empty="Nothing scheduled" base={base} />
@@ -375,7 +377,7 @@ export function GridWorkspace({
               <Field label="Following" value={profile.following} onChange={(v) => setProfile((p) => ({ ...p, following: v }))} placeholder="850" />
             </div>
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Bio</label>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Bio</label>
               <textarea
                 value={profile.bio}
                 onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
@@ -386,7 +388,7 @@ export function GridWorkspace({
             </div>
             <Field label="Website link" value={profile.website} onChange={(v) => setProfile((p) => ({ ...p, website: v }))} placeholder="yourbrand.com" />
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setEditOpen(false)} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood">
+              <button type="button" onClick={() => setEditOpen(false)} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:text-oxblood">
                 Cancel
               </button>
               <button type="button" onClick={saveProfile} className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90">
@@ -431,7 +433,7 @@ function Toggle({
           />
         </span>
       </button>
-      <p className="mt-1 text-[10px] text-ink/60">{help}</p>
+      <p className="mt-1 text-[10px] text-ink/80">{help}</p>
     </div>
   );
 }
@@ -456,13 +458,13 @@ function PhoneUploadModal({
         <div className="flex h-40 w-40 items-center justify-center rounded-xl border border-oxblood/15 bg-oat/20">
           <QrCode className="h-24 w-24 text-oxblood/70" />
         </div>
-        <p className="text-xs font-medium text-ink/75">
+        <p className="text-xs font-medium text-ink/90">
           Files go to <span className="font-semibold text-ink">{clientName}</span> only.
         </p>
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
           Expires {mm}:{ss}
         </p>
-        <p className="text-[10px] uppercase tracking-[0.14em] text-ink/55">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-ink/75">
           Connect storage to enable · coming soon
         </p>
       </div>
@@ -474,7 +476,7 @@ function Stat({ n, label }: { n: string; label: string }) {
   return (
     <div>
       <p className="font-semibold text-ink">{n}</p>
-      <p className="text-[10px] text-ink/70">{label}</p>
+      <p className="text-[10px] text-ink/85">{label}</p>
     </div>
   );
 }
@@ -492,7 +494,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">
+      <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">
         {label}
       </label>
       <input
@@ -525,7 +527,7 @@ function Modal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-xl text-oxblood">{title}</h3>
-          <button onClick={onClose} className="text-ink/60 hover:text-oxblood" aria-label="Close">
+          <button onClick={onClose} className="text-ink/80 hover:text-oxblood" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -546,7 +548,7 @@ function Column({
 }) {
   if (tiles.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] font-medium text-ink/60">
+      <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] font-medium text-ink/80">
         {empty}
       </p>
     );
@@ -560,7 +562,7 @@ function Column({
           className="flex items-center gap-2 rounded-xl border border-oxblood/10 bg-white p-2 hover:border-oxblood/30"
         >
           <span className="h-9 w-9 shrink-0 rounded-lg" style={{ backgroundColor: tintFor(t.id) }} />
-          <span className="line-clamp-2 text-[11px] font-medium text-ink/75">
+          <span className="line-clamp-2 text-[11px] font-medium text-ink/90">
             {firstWords(t.caption, 8)}
           </span>
         </Link>

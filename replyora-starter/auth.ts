@@ -81,14 +81,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    // Stamp the user id + their workspace id onto the token (once, at sign-in).
+    // Stamp the user id + workspace id onto the token. Self-healing: if a token
+    // ever lacks wsid (transient Neon error at sign-in, or an older token), we
+    // resolve it on the next request instead of bouncing the user to /login.
+    // Never throw here — a thrown jwt callback logs the user out.
     async jwt({ token, user }) {
-      if (user?.id) {
-        token.uid = user.id;
-        token.wsid = await getOrCreateWorkspace(
-          user.id,
-          user.name || user.email || "My",
-        );
+      if (user?.id) token.uid = user.id;
+      if (token.uid && !token.wsid) {
+        try {
+          token.wsid = await getOrCreateWorkspace(
+            token.uid as string,
+            (token.name as string) || (token.email as string) || "My",
+          );
+        } catch {
+          // leave wsid unset; we'll retry on the next request
+        }
       }
       return token;
     },

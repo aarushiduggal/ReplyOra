@@ -8,6 +8,7 @@ import type { ClientPost } from "@/lib/social/posts";
 import type { ApprovalStatus } from "@/lib/social/approvals";
 import { PLATFORM_LABEL } from "@/lib/social/types";
 import { sendForReviewAction } from "@/app/(social)/clients/[id]/approvals/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 export function ApprovalsWorkspace({
   clientId,
@@ -50,9 +51,10 @@ export function ApprovalsWorkspace({
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 07 )</span> Approvals
-        </p>
+          <GuideTrigger pageKey="approvals" clientId={clientId} />
+        </div>
       </div>
 
       {/* Client portal link */}
@@ -60,7 +62,7 @@ export function ApprovalsWorkspace({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
           Client portal link
         </p>
-        <p className="mt-1 text-[12px] font-medium text-ink/75">
+        <p className="mt-1 text-[12px] font-medium text-ink/90">
           Share this read-only link with {clientName} — they review the planned grid
           and Approve or Request changes. No login needed.
         </p>
@@ -99,7 +101,7 @@ function Stat({ label, n, tone }: { label: string; n: number; tone: string }) {
   return (
     <div className="rounded-xl border border-ink/10 px-4 py-3">
       <p className={`font-display text-3xl ${tone}`}>{n}</p>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">{label}</p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">{label}</p>
     </div>
   );
 }
@@ -122,7 +124,7 @@ function Group({
   if (posts.length === 0) return null;
   return (
     <div className="mt-8">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">{title}</p>
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">{title}</p>
       <div className="space-y-2">
         {posts.map((p) => (
           <div key={p.id} className="flex items-start justify-between gap-3 rounded-xl border border-ink/10 px-4 py-3">
@@ -130,7 +132,7 @@ function Group({
               <p className="text-sm font-semibold text-ink">
                 {p.caption ? p.caption.slice(0, 70) : "(untitled)"}
               </p>
-              <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/65">
+              <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
                 {p.scheduledFor?.slice(0, 10) ?? "Unscheduled"} · {PLATFORM_LABEL[p.platform]}
               </p>
               {approvals[p.id] === "changes" && notes[p.id] && (

@@ -32,9 +32,9 @@ export function ClientSubNav({
           <Link href="/clients" className="transition-colors hover:text-oxblood">
             ← Clients
           </Link>
-          <span className="text-ink/50">/</span>
+          <span className="text-ink/70">/</span>
           <span className="text-ink">{clientName}</span>
-          <span className="text-ink/50">/</span>
+          <span className="text-ink/70">/</span>
           <span className="text-oxblood">{current?.label}</span>
         </div>
 

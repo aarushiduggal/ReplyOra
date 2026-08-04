@@ -6,14 +6,18 @@ import { Plus, Trash2, X } from "lucide-react";
 
 import type { Invoice, LineItem } from "@/lib/social/invoice-types";
 import { subtotalCents, totalWithTax } from "@/lib/social/invoice-types";
-import { createInvoiceAction } from "@/app/(social)/clients/[id]/invoices/actions";
+import {
+  createInvoiceAction,
+  updateInvoiceStatusAction,
+} from "@/app/(social)/clients/[id]/invoices/actions";
+import { GuideTrigger } from "@/components/social/guide";
 
 function money(cents: number, currency: string): string {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(cents / 100);
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-ink/10 text-ink/70",
+  draft: "bg-ink/10 text-ink/85",
   sent: "bg-sky-100 text-sky-800",
   paid: "bg-emerald-100 text-emerald-800",
   overdue: "bg-rose-100 text-rose-800",
@@ -45,10 +49,11 @@ export function InvoicesWorkspace({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 04 )</span> Invoices
-        </p>
-        <span className="rounded-full border border-ink/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+          <GuideTrigger pageKey="invoices" clientId={clientId} />
+        </div>
+        <span className="rounded-full border border-ink/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
           All time ▾
         </span>
       </div>
@@ -63,7 +68,7 @@ export function InvoicesWorkspace({
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_260px]">
         <div>
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               {invoices.length} invoices · {clientName}
             </p>
             <button
@@ -76,14 +81,14 @@ export function InvoicesWorkspace({
           </div>
 
           {invoices.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-dashed border-ink/20 px-4 py-12 text-center text-[12px] font-medium text-ink/60">
+            <p className="mt-4 rounded-xl border border-dashed border-ink/20 px-4 py-12 text-center text-[12px] font-medium text-ink/80">
               No invoices yet.
             </p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[560px] border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-ink/15 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+                  <tr className="border-b border-ink/15 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                     <th className="py-2 pr-3">Invoice</th>
                     <th className="py-2 pr-3">Issued</th>
                     <th className="py-2 pr-3">Due</th>
@@ -96,8 +101,8 @@ export function InvoicesWorkspace({
                   {invoices.map((i) => (
                     <tr key={i.id} className="border-b border-ink/10">
                       <td className="py-2.5 pr-3 font-semibold text-ink">{i.number}</td>
-                      <td className="py-2.5 pr-3 text-ink/70">{i.issuedAt?.slice(0, 10) ?? "—"}</td>
-                      <td className="py-2.5 pr-3 text-ink/70">{i.dueAt?.slice(0, 10) ?? "—"}</td>
+                      <td className="py-2.5 pr-3 text-ink/85">{i.issuedAt?.slice(0, 10) ?? "—"}</td>
+                      <td className="py-2.5 pr-3 text-ink/85">{i.dueAt?.slice(0, 10) ?? "—"}</td>
                       <td className="py-2.5 pr-3">
                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ${STATUS_STYLE[i.status]}`}>
                           {i.status}
@@ -105,9 +110,12 @@ export function InvoicesWorkspace({
                       </td>
                       <td className="py-2.5 pr-3 text-right font-semibold text-ink">{money(i.totalCents, i.currency)}</td>
                       <td className="py-2.5 text-right">
-                        <a href={`/invoice/${i.id}`} target="_blank" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-oxblood hover:underline">
-                          PDF
-                        </a>
+                        <div className="flex items-center justify-end gap-3">
+                          <RowActions clientId={clientId} id={i.id} status={i.status} />
+                          <a href={`/invoice/${i.id}`} target="_blank" className="text-[11px] font-semibold uppercase tracking-[0.1em] text-oxblood hover:underline">
+                            PDF
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -121,20 +129,20 @@ export function InvoicesWorkspace({
         <div className="space-y-4">
           <div className="rounded-xl border border-ink/10 p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Bill to</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Bill to</p>
               <button type="button" className="text-[10px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline">Edit</button>
             </div>
             <p className="mt-2 text-sm font-semibold text-ink">{defaults.billToName || clientName}</p>
-            <p className="text-[12px] text-ink/60">Set the client&apos;s billing details on their first invoice.</p>
+            <p className="text-[12px] text-ink/80">Set the client&apos;s billing details on their first invoice.</p>
           </div>
           <div className="rounded-xl border border-ink/10 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">In effect</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">In effect</p>
             <dl className="mt-2 space-y-1.5 text-[12px]">
               <Row k="Tax rate" v={`${defaults.taxRate}%`} />
               <Row k="Terms" v={defaults.terms || "—"} />
               <Row k="Currency" v={defaults.currency} />
             </dl>
-            <p className="mt-2 text-[10px] text-ink/55">Defaults inherited from agency billing (Settings → Workspace).</p>
+            <p className="mt-2 text-[10px] text-ink/75">Defaults inherited from agency billing (Settings → Workspace).</p>
           </div>
         </div>
       </div>
@@ -153,9 +161,50 @@ export function InvoicesWorkspace({
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-3">
-      <dt className="text-ink/60">{k}</dt>
+      <dt className="text-ink/80">{k}</dt>
       <dd className="font-semibold text-ink">{v}</dd>
     </div>
+  );
+}
+
+function RowActions({
+  clientId,
+  id,
+  status,
+}: {
+  clientId: string;
+  id: string;
+  status: string;
+}) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  function set(next: "sent" | "paid") {
+    startTransition(async () => {
+      await updateInvoiceStatusAction(clientId, id, next);
+      router.refresh();
+    });
+  }
+  return (
+    <>
+      {status === "draft" && (
+        <button
+          type="button"
+          onClick={() => set("sent")}
+          className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink/70 hover:text-oxblood"
+        >
+          Mark sent
+        </button>
+      )}
+      {(status === "sent" || status === "overdue") && (
+        <button
+          type="button"
+          onClick={() => set("paid")}
+          className="text-[11px] font-semibold uppercase tracking-[0.1em] text-emerald-700 hover:underline"
+        >
+          Mark paid
+        </button>
+      )}
+    </>
   );
 }
 
@@ -163,7 +212,7 @@ function StatCard({ label, value, n, tone }: { label: string; value: string; n: 
   return (
     <div className="rounded-xl border border-ink/10 px-4 py-3">
       <p className={`font-display text-2xl ${tone ?? "text-oxblood"}`}>{value}</p>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/65">
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
         {label} · {n}
       </p>
     </div>
@@ -212,7 +261,7 @@ function NewInvoiceModal({
       <div className="w-full max-w-lg rounded-2xl border border-oxblood/15 bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-xl text-oxblood">New invoice</h3>
-          <button onClick={onClose} className="text-ink/60 hover:text-oxblood" aria-label="Close"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="text-ink/80 hover:text-oxblood" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="space-y-3">
@@ -221,13 +270,13 @@ function NewInvoiceModal({
             <input value={billEmail} onChange={(e) => setBillEmail(e.target.value)} placeholder="Bill to (email)" className="rounded-lg border border-oxblood/20 px-3 py-2 text-sm outline-none focus:border-oxblood" />
           </div>
 
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">Line items</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">Line items</p>
           {items.map((it, idx) => (
             <div key={idx} className="flex items-center gap-2">
               <input value={it.description} onChange={(e) => setItem(idx, { description: e.target.value })} placeholder="Description" className="flex-1 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
               <input type="number" min={1} value={it.quantity} onChange={(e) => setItem(idx, { quantity: Number(e.target.value) })} className="w-14 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
               <input type="number" min={0} step="0.01" value={it.unitCents / 100} onChange={(e) => setItem(idx, { unitCents: Math.round(Number(e.target.value) * 100) })} placeholder="0.00" className="w-24 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
-              <button type="button" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))} className="text-ink/40 hover:text-rose" aria-label="Remove line"><Trash2 className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))} className="text-ink/60 hover:text-rose" aria-label="Remove line"><Trash2 className="h-4 w-4" /></button>
             </div>
           ))}
           <button type="button" onClick={() => setItems((p) => [...p, { description: "", quantity: 1, unitCents: 0 }])} className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline">
@@ -236,18 +285,18 @@ function NewInvoiceModal({
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/75">Due date</label>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Due date</label>
               <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 px-3 py-2 text-sm outline-none focus:border-oxblood" />
             </div>
             <div className="flex flex-col justify-end text-right">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-ink/60">Total (incl {defaults.taxRate}% tax)</p>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-ink/80">Total (incl {defaults.taxRate}% tax)</p>
               <p className="font-display text-2xl text-oxblood">{money(total, defaults.currency)}</p>
-              <p className="text-[10px] text-ink/50">Subtotal {money(subtotalCents(items), defaults.currency)}</p>
+              <p className="text-[10px] text-ink/70">Subtotal {money(subtotalCents(items), defaults.currency)}</p>
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60 hover:text-oxblood">Cancel</button>
+            <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 hover:text-oxblood">Cancel</button>
             <button type="button" onClick={save} className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90">Create invoice</button>
           </div>
         </div>
