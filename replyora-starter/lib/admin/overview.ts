@@ -147,6 +147,67 @@ function summarize(agencies: AgencySummary[]): AdminOverviewData {
   return { agencies, kpis, attention: buildAttention(agencies), revenue };
 }
 
+export interface AgencyBrand {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+export interface AgencyDetail extends AgencySummary {
+  brandList: AgencyBrand[];
+}
+
+const DEMO_BRAND_POOL = [
+  "Bloom Hair Studio", "Rosewood Skin", "Lumen Cafe", "Harbour Dental",
+  "Coastal Pilates", "Ember Interiors", "Sol Swimwear", "Fern & Field",
+  "Wilder Florals", "Amara Beauty", "Nara Yoga", "Halcyon Homewares",
+];
+
+/** Rich single-agency view for the staff console. Mock = seeded; Neon = real. */
+export async function getAgencyDetail(id: string): Promise<AgencyDetail | null> {
+  if (!hasDb()) {
+    const a = DEMO_AGENCIES.find((x) => x.id === id);
+    if (!a) return null;
+    const brandList: AgencyBrand[] = Array.from({ length: a.brands }, (_, i) => ({
+      id: `${id}_brand_${i}`,
+      name: DEMO_BRAND_POOL[i % DEMO_BRAND_POOL.length] ?? `Brand ${i + 1}`,
+      createdAt: new Date(
+        new Date(a.createdAt).getTime() + i * 3 * 86400000,
+      ).toISOString(),
+    }));
+    return { ...a, brandList };
+  }
+
+  const { getWorkspaceDetail } = await import("@/lib/admin/social-data");
+  const d = await getWorkspaceDetail(id);
+  if (!d) return null;
+  const accountType: SocialPlan = d.accountType === "agency" ? "agency" : "personal";
+  const status: AgencyStatus =
+    d.planStatus === "active"
+      ? "active"
+      : d.planStatus === "past_due"
+        ? "past_due"
+        : d.planStatus === "canceled"
+          ? "canceled"
+          : "trialing";
+  const addons: SocialAddons = { chatbox: false, reports: false };
+  return {
+    id: d.id,
+    name: d.name,
+    ownerName: d.ownerName ?? d.ownerEmail.split("@")[0] ?? "Owner",
+    ownerEmail: d.ownerEmail,
+    accountType,
+    status,
+    addons,
+    brands: d.clientCount,
+    postsThisMonth: d.postCount,
+    mrr: mrrFor(accountType, addons),
+    createdAt: d.createdAt,
+    lastActiveDays: 0,
+    trialEndsInDays: status === "trialing" ? 5 : null,
+    brandList: d.clients,
+  };
+}
+
 /** Everything the staff god-view needs. Mock = seeded agencies; Neon = real. */
 export async function getAdminOverview(): Promise<AdminOverviewData> {
   if (!hasDb()) return summarize(DEMO_AGENCIES);

@@ -194,6 +194,45 @@ export async function setAccountType(type: SocialPlan | null): Promise<void> {
   `;
 }
 
+/** Staff: set add-ons for a SPECIFIC workspace (admin agency console). */
+export async function setWorkspaceAddonsById(
+  workspaceId: string,
+  addons: SocialAddons,
+): Promise<void> {
+  if (!hasDb()) return; // mock: optimistic only (seeded agencies are constant)
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), addons };
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
+  `;
+}
+
+/** Staff: set plan/status for a SPECIFIC workspace (admin agency console). */
+export async function setWorkspacePlanById(
+  workspaceId: string,
+  accountType: SocialPlan,
+  planStatus: string,
+): Promise<void> {
+  if (!hasDb()) return;
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = {
+    ...(rows[0]?.address ?? {}),
+    accountType,
+    planStatus,
+  };
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
+  `;
+}
+
 /** Update the workspace's paid add-ons (build-your-plan toggles in Settings). */
 export async function setAddons(addons: SocialAddons): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
