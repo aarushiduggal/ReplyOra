@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Instagram, Music2 } from "lucide-react";
+import { Check, Instagram, Music2, Zap } from "lucide-react";
 
 import {
   disconnectAction,
@@ -16,12 +16,14 @@ export function IntegrationsWorkspace({
   platforms,
   metaReady,
   tiktokReady,
+  ayrshareReady,
 }: {
   clientId: string;
   clientName: string;
   platforms: string[];
   metaReady: boolean;
   tiktokReady: boolean;
+  ayrshareReady: boolean;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -51,6 +53,21 @@ export function IntegrationsWorkspace({
         Connect social accounts for <strong>{clientName}</strong> only. Published posts
         flow back onto the Grid and power Reports.
       </p>
+
+      {ayrshareReady && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <Zap className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">Auto-publishing is live</p>
+            <p className="mt-0.5 text-[12px] text-emerald-800/90">
+              Instagram &amp; TikTok posting runs through your connected publishing
+              account — just hit <strong>Publish</strong> on any post in the Calendar and
+              it goes out for real. Link the social accounts inside your Ayrshare
+              dashboard.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card

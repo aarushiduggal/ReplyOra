@@ -2,7 +2,7 @@ import { IntegrationsWorkspace } from "@/components/social/integrations/integrat
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientConnections } from "@/lib/social/connections";
-import { HAS_META, HAS_TIKTOK } from "@/lib/social/publish";
+import { HAS_META, HAS_TIKTOK, HAS_AYRSHARE } from "@/lib/social/publish";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,7 @@ export default async function ClientIntegrationsPage({
       platforms={connected}
       metaReady={HAS_META}
       tiktokReady={HAS_TIKTOK}
+      ayrshareReady={HAS_AYRSHARE}
     />
   );
 }
