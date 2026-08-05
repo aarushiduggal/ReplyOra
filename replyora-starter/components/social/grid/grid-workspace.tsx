@@ -6,14 +6,17 @@ import {
   CalendarClock,
   Check,
   Grid3x3,
+  Heart,
   ImageIcon,
   Instagram,
   Menu,
+  Music2,
   PencilLine,
   Play,
   Plus,
   QrCode,
   Redo2,
+  Repeat2,
   Square,
   Trash2,
   Undo2,
@@ -23,6 +26,7 @@ import {
 } from "lucide-react";
 
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
+import type { Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
 import {
@@ -60,6 +64,12 @@ const STATUS_DOT: Record<GridTile["status"], string> = {
   scheduled: "bg-rose",
   published: "bg-oxblood",
 };
+
+/** Fake view counts for the TikTok mock thumbnails. */
+const TIKTOK_VIEWS = [
+  "12.4K", "8.1K", "23.7K", "5.6K", "41.2K", "9.9K",
+  "3.3K", "18.0K", "6.7K", "2.1K", "15.5K", "7.2K",
+];
 
 /** Live feed analysis — harmony %, palette, pillar mix. Computed from tiles. */
 function analyzeFeed(tiles: GridTile[]) {
@@ -113,6 +123,8 @@ export function GridWorkspace({
   const [qrOpen, setQrOpen] = useState(false);
   const [reels, setReels] = useState(false);
   const [showDates, setShowDates] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("instagram");
+  const isTikTok = platform === "tiktok";
   const [, startTransition] = useTransition();
 
   const drafts = useMemo(() => tiles.filter((t) => t.status === "draft"), [tiles]);
@@ -224,7 +236,9 @@ export function GridWorkspace({
         <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
           <span className="text-oxblood">( 02 )</span> Grid
           <span className="text-ink/60">·</span>
-          <span className="text-ink/80">Studio · Instagram</span>
+          <span className="text-ink/80">
+            Studio · {isTikTok ? "TikTok" : "Instagram"}
+          </span>
           <GuideTrigger pageKey="grid" clientId={clientId} />
         </div>
         <div className="flex items-center gap-4">
@@ -250,11 +264,29 @@ export function GridWorkspace({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Platform
             </p>
-            <p className="mt-1 flex items-center gap-2 font-semibold text-ink">
-              <Instagram className="h-4 w-4 text-oxblood" /> Instagram
-            </p>
-            <p className="mt-1 text-xs font-medium text-ink/85">
-              {tiles.length} posts · 0 highlights
+            <div className="mt-2 flex gap-4 text-sm font-semibold">
+              {(["instagram", "tiktok"] as Platform[]).map((p) => {
+                const active = platform === p;
+                const Icon = p === "instagram" ? Instagram : Music2;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPlatform(p)}
+                    className={`flex items-center gap-1.5 pb-1 transition-colors ${
+                      active
+                        ? "text-oxblood underline decoration-oxblood underline-offset-[6px]"
+                        : "text-ink/50 hover:text-ink/80"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {p === "instagram" ? "Instagram" : "TikTok"}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs font-medium text-ink/85">
+              {tiles.length} posts{isTikTok ? "" : " · 0 highlights"}
             </p>
           </div>
 
@@ -289,20 +321,22 @@ export function GridWorkspace({
             </p>
           </div>
 
-          <div className="space-y-3">
-            <Toggle
-              label="Reels"
-              on={reels}
-              onChange={setReels}
-              help="Includes live posts fetched from Instagram."
-            />
-            <Toggle
-              label="Scheduled dates"
-              on={showDates}
-              onChange={setShowDates}
-              help="Show the scheduled date on each planned tile."
-            />
-          </div>
+          {!isTikTok && (
+            <div className="space-y-3">
+              <Toggle
+                label="Reels"
+                on={reels}
+                onChange={setReels}
+                help="Includes live posts fetched from Instagram."
+              />
+              <Toggle
+                label="Scheduled dates"
+                on={showDates}
+                onChange={setShowDates}
+                help="Show the scheduled date on each planned tile."
+              />
+            </div>
+          )}
         </aside>
 
         {/* Centre — iPhone mock */}
@@ -312,25 +346,52 @@ export function GridWorkspace({
               <span>9:41</span>
               <span>5G</span>
             </div>
-            <div className="flex items-center justify-between px-4 pt-1">
-              <span className="text-[13px] font-semibold text-ink">
-                {profile.username || "instagram"}
-              </span>
-              <span className="flex items-center gap-3 text-ink/85">
-                <Plus className="h-4 w-4" />
-                <Menu className="h-4 w-4" />
-              </span>
-            </div>
-            <div className="flex items-center gap-4 px-4 py-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
-                {clientName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex flex-1 justify-around text-center">
-                <Stat n={String(tiles.length)} label="Posts" />
-                <Stat n={profile.followers || "0"} label="Followers" />
-                <Stat n={profile.following || "0"} label="Following" />
-              </div>
-            </div>
+            {isTikTok ? (
+              <>
+                <div className="flex items-center justify-between px-4 pt-1 text-ink/85">
+                  <span className="w-4" />
+                  <span className="text-[13px] font-semibold text-ink">
+                    {profile.username ? `@${profile.username}` : "@tiktok"}
+                  </span>
+                  <Menu className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col items-center px-4 pt-2">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
+                    {clientName.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="mt-2 text-[13px] font-semibold text-ink">
+                    @{profile.username || "tiktok"}
+                  </p>
+                  <div className="mt-2 flex justify-center gap-6 text-center">
+                    <Stat n={profile.following || "0"} label="Following" />
+                    <Stat n={profile.followers || "0"} label="Followers" />
+                    <Stat n="18.2K" label="Likes" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between px-4 pt-1">
+                  <span className="text-[13px] font-semibold text-ink">
+                    {profile.username || "instagram"}
+                  </span>
+                  <span className="flex items-center gap-3 text-ink/85">
+                    <Plus className="h-4 w-4" />
+                    <Menu className="h-4 w-4" />
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 px-4 py-3">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
+                    {clientName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex flex-1 justify-around text-center">
+                    <Stat n={String(tiles.length)} label="Posts" />
+                    <Stat n={profile.followers || "0"} label="Followers" />
+                    <Stat n={profile.following || "0"} label="Following" />
+                  </div>
+                </div>
+              </>
+            )}
             <div className="px-4 pb-2">
               <p className="text-[12px] font-semibold text-ink">
                 {profile.displayName}
@@ -347,10 +408,20 @@ export function GridWorkspace({
               )}
             </div>
             <div className="flex justify-around border-t border-oxblood/10 py-2 text-ink/85">
-              <Grid3x3 className="h-4 w-4 text-oxblood" />
-              <Play className="h-4 w-4" />
-              <UserSquare className="h-4 w-4" />
-              <Square className="h-4 w-4" />
+              {isTikTok ? (
+                <>
+                  <Grid3x3 className="h-4 w-4 text-oxblood" />
+                  <Repeat2 className="h-4 w-4" />
+                  <Heart className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  <Grid3x3 className="h-4 w-4 text-oxblood" />
+                  <Play className="h-4 w-4" />
+                  <UserSquare className="h-4 w-4" />
+                  <Square className="h-4 w-4" />
+                </>
+              )}
             </div>
 
             {tiles.length === 0 ? (
@@ -359,7 +430,9 @@ export function GridWorkspace({
                   {Array.from({ length: 9 }).map((_, i) => (
                     <div
                       key={i}
-                      className="flex aspect-square items-center justify-center border border-dashed border-oxblood/15 bg-oat/40"
+                      className={`flex items-center justify-center border border-dashed border-oxblood/15 bg-oat/40 ${
+                        isTikTok ? "aspect-[9/16]" : "aspect-square"
+                      }`}
                     >
                       <ImageIcon className="h-4 w-4 text-oxblood/20" />
                     </div>
@@ -387,7 +460,9 @@ export function GridWorkspace({
                         setDropTarget((d) => (d === t.id ? null : d))
                       }
                       onDrop={() => onDrop(t.id)}
-                      className="group relative aspect-square cursor-grab bg-cover bg-center active:cursor-grabbing"
+                      className={`group relative cursor-grab bg-cover bg-center active:cursor-grabbing ${
+                        isTikTok ? "aspect-[9/16]" : "aspect-square"
+                      }`}
                       style={
                         t.mediaUrl
                           ? { backgroundImage: `url(${t.mediaUrl})` }
@@ -415,9 +490,15 @@ export function GridWorkspace({
                       <span
                         className={`absolute right-1 top-1 h-2 w-2 rounded-full ${STATUS_DOT[t.status]} ring-1 ring-white/70`}
                       />
-                      {!t.mediaUrl && (
+                      {!t.mediaUrl && !isTikTok && (
                         <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
                           {firstWords(t.caption, 6)}
+                        </span>
+                      )}
+                      {isTikTok && (
+                        <span className="absolute bottom-1 left-1 flex items-center gap-0.5 text-[8px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
+                          <Play className="h-2.5 w-2.5 fill-white text-white" />
+                          {TIKTOK_VIEWS[i % TIKTOK_VIEWS.length]}
                         </span>
                       )}
                       {isTarget && (
