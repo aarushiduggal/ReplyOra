@@ -48,7 +48,7 @@ const CARDS: Card[] = [
     pos: "top",
   },
   {
-    src: "hero-center.jpg",
+    src: "hero-center.png",
     left: "34.5%",
     top: "4%",
     width: "32%",
