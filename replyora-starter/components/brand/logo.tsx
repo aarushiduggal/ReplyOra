@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-type LogoVariant = "wordmark" | "lockup" | "badge";
+type LogoVariant = "wordmark" | "lockup" | "badge" | "mark";
 /** default = dark logo for light backgrounds · inverted = cream logo for dark. */
 type LogoTone = "default" | "inverted";
 
@@ -20,6 +20,12 @@ const SRC: Record<LogoVariant, Record<LogoTone, string>> = {
     default: "/brand/replyora-badge.png",
     inverted: "/brand/replyora-badge.png",
   },
+  // The current brand logo — white wordmark on an oxblood field, shown as a
+  // round badge.
+  mark: {
+    default: "/brand/replyora-circle.png",
+    inverted: "/brand/replyora-circle.png",
+  },
 };
 
 // Intrinsic aspect ratios of the source PNGs (width / height).
@@ -27,6 +33,7 @@ const RATIO: Record<LogoVariant, number> = {
   wordmark: 1299 / 313,
   lockup: 1299 / 400,
   badge: 1,
+  mark: 1,
 };
 
 /**
@@ -66,7 +73,11 @@ export function Logo({
       height={height}
       priority={priority}
       sizes={`${width}px`}
-      className={cn("block object-contain", className)}
+      className={cn(
+        "block object-contain",
+        variant === "mark" && "rounded-full",
+        className,
+      )}
       style={{ height, width: "auto" }}
     />
   );

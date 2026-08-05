@@ -7,7 +7,7 @@ import { ArrowRight, CalendarClock, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Live Playground hero — the visitor types their business and watches ReplyOra
+ * Live Playground hero — the visitor types their business and watches Replyora
  * generate a real on-brand post AND drop it onto a content calendar, live. It
  * demonstrates the core product (social media management: content + scheduling)
  * by doing it. Zero network calls — the generator runs in the browser, so it's
@@ -80,8 +80,8 @@ const SCHEDULE_DAYS = [1, 3, 5]; // Tue, Thu, Sat
 const ROTATE = ["content", "captions", "calendar", "socials"];
 
 export function PlaygroundHero() {
-  const [draft, setDraft] = useState("Bondi hair salon");
-  const [business, setBusiness] = useState("Bondi Hair Salon");
+  const [draft, setDraft] = useState("Rosewood hair salon");
+  const [business, setBusiness] = useState("Rosewood Hair Salon");
   const [seed, setSeed] = useState(0);
   const [rot, setRot] = useState(0);
   const [filled, setFilled] = useState<number[]>([]);
@@ -120,7 +120,7 @@ export function PlaygroundHero() {
         {/* Left — pitch + playground input */}
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-rose">
-            Social media management
+            Social media management platform
             <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-rose" />
           </p>
 

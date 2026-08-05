@@ -57,7 +57,7 @@ export function MobileMenu() {
           />
           <div className="absolute right-0 top-0 flex h-full w-80 max-w-[88%] flex-col bg-cream shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-border px-5">
-              <Logo height={28} />
+              <Logo variant="mark" height={36} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -70,13 +70,27 @@ export function MobileMenu() {
 
             <div className="flex-1 overflow-y-auto px-4 py-4">
               {TOP_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block border-b border-border/60 py-3.5 text-sm font-semibold text-ink hover:text-oxblood"
-                >
-                  {link.label}
-                </Link>
+                <div key={link.label} className="border-b border-border/60 py-3.5">
+                  <Link
+                    href={link.href}
+                    className="block text-sm font-semibold text-ink hover:text-oxblood"
+                  >
+                    {link.label}
+                  </Link>
+                  {link.children && (
+                    <div className="mt-2 space-y-1 pl-3">
+                      {link.children.map((c) => (
+                        <Link
+                          key={c.href}
+                          href={c.href}
+                          className="block py-1.5 text-sm text-ink/65 hover:text-oxblood"
+                        >
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 

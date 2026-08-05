@@ -89,7 +89,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && (path === "/login" || path === "/signup")) {
     const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/dashboard";
+    dashUrl.pathname = "/clients";
     return NextResponse.redirect(dashUrl);
   }
 

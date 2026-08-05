@@ -1,44 +1,26 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { SocialLinks } from "@/components/marketing/social-links";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
-  {
-    title: "Product",
-    links: [
-      { label: "Features", href: "/#features" },
-      { label: "How it works", href: "/#how" },
-      { label: "Pricing", href: "/#pricing" },
-      { label: "Work", href: "/demo" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "Blog", href: "/blog" },
-      { label: "Book a demo", href: "/demo" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-      { label: "Security", href: "/security" },
-    ],
-  },
+// Product & Company links live in the header dropdowns now. The footer keeps a
+// small Legal list (still being drafted) plus the brand block.
+const LEGAL: { label: string; href: string }[] = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
 ];
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-cream">
-      <div className="mx-auto max-w-6xl px-6 py-14">
-        <div className="grid gap-10 md:grid-cols-[1.5fr_repeat(3,1fr)]">
-          <div className="space-y-3">
-            <Logo height={30} />
-            <p className="max-w-xs text-sm text-muted-foreground">
-              AI that replies instantly, captures leads, and books customers 24/7.
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-sm space-y-3">
+            <Logo variant="mark" height={48} />
+            <p className="text-sm text-muted-foreground">
+              One workspace to plan your content, manage your clients, and never
+              miss a conversation.
             </p>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
@@ -46,28 +28,32 @@ export function SiteFooter() {
             >
               {CONTACT_EMAIL}
             </a>
+
+            <SocialLinks className="pt-1" />
           </div>
-          {COLUMNS.map((col) => (
-            <div key={col.title}>
-              <p className="text-sm font-semibold text-ink">{col.title}</p>
-              <ul className="mt-3 space-y-2">
-                {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-sm text-ink/70 hover:text-oxblood"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/40">
+              Legal
+            </p>
+            <ul className="mt-2 space-y-1">
+              {LEGAL.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-xs text-ink/45 hover:text-oxblood"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
+
       <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-border/60 py-4 text-center text-xs text-muted-foreground">
-        <span>© 2026 Replyora · Built burgundy &amp; oat in Sydney.</span>
+        <span>© 2026 Replyora</span>
         <span aria-hidden="true">·</span>
         <Link href="/admin" className="text-ink/50 hover:text-oxblood">
           Staff login

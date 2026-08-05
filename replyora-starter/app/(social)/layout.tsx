@@ -6,9 +6,11 @@ import { isOwner } from "@/lib/auth/owner";
 import { readImpersonation } from "@/lib/admin/impersonate";
 import { getWorkspaceById } from "@/lib/auth/users";
 import { getWorkspaceBilling } from "@/lib/social/billing";
+import { listClients } from "@/lib/social/clients";
 import type { SocialPlan } from "@/lib/social/plans";
 
 import { PortalTopNav } from "@/components/social/portal-topnav";
+import { CommandBar } from "@/components/social/command-bar";
 import { PortalFooter } from "@/components/social/portal-footer";
 import { TodoPill } from "@/components/social/todo-pill";
 import { ClientNameProvider } from "@/components/social/client-name-context";
@@ -49,10 +51,16 @@ export default async function SocialPortalLayout({
     }
   }
 
+  // Clients power the global ⌘K command bar (jump straight to any client).
+  const clients = (await listClients().catch(() => [])).map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
   return (
     <ClientNameProvider>
       <GuideProvider>
-        <div className="flex min-h-screen flex-col bg-white text-ink">
+        <div className="flex min-h-screen flex-col bg-cream text-ink">
           {impersonatingName && (
             <ImpersonationBanner workspaceName={impersonatingName} />
           )}
@@ -60,6 +68,7 @@ export default async function SocialPortalLayout({
           <main className="flex-1">{children}</main>
           <PortalFooter />
           <TodoPill />
+          <CommandBar clients={clients} />
           {owner && !impersonatingName && (
             <OwnerPanel accountType={ownerAccountType} />
           )}

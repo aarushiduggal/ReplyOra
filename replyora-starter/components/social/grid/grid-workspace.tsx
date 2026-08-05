@@ -35,9 +35,9 @@ function firstWords(s: string, n = 6): string {
   return s.replace(/\s+/g, " ").trim().split(" ").slice(0, n).join(" ");
 }
 const STATUS_DOT: Record<GridTile["status"], string> = {
-  draft: "bg-slate-400",
-  scheduled: "bg-sky-500",
-  published: "bg-emerald-500",
+  draft: "bg-ink/30",
+  scheduled: "bg-rose",
+  published: "bg-oxblood",
 };
 
 export function GridWorkspace({

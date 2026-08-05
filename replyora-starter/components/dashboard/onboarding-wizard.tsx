@@ -58,7 +58,7 @@ export function OnboardingWizard() {
         knowledge,
       });
       toast({ title: "Your assistant is set up!", type: "success" });
-      router.push("/dashboard");
+      router.push("/clients");
       router.refresh();
     });
   }
@@ -66,7 +66,7 @@ export function OnboardingWizard() {
   function skip() {
     start(async () => {
       await markOnboarded();
-      router.push("/dashboard");
+      router.push("/clients");
       router.refresh();
     });
   }
@@ -77,7 +77,7 @@ export function OnboardingWizard() {
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-10">
       <div className="mb-8 flex items-center justify-between">
-        <Logo height={30} href="/dashboard" />
+        <Logo height={30} href="/clients" />
         <button
           type="button"
           onClick={skip}

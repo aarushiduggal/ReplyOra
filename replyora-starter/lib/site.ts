@@ -11,7 +11,7 @@ export const CONTACT_EMAIL = "hello.replyora@gmail.com";
 export const FOUNDER = {
   name: "Aarushi",
   jobTitle: "Founder",
-  photo: "/founder-aarushi.jpg",
+  photo: "/marketing/founder.jpg",
   caption: "Founder, Replyora · building in public",
   ig: IG_URL,
 } as const;

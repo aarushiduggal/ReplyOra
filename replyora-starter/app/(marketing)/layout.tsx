@@ -2,6 +2,7 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { StructuredData } from "@/components/marketing/structured-data";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
+import { ChatWidget } from "@/components/marketing/chat-widget";
 
 export default function MarketingLayout({
   children,
@@ -15,6 +16,7 @@ export default function MarketingLayout({
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <ChatWidget />
       </div>
     </SmoothScroll>
   );

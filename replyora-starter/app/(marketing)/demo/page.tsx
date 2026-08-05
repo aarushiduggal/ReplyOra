@@ -21,11 +21,12 @@ export default function DemoPage() {
             Book a demo
           </p>
           <h1 className="mt-3 font-display text-4xl text-oxblood">
-            See how we&apos;d run your socials
+            See Replyora in action
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Pick a time and we&apos;ll walk you through content creation,
-            scheduling, and the dashboard, tailored to your business.
+            Pick a time and we&apos;ll walk you through the platform — planning,
+            creating and scheduling your Instagram &amp; TikTok, plus the website
+            chatbox — tailored to your business.
           </p>
           <ul className="mt-6 space-y-3">
             {BENEFITS.map((b) => (

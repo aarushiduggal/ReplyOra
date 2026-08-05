@@ -21,9 +21,9 @@ export interface SocialRow {
 }
 
 const STATUS_PILL: Record<PostStatus, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-slate-100 text-slate-600" },
-  scheduled: { label: "Scheduled", className: "bg-sky-100 text-sky-700" },
-  published: { label: "Published", className: "bg-emerald-100 text-emerald-700" },
+  draft: { label: "Draft", className: "bg-ink/8 text-ink/60" },
+  scheduled: { label: "Scheduled", className: "bg-rose/15 text-oxblood" },
+  published: { label: "Published", className: "bg-oxblood text-cream" },
 };
 
 function Row({ row, onGone }: { row: SocialRow; onGone: (id: string) => void }) {

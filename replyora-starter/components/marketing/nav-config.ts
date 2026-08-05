@@ -1,15 +1,25 @@
-/** A standalone link shown directly on the marketing header bar. */
+/** A link shown on the marketing header bar, optionally with a hover menu. */
+export interface NavChild {
+  label: string;
+  href: string;
+  desc?: string;
+}
+
 export interface TopLink {
   label: string;
   href: string;
+  children?: NavChild[];
 }
 
 /**
- * Marketing top nav — deliberately lean: Product · Pricing · Work.
- * ("Log in" is rendered separately as a button in the header/mobile menu.)
+ * Marketing top nav — flat links, no dropdowns.
+ * "Product" is the combined product-tour + website-chatbox page.
+ * About lives on the homepage (Meet the founder); Book a call is the homepage
+ * footer CTA — so neither needs a nav slot.
  */
 export const TOP_LINKS: TopLink[] = [
-  { label: "Product", href: "/#features" },
-  { label: "Pricing", href: "/#pricing" },
-  { label: "Work", href: "/demo" },
+  { label: "Product", href: "/product" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Blog", href: "/blog" },
 ];

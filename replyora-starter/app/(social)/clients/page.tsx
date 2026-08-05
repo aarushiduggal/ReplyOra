@@ -3,15 +3,21 @@ import { ArrowRight } from "lucide-react";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { listClients } from "@/lib/social/clients";
+import { getStudioOverview } from "@/lib/social/overview";
 import { PageShell } from "@/components/social/page-shell";
 import { SectionHeader } from "@/components/social/section-header";
 import { AddClient } from "@/components/social/add-client";
 import { GuideTrigger } from "@/components/social/guide";
+import { Cockpit, ActivityFeed } from "@/components/social/dashboard/home-widgets";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const [user, clients] = await Promise.all([getCurrentUser(), listClients()]);
+  const [user, clients, overview] = await Promise.all([
+    getCurrentUser(),
+    listClients(),
+    getStudioOverview(),
+  ]);
   const count = clients.length;
 
   return (
@@ -42,7 +48,14 @@ export default async function ClientsPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-12 border-t border-ink/10">
+        <>
+          {/* Cockpit — at-a-glance numbers across every client */}
+          <div className="mt-8">
+            <Cockpit stats={overview.stats} />
+          </div>
+
+          {/* Client roster */}
+          <div className="mt-12 border-t border-ink/10">
           {clients.map((c) => {
             const initial = c.name.trim().charAt(0).toUpperCase() || "?";
             const pillars =
@@ -72,7 +85,16 @@ export default async function ClientsPage() {
               </Link>
             );
           })}
-        </div>
+          </div>
+
+          {/* Activity — a live feed of what's happening across clients */}
+          <section className="mt-14">
+            <h2 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+              Recent activity
+            </h2>
+            <ActivityFeed items={overview.activity} />
+          </section>
+        </>
       )}
     </PageShell>
   );

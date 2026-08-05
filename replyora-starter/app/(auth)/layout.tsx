@@ -12,7 +12,7 @@ export default function AuthLayout({
       {/* Form side */}
       <div className="flex flex-col bg-cream">
         <div className="p-6">
-          <Logo height={30} />
+          <Logo variant="mark" height={44} />
         </div>
         <div className="flex flex-1 items-center justify-center px-6 pb-16">
           {children}
@@ -24,7 +24,7 @@ export default function AuthLayout({
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-rose/30 blur-3xl" />
         <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-wine/60 blur-3xl" />
         <div className="relative">
-          <Logo asLink={false} tone="inverted" height={30} />
+          <Logo variant="mark" asLink={false} height={40} />
         </div>
         <blockquote className="relative max-w-md">
           <p className="font-display text-3xl leading-snug">

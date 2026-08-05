@@ -14,17 +14,18 @@ import {
   HAS_GOOGLE_CLIENT,
   APP_URL,
 } from "@/lib/data/mode";
-import { PLANS } from "@/lib/stripe/plans";
-import {
-  TRIALABLE_PLANS,
-  normalizePlanSlug,
-  PLAN_INTENT_COOKIE,
-} from "@/lib/plan-intent";
+import { PLAN_INTENT_COOKIE } from "@/lib/plan-intent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { Plan } from "@/lib/data/types";
+
+/** The two live plans (mirrors the marketing pricing). */
+type SignupPlan = "personal" | "agency";
+const SIGNUP_PLANS: { slug: SignupPlan; name: string; price: number }[] = [
+  { slug: "personal", name: "Personal", price: 50 },
+  { slug: "agency", name: "Agency", price: 200 },
+];
 
 /**
  * Auth form.
@@ -41,7 +42,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [plan, setPlan] = useState<Plan>("growth");
+  const [plan, setPlan] = useState<SignupPlan>("personal");
   const isSignup = mode === "signup";
   const redirectTo = `${APP_URL.replace(/\/$/, "")}/auth/callback`;
 
@@ -56,8 +57,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
     if (err) setError(err === "auth" ? "Sign-in failed. Please try again." : err);
-    const chosen = normalizePlanSlug(params.get("plan"));
-    if (chosen) setPlan(chosen);
+    const chosen = params.get("plan");
+    if (chosen === "personal" || chosen === "agency") setPlan(chosen);
   }, []);
 
   /** Persist the chosen trial plan so it survives the OAuth round-trip. */
@@ -110,7 +111,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     // Local dev without Supabase: keep the fast mock flow.
     if (!USE_SUPABASE) {
       setTimeout(
-        () => router.push(isSignup ? "/onboarding" : "/dashboard"),
+        () => router.push(isSignup ? "/onboarding" : "/clients"),
         500,
       );
       return;
@@ -139,7 +140,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
+      router.push("/onboarding");
       router.refresh();
       return;
     }
@@ -153,7 +154,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setLoading(false);
       return;
     }
-    router.push("/dashboard");
+    router.push("/clients");
     router.refresh();
   }
 
@@ -166,7 +167,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
     if (!USE_SUPABASE) {
-      setTimeout(() => router.push("/dashboard"), 500);
+      setTimeout(() => router.push("/clients"), 500);
       return;
     }
     if (isSignup) rememberPlan();
@@ -194,10 +195,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {!isSignup
-            ? "Log in to your Replyora workspace."
+            ? "Log in to your replyora workspace."
             : socialMode
               ? "Plan, create and schedule your social content in one place."
-              : `No card to start. After 7 days, ${PLANS[plan].name} is $${PLANS[plan].priceAud}/mo + a one-time $250 setup fee.`}
+              : "No card to start. Free for 7 days, then from $50/mo — cancel anytime."}
         </p>
       </div>
 
@@ -206,15 +207,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/60">
             Choose the plan to trial
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            {TRIALABLE_PLANS.map((p) => {
-              const cfg = PLANS[p];
-              const active = plan === p;
+          <div className="grid grid-cols-2 gap-2">
+            {SIGNUP_PLANS.map((p) => {
+              const active = plan === p.slug;
               return (
                 <button
-                  key={p}
+                  key={p.slug}
                   type="button"
-                  onClick={() => setPlan(p)}
+                  onClick={() => setPlan(p.slug)}
                   aria-pressed={active}
                   className={cn(
                     "rounded-lg border px-2 py-2 text-center transition-colors",
@@ -223,14 +223,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                       : "border-border bg-card text-ink hover:bg-oat",
                   )}
                 >
-                  <span className="block text-sm font-semibold">{cfg.name}</span>
+                  <span className="block text-sm font-semibold">{p.name}</span>
                   <span
                     className={cn(
                       "block text-xs",
                       active ? "text-cream/80" : "text-muted-foreground",
                     )}
                   >
-                    ${cfg.priceAud}/mo
+                    ${p.price}/mo
                   </span>
                 </button>
               );
@@ -318,7 +318,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        {isSignup ? "Already have an account? " : "New to Replyora? "}
+        {isSignup ? "Already have an account? " : "New to replyora? "}
         <Link
           href={isSignup ? "/login" : "/signup"}
           className="font-medium text-oxblood hover:underline"
