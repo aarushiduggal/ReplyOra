@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import type { Platform, PostStatus } from "@/lib/social/types";
+import { DEMO_CLIENT_ID, demoPosts } from "@/lib/social/demo";
 
 /**
  * ReplyOra Social — client-scoped post CRUD (shared by Calendar, Studio,
@@ -96,9 +97,15 @@ function toPost(r: Row): ClientPost {
 export async function listClientPosts(clientId: string): Promise<ClientPost[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) {
-    return MEM.filter(
+    const mine = MEM.filter(
       (p) => p.workspaceId === workspaceId && p.clientId === clientId,
-    ).sort((a, b) => (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? ""));
+    );
+    if (mine.length === 0 && clientId === DEMO_CLIENT_ID) {
+      return demoPosts(Date.now());
+    }
+    return mine.sort((a, b) =>
+      (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? ""),
+    );
   }
   const rows = (await sql()`
     SELECT id, client_id, platform, pillar, topic, caption, hashtags,

@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import { DEMO_CLIENT_ID, DEMO_PROFILE, demoTiles } from "@/lib/social/demo";
 
 /**
  * ReplyOra Social — Grid data layer (client-scoped).
@@ -72,7 +73,7 @@ interface TileRow {
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
-  if (!hasDb()) return [];
+  if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
     SELECT id, caption, status, pillar, order_index, media_url
     FROM social_posts
@@ -173,7 +174,9 @@ export async function getProfilePreview(
 ): Promise<ProfilePreview> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) {
-    return MEM_PROFILE.get(`${workspaceId}:${clientId}`) ?? { ...EMPTY_PROFILE };
+    const saved = MEM_PROFILE.get(`${workspaceId}:${clientId}`);
+    if (saved) return saved;
+    return clientId === DEMO_CLIENT_ID ? { ...DEMO_PROFILE } : { ...EMPTY_PROFILE };
   }
   const rows = (await sql()`
     SELECT username, display_name, followers, following, bio, website

@@ -79,7 +79,7 @@ export function AssetsWorkspace({
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
-          <span className="text-oxblood">( 04 )</span> Assets
+          <span className="text-oxblood">( 05 )</span> Assets
           <GuideTrigger pageKey="assets" clientId={clientId} />
         </div>
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">

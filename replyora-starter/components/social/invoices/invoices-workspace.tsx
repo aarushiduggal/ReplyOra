@@ -50,7 +50,7 @@ export function InvoicesWorkspace({
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
-          <span className="text-oxblood">( 04 )</span> Invoices
+          <span className="text-oxblood">( 09 )</span> Invoices
           <GuideTrigger pageKey="invoices" clientId={clientId} />
         </div>
         <span className="rounded-full border border-ink/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">

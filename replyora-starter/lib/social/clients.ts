@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import { DEMO_CLIENT } from "@/lib/social/demo";
 
 /**
  * ReplyOra Social — clients data layer (the brands an agency manages).
@@ -61,7 +62,9 @@ function toClient(r: Row): Client {
 interface MemClient extends Client {
   workspaceId: string;
 }
-const CLIENTS: MemClient[] = [];
+// Seeded with one fully-populated demo brand so mock/local mode never looks
+// empty and every screen shows a real client name (see lib/social/demo.ts).
+const CLIENTS: MemClient[] = [DEMO_CLIENT];
 
 function stripWs(c: MemClient): Client {
   return {

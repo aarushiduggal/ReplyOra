@@ -3,6 +3,7 @@ import { neon } from "@neondatabase/serverless";
 
 import type { ClientPost } from "@/lib/social/posts";
 import type { Approval, ApprovalStatus } from "@/lib/social/approvals";
+import { DEMO_CLIENT, DEMO_CLIENT_ID, demoPosts } from "@/lib/social/demo";
 
 /**
  * ReplyOra Social — public client-review portal.
@@ -70,7 +71,15 @@ interface PostRow {
 
 /** Read the shared grid for the client the token authorises. */
 export async function getPortalData(clientId: string): Promise<PortalData | null> {
-  if (!hasDb()) return { clientName: "Client", posts: [], approvals: {} };
+  if (!hasDb()) {
+    if (clientId === DEMO_CLIENT_ID) {
+      const posts = demoPosts(Date.now()).filter(
+        (p) => p.status === "scheduled" || p.status === "published",
+      );
+      return { clientName: DEMO_CLIENT.name, posts, approvals: {} };
+    }
+    return { clientName: "Client", posts: [], approvals: {} };
+  }
 
   const clientRows = (await sql()`
     SELECT name FROM clients WHERE id = ${clientId} LIMIT 1

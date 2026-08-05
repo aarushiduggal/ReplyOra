@@ -98,7 +98,13 @@ interface Row {
 export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) {
-    const base = MEM.get(workspaceId) ?? { ...DEFAULTS };
+    // Local/demo mode: default to a fully-unlocked Agency workspace so every
+    // section (incl. Chatbox + Reports) is visible. Cookie/MEM still override.
+    const base = MEM.get(workspaceId) ?? {
+      ...DEFAULTS,
+      accountType: "agency" as SocialPlan,
+      addons: { chatbox: true, reports: true },
+    };
     const cookieAddons = await readMockAddons();
     return cookieAddons ? { ...base, addons: cookieAddons } : base;
   }

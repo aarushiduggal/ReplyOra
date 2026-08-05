@@ -374,7 +374,7 @@ function Header({ title, clientId }: { title: string; clientId: string }) {
   return (
     <div>
       <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
-        <span className="text-oxblood">( Reports )</span> Instagram
+        <span className="text-oxblood">( 08 )</span> Reports
         <GuideTrigger pageKey="reports" clientId={clientId} />
       </div>
       <h2 className="mt-3 font-display text-3xl text-oxblood">{title}</h2>
