@@ -59,7 +59,9 @@ const CARDS: Card[] = [
     floatY: 14,
   },
   {
-    src: "brand-1.jpg",
+    // Third card: the filled-grid product screenshot. Drop a new image at
+    // public/marketing/hero-right.jpg to swap (no code change needed).
+    src: "hero-right.jpg",
     left: "69%",
     top: "16%",
     width: "31%",
@@ -69,9 +71,7 @@ const CARDS: Card[] = [
     delay: 0.33,
     floatDur: 8,
     floatY: 12,
-    // zoom + bottom-align to crop the second hand off the top (keeps the bag)
-    bgSize: "112%",
-    pos: "center bottom",
+    pos: "top",
   },
 ];
 
