@@ -247,16 +247,17 @@ export async function adminRemoveStaff(userId: string): Promise<void> {
 export async function adminSendBroadcast(
   subject: string,
   body: string,
+  audience = "All agencies",
 ): Promise<void> {
   const staff = await requirePlatformAdmin();
   ADMIN_BROADCASTS.unshift({
     id: `bc_${Math.random().toString(36).slice(2, 8)}`,
     subject,
     body,
-    audience: "All clients",
+    audience,
     sentAt: new Date().toISOString(),
   });
-  // // TODO: real email fan-out to all client owners.
-  await audit(staff, "broadcast.send", null, subject);
+  // // TODO: real email fan-out to the targeted agency owners.
+  await audit(staff, "broadcast.send", null, `${audience}: ${subject}`);
   revalidatePath("/admin/broadcast");
 }

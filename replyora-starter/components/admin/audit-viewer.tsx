@@ -54,7 +54,7 @@ export function AuditViewer({ entries }: { entries: AuditRow[] }) {
           ))}
         </select>
         <select value={ws} onChange={(e) => setWs(e.target.value)} className={sel}>
-          <option value="">All clients</option>
+          <option value="">All agencies</option>
           {workspaces.map((w) => (
             <option key={w} value={w}>{w}</option>
           ))}
@@ -73,7 +73,7 @@ export function AuditViewer({ entries }: { entries: AuditRow[] }) {
             <tr className="[&>th]:py-2 [&>th]:pr-4">
               <th>When</th>
               <th>Staff</th>
-              <th>Client</th>
+              <th>Agency</th>
               <th>Action</th>
               <th>Target</th>
             </tr>
