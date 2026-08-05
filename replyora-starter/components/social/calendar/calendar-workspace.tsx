@@ -11,9 +11,11 @@ import {
   updateCalendarPostAction,
   deleteCalendarPostAction,
   sendForApprovalAction,
+  publishNowAction,
 } from "@/app/(social)/clients/[id]/calendar/actions";
 import { GuideTrigger } from "@/components/social/guide";
 import { PublishAssist } from "@/components/social/publish-assist";
+import { toast } from "@/lib/toast";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -33,18 +35,37 @@ function dateKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+/** Turn a raw publish error code into something an agency can act on. */
+function prettyPublishError(err?: string): string {
+  switch (err) {
+    case "no_media":
+      return "Add an image or video to this post first — the platforms need media.";
+    case "no_database":
+      return "Publishing runs on the live site only, not this local preview.";
+    case "instagram_not_connected":
+    case "tiktok_not_connected":
+      return "This account isn’t linked yet. Connect it on the Integrations page.";
+    default:
+      return err ?? "Something went wrong. Try again in a moment.";
+  }
+}
+
 export function CalendarWorkspace({
   clientId,
   clientName,
   posts,
   approvals,
   todayISO,
+  publishReady = false,
 }: {
   clientId: string;
   clientName: string;
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
   todayISO: string;
+  /** True when a real publishing engine is configured — the Publish button then
+   *  posts live instead of opening the copy-and-paste assist. */
+  publishReady?: boolean;
 }) {
   const parts = todayISO.split("-");
   const todayY = Number(parts[0]);
@@ -57,12 +78,36 @@ export function CalendarWorkspace({
   const [shareMonth, setShareMonth] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
   const [publishPost, setPublishPost] = useState<ClientPost | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   function markPosted(p: ClientPost) {
     startTransition(async () => {
       await updateCalendarPostAction(clientId, p.id, { status: "published" });
       setPublishPost(null);
+    });
+  }
+
+  /** Real publish — pushes the post live via the configured engine (Ayrshare /
+   *  Meta / TikTok). Falls back to the copy-and-paste assist when none is set. */
+  function publishNow(p: ClientPost) {
+    if (!publishReady) {
+      setPublishPost(p);
+      return;
+    }
+    setPublishingId(p.id);
+    startTransition(async () => {
+      const res = await publishNowAction(clientId, p.id);
+      setPublishingId(null);
+      if (res.ok) {
+        toast({ title: `Posted to ${PLATFORM_LABEL[p.platform]} 🎉`, type: "success" });
+      } else {
+        toast({
+          title: "Couldn’t publish",
+          body: prettyPublishError(res.error),
+          type: "error",
+        });
+      }
     });
   }
 
@@ -265,10 +310,12 @@ export function CalendarWorkspace({
                   {p.status !== "published" && (
                     <button
                       type="button"
-                      onClick={() => setPublishPost(p)}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
+                      onClick={() => publishNow(p)}
+                      disabled={publishingId === p.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
                     >
-                      <Send className="h-3 w-3" /> Publish
+                      <Send className="h-3 w-3" />
+                      {publishingId === p.id ? "Posting…" : "Publish"}
                     </button>
                   )}
                 </div>

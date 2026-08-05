@@ -18,7 +18,18 @@ export const HAS_META = Boolean(
 export const HAS_TIKTOK = Boolean(
   process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET,
 );
+/**
+ * Ayrshare — a managed publishing API. It has already cleared Meta/TikTok App
+ * Review, so setting AYRSHARE_API_KEY lets us post to Instagram + TikTok for
+ * real with zero approval on our side. When present it takes over publishing.
+ */
+export const HAS_AYRSHARE = Boolean(process.env.AYRSHARE_API_KEY);
+
+/** True when a post can actually go live (any real engine is configured). */
+export const HAS_PUBLISHER = HAS_AYRSHARE || HAS_META || HAS_TIKTOK;
+
 const GRAPH = "https://graph.facebook.com/v21.0";
+const AYRSHARE = "https://api.ayrshare.com/api";
 
 const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
 let _sql: ReturnType<typeof neon> | null = null;
@@ -73,6 +84,28 @@ export async function publishPost(
     return await fail(workspaceId, postId, "no_media");
   }
 
+  // Managed API (Ayrshare) — posts for real without our own App Review. It holds
+  // the social connections, so no per-client OAuth token is needed here.
+  if (HAS_AYRSHARE) {
+    try {
+      const outcome = await publishViaAyrshare(post);
+      if (!outcome.ok) {
+        return await fail(workspaceId, postId, outcome.error ?? "publish_failed");
+      }
+      await sql()`
+        UPDATE social_posts SET
+          status = 'published',
+          external_post_id = ${outcome.externalId ?? null},
+          published_at = now(),
+          publish_error = NULL
+        WHERE id = ${postId} AND workspace_id = ${workspaceId}
+      `;
+      return outcome;
+    } catch (e) {
+      return await fail(workspaceId, postId, (e as Error).message.slice(0, 200));
+    }
+  }
+
   const conns = (await sql()`
     SELECT external_account_id, access_token
     FROM client_connections
@@ -114,6 +147,59 @@ async function fail(
     WHERE id = ${postId} AND workspace_id = ${workspaceId}
   `;
   return { ok: false, error };
+}
+
+/**
+ * Ayrshare — post to Instagram/TikTok via the managed API. With a single linked
+ * account, posts go to the default profile. For agencies, an optional per-client
+ * profile key (clients.ayrshare_profile_key, migration 0005) routes each client's
+ * posts to their own linked accounts. If that column isn't present yet we simply
+ * fall back to the default profile, so posting works before the migration is run.
+ */
+async function publishViaAyrshare(post: PostRow): Promise<PublishOutcome> {
+  const platform = post.platform === "instagram" ? "instagram" : "tiktok";
+
+  let profileKey: string | null = null;
+  try {
+    const r = (await sql()`
+      SELECT ayrshare_profile_key FROM clients WHERE id = ${post.client_id} LIMIT 1
+    `) as { ayrshare_profile_key: string | null }[];
+    profileKey = r[0]?.ayrshare_profile_key ?? null;
+  } catch {
+    /* column not present yet — post to the default profile */
+  }
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${process.env.AYRSHARE_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+  if (profileKey) headers["Profile-Key"] = profileKey;
+
+  const res = await fetch(`${AYRSHARE}/post`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      post: fullCaption(post),
+      platforms: [platform],
+      mediaUrls: [post.media_url],
+      ...(post.media_kind === "video" ? { isVideo: true } : {}),
+    }),
+  });
+  const data = (await res.json()) as {
+    status?: string;
+    postIds?: { platform: string; id?: string; postUrl?: string }[];
+    errors?: ({ message?: string } | string)[];
+    message?: string;
+  };
+  if (data.status === "success" && data.postIds && data.postIds.length > 0) {
+    return { ok: true, externalId: data.postIds[0]?.id };
+  }
+  const err = data.errors?.[0];
+  const msg =
+    (typeof err === "string" ? err : err?.message) ??
+    data.message ??
+    "ayrshare_failed";
+  return { ok: false, error: msg };
 }
 
 /** Instagram Graph API: create a media container, then publish it. */

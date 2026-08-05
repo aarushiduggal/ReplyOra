@@ -3,6 +3,7 @@ import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
 import { getClientApprovals, type ApprovalStatus } from "@/lib/social/approvals";
+import { HAS_PUBLISHER } from "@/lib/social/publish";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function ClientCalendarPage({
       posts={posts}
       approvals={approvals}
       todayISO={todayISO}
+      publishReady={HAS_PUBLISHER}
     />
   );
 }
