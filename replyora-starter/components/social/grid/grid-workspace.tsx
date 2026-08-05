@@ -3,33 +3,54 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
+  CalendarClock,
+  Check,
   Grid3x3,
   ImageIcon,
   Instagram,
   Menu,
+  PencilLine,
   Play,
   Plus,
   QrCode,
   Redo2,
   Square,
+  Trash2,
   Undo2,
   UserSquare,
   Upload,
   X,
 } from "lucide-react";
 
-import type { GridTile, ProfilePreview } from "@/lib/social/grid";
+import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
 import { GuideTrigger } from "@/components/social/guide";
+import { toast } from "@/lib/toast";
 import {
+  bulkDeleteAction,
+  bulkStatusAction,
+  placeAssetAction,
   reorderTilesAction,
   saveProfilePreviewAction,
 } from "@/app/(social)/clients/[id]/grid/actions";
 
+export interface GridAsset {
+  id: string;
+  url: string;
+}
+
 const TINTS = ["#5C1A1A", "#7A2E2A", "#B26B62", "#3F1011", "#8A4A42", "#D9AFA6"];
-function tintFor(id: string): string {
+/**
+ * A tile's representative swatch is derived from its content pillar (falling
+ * back to its id) — so tiles that share a theme share a colour. That makes the
+ * palette + harmony read the feed's real content consistency, not random noise.
+ */
+function colorFor(key: string): string {
   let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) & 0xffff;
   return TINTS[h % TINTS.length] ?? "#5C1A1A";
+}
+function tileColor(t: GridTile): string {
+  return colorFor(t.pillar || t.id);
 }
 function firstWords(s: string, n = 6): string {
   return s.replace(/\s+/g, " ").trim().split(" ").slice(0, n).join(" ");
@@ -40,22 +61,47 @@ const STATUS_DOT: Record<GridTile["status"], string> = {
   published: "bg-oxblood",
 };
 
+/** Live feed analysis — harmony %, palette, pillar mix. Computed from tiles. */
+function analyzeFeed(tiles: GridTile[]) {
+  const total = tiles.length;
+  const colors = tiles.map(tileColor);
+  const distinct = [...new Set(colors)];
+  // Consistency: 1 shared colour → 100%, all-different → 0%. Floors at 40 so a
+  // varied-but-intentional feed never reads as "broken".
+  const raw =
+    total <= 1 ? 100 : 100 * (1 - (distinct.length - 1) / (total - 1));
+  const harmony = total === 0 ? 0 : Math.max(40, Math.round(raw));
+  // Palette ordered by frequency.
+  const freq = new Map<string, number>();
+  for (const c of colors) freq.set(c, (freq.get(c) ?? 0) + 1);
+  const palette = [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([c]) => c)
+    .slice(0, 5);
+  return { harmony, palette, total };
+}
+
 export function GridWorkspace({
   clientId,
   clientName,
   tiles: initialTiles,
   profile: initialProfile,
+  assets = [],
 }: {
   clientId: string;
   clientName: string;
   tiles: GridTile[];
   profile: ProfilePreview;
+  assets?: GridAsset[];
 }) {
   const base = `/clients/${clientId}`;
   const [tiles, setTiles] = useState<GridTile[]>(initialTiles);
   const [past, setPast] = useState<GridTile[][]>([]);
   const [future, setFuture] = useState<GridTile[][]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragAssetUrl, setDragAssetUrl] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<ProfilePreview>({
     ...initialProfile,
@@ -74,6 +120,7 @@ export function GridWorkspace({
     () => tiles.filter((t) => t.status === "scheduled"),
     [tiles],
   );
+  const feed = useMemo(() => analyzeFeed(tiles), [tiles]);
 
   function commitOrder(next: GridTile[]) {
     setPast((p) => [...p, tiles]);
@@ -85,6 +132,14 @@ export function GridWorkspace({
   }
 
   function onDrop(targetId: string) {
+    setDropTarget(null);
+    // Dropping an ASSET onto a tile → place its image (real, persisted).
+    if (dragAssetUrl) {
+      placeAsset(targetId, dragAssetUrl);
+      setDragAssetUrl(null);
+      return;
+    }
+    // Otherwise it's a tile being dragged → reorder.
     if (!dragId || dragId === targetId) return;
     const from = tiles.findIndex((t) => t.id === dragId);
     const to = tiles.findIndex((t) => t.id === targetId);
@@ -95,6 +150,47 @@ export function GridWorkspace({
     if (!moved) return;
     next.splice(to, 0, moved);
     commitOrder(next);
+  }
+
+  /** Place (persist) an asset image onto a tile — optimistic. */
+  function placeAsset(tileId: string, url: string) {
+    setTiles((ts) =>
+      ts.map((t) => (t.id === tileId ? { ...t, mediaUrl: url } : t)),
+    );
+    startTransition(() => placeAssetAction(clientId, tileId, url));
+    toast({ title: "Image placed", type: "success" });
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelected(new Set());
+  }
+
+  function applyBulkStatus(status: TileStatus) {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setTiles((ts) =>
+      ts.map((t) => (selected.has(t.id) ? { ...t, status } : t)),
+    );
+    startTransition(() => bulkStatusAction(clientId, ids, status));
+    toast({ title: `${ids.length} moved to ${status}`, type: "success" });
+    clearSelection();
+  }
+  function applyBulkDelete() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setPast((p) => [...p, tiles]);
+    setTiles((ts) => ts.filter((t) => !selected.has(t.id)));
+    startTransition(() => bulkDeleteAction(clientId, ids));
+    toast({ title: `${ids.length} deleted`, type: "info" });
+    clearSelection();
   }
 
   function undo() {
@@ -265,26 +361,77 @@ export function GridWorkspace({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
-                {tiles.map((t) => (
-                  <div
-                    key={t.id}
-                    draggable
-                    onDragStart={() => setDragId(t.id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => onDrop(t.id)}
-                    className="group relative aspect-square cursor-grab active:cursor-grabbing"
-                    style={{ backgroundColor: tintFor(t.id) }}
-                    title={firstWords(t.caption, 12)}
-                  >
-                    <span
-                      className={`absolute right-1 top-1 h-2 w-2 rounded-full ${STATUS_DOT[t.status]} ring-1 ring-white/70`}
-                    />
-                    <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
-                      {firstWords(t.caption, 6)}
-                    </span>
-                  </div>
-                ))}
+              <div className="relative grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
+                {tiles.map((t, i) => {
+                  const isSel = selected.has(t.id);
+                  const isTarget = dropTarget === t.id;
+                  return (
+                    <div
+                      key={t.id}
+                      draggable
+                      onDragStart={() => setDragId(t.id)}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (dragAssetUrl) setDropTarget(t.id);
+                      }}
+                      onDragLeave={() =>
+                        setDropTarget((d) => (d === t.id ? null : d))
+                      }
+                      onDrop={() => onDrop(t.id)}
+                      className="group relative aspect-square cursor-grab bg-cover bg-center active:cursor-grabbing"
+                      style={
+                        t.mediaUrl
+                          ? { backgroundImage: `url(${t.mediaUrl})` }
+                          : { backgroundColor: tileColor(t) }
+                      }
+                      title={firstWords(t.caption, 12)}
+                    >
+                      {/* select toggle (click doesn't trigger drag) */}
+                      <button
+                        type="button"
+                        draggable={false}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelect(t.id);
+                        }}
+                        aria-label={isSel ? "Deselect" : "Select"}
+                        className={`absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border transition ${
+                          isSel
+                            ? "border-oxblood bg-oxblood text-cream"
+                            : "border-white/70 bg-black/25 text-transparent opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        <Check className="h-2.5 w-2.5" />
+                      </button>
+                      <span
+                        className={`absolute right-1 top-1 h-2 w-2 rounded-full ${STATUS_DOT[t.status]} ring-1 ring-white/70`}
+                      />
+                      {!t.mediaUrl && (
+                        <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
+                          {firstWords(t.caption, 6)}
+                        </span>
+                      )}
+                      {isTarget && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-oxblood/40 text-[8px] font-bold uppercase tracking-wide text-cream">
+                          Drop
+                        </span>
+                      )}
+                      {isSel && (
+                        <span className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-oxblood" />
+                      )}
+                      {/* "first impression" line after the top 6 (above the fold) */}
+                      {i === 5 && tiles.length > 6 && (
+                        <span className="pointer-events-none absolute inset-x-0 -bottom-0.5 z-10 flex translate-y-1/2 items-center gap-1">
+                          <span className="h-px flex-1 bg-oxblood/70" />
+                          <span className="whitespace-nowrap rounded-full bg-oxblood px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
+                            First impression
+                          </span>
+                          <span className="h-px flex-1 bg-oxblood/70" />
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -306,20 +453,85 @@ export function GridWorkspace({
             <QrCode className="h-3.5 w-3.5" /> Upload from phone
           </button>
 
+          {/* Bulk actions bar — appears when tiles are multi-selected */}
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-oxblood/20 bg-white p-2.5">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/85">
+                {selected.size} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => applyBulkStatus("scheduled")}
+                className="inline-flex items-center gap-1 rounded-full bg-oxblood px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-cream"
+              >
+                <CalendarClock className="h-3 w-3" /> Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => applyBulkStatus("draft")}
+                className="inline-flex items-center gap-1 rounded-full border border-oxblood/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-oxblood"
+              >
+                <PencilLine className="h-3 w-3" /> Draft
+              </button>
+              <button
+                type="button"
+                onClick={applyBulkDelete}
+                className="inline-flex items-center gap-1 rounded-full border border-ink/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink/70 hover:border-red-400 hover:text-red-600"
+              >
+                <Trash2 className="h-3 w-3" /> Delete
+              </button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="ml-auto text-[10px] font-semibold uppercase tracking-[0.1em] text-ink/60 hover:text-oxblood"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
-              <span>0 assets</span>
-              <span className="flex gap-3">
-                <span>Filter</span>
-                <span>Arrange</span>
-              </span>
+              <span>{assets.length} assets</span>
+              <Link
+                href={`${base}/assets`}
+                className="text-oxblood hover:underline"
+              >
+                Manage
+              </Link>
             </div>
-            <div className="mt-2 flex flex-col items-center gap-1 rounded-xl border border-dashed border-oxblood/20 px-4 py-8 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
-                No unplaced assets here
-              </p>
-              <p className="text-[11px] text-ink/80">Drop files here</p>
-            </div>
+            {assets.length === 0 ? (
+              <div className="mt-2 flex flex-col items-center gap-1 rounded-xl border border-dashed border-oxblood/20 px-4 py-8 text-center">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
+                  No assets yet
+                </p>
+                <Link
+                  href={`${base}/assets`}
+                  className="text-[11px] text-oxblood hover:underline"
+                >
+                  Upload some to drag onto the grid →
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mt-2 grid grid-cols-4 gap-1.5">
+                  {assets.map((a) => (
+                    <div
+                      key={a.id}
+                      draggable
+                      onDragStart={() => setDragAssetUrl(a.url)}
+                      onDragEnd={() => setDragAssetUrl(null)}
+                      className="aspect-square cursor-grab rounded-md bg-oat bg-cover bg-center ring-1 ring-oxblood/10 transition hover:ring-oxblood/40 active:cursor-grabbing"
+                      style={{ backgroundImage: `url(${a.url})` }}
+                      title="Drag onto a grid tile to place"
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-ink/55">
+                  Drag an asset onto a grid tile to place it.
+                </p>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -365,6 +577,8 @@ export function GridWorkspace({
           </div>
         </div>
       </div>
+
+      {tiles.length > 0 && <GridIntelligence feed={feed} />}
 
       {editOpen && (
         <Modal title="Edit profile" onClose={() => setEditOpen(false)}>
@@ -561,12 +775,97 @@ function Column({
           href={`${base}/studio`}
           className="flex items-center gap-2 rounded-xl border border-oxblood/10 bg-white p-2 hover:border-oxblood/30"
         >
-          <span className="h-9 w-9 shrink-0 rounded-lg" style={{ backgroundColor: tintFor(t.id) }} />
+          <span
+            className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center"
+            style={
+              t.mediaUrl
+                ? { backgroundImage: `url(${t.mediaUrl})` }
+                : { backgroundColor: tileColor(t) }
+            }
+          />
           <span className="line-clamp-2 text-[11px] font-medium text-ink/90">
             {firstWords(t.caption, 8)}
           </span>
         </Link>
       ))}
     </div>
+  );
+}
+
+/** Recommended posting windows (general best-practice, not per-account analytics). */
+const RECOMMENDED_TIMES = ["Tue 7pm", "Thu 6pm", "Sun 11am"];
+
+function GridIntelligence({
+  feed,
+}: {
+  feed: { harmony: number; palette: string[]; total: number };
+}) {
+  const verdict =
+    feed.harmony >= 80
+      ? "Your tiles are consistent — this feed reads as one brand."
+      : feed.harmony >= 60
+        ? "Fairly consistent — a couple of outliers break the rhythm."
+        : "Mixed themes — group similar posts to tighten the look.";
+
+  return (
+    <section className="mt-8 border-t border-oxblood/10 pt-6">
+      <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
+        <span className="text-oxblood">( 02b )</span> Grid intelligence
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Feed harmony */}
+        <div className="rounded-2xl border border-oxblood/10 bg-white p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/55">
+              Feed harmony
+            </p>
+            <p className="font-display text-lg text-oxblood">{feed.harmony}%</p>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-oat">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-oxblood to-rose transition-all duration-700"
+              style={{ width: `${feed.harmony}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-ink/55">{verdict}</p>
+        </div>
+
+        {/* Palette */}
+        <div className="rounded-2xl border border-oxblood/10 bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/55">
+            Your palette
+          </p>
+          <div className="mt-2 flex gap-1.5">
+            {feed.palette.map((c, i) => (
+              <span
+                key={`${c}-${i}`}
+                className="h-7 flex-1 rounded-md ring-1 ring-black/5"
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-ink/55">
+            Pulled from your {feed.total} planned tiles.
+          </p>
+        </div>
+
+        {/* Recommended times */}
+        <div className="rounded-2xl border border-oxblood/10 bg-white p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink/55">
+            <CalendarClock className="h-3.5 w-3.5" /> Recommended times
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {RECOMMENDED_TIMES.map((t) => (
+              <span
+                key={t}
+                className="rounded-full bg-oxblood/10 px-3 py-1 text-xs font-medium text-oxblood"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

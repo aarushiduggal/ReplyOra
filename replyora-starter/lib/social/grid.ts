@@ -14,12 +14,16 @@ import { getCurrentWorkspaceId } from "@/lib/auth/session";
  * Schema: db/migrations/0003_agency_clients.sql
  */
 
+export type TileStatus = "draft" | "scheduled" | "published";
+
 export interface GridTile {
   id: string;
   caption: string;
-  status: "draft" | "scheduled" | "published";
+  status: TileStatus;
   pillar: string;
   orderIndex: number;
+  /** Placed image (Instagram media). null until an asset is dropped on the tile. */
+  mediaUrl: string | null;
 }
 
 export interface ProfilePreview {
@@ -63,13 +67,14 @@ interface TileRow {
   status: string;
   pillar: string | null;
   order_index: number | null;
+  media_url: string | null;
 }
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return [];
   const rows = (await sql()`
-    SELECT id, caption, status, pillar, order_index
+    SELECT id, caption, status, pillar, order_index, media_url
     FROM social_posts
     WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
     ORDER BY order_index ASC NULLS LAST, created_at DESC
@@ -77,10 +82,62 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   return rows.map((r, i) => ({
     id: r.id,
     caption: r.caption ?? "",
-    status: (r.status as GridTile["status"]) ?? "draft",
+    status: (r.status as TileStatus) ?? "draft",
     pillar: r.pillar ?? "",
     orderIndex: r.order_index ?? i,
+    mediaUrl: r.media_url ?? null,
   }));
+}
+
+/** Place an image on a tile (drag an asset onto the grid slot). */
+export async function setTileMedia(
+  clientId: string,
+  tileId: string,
+  mediaUrl: string | null,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return;
+  await sql()`
+    UPDATE social_posts SET media_url = ${mediaUrl}
+    WHERE workspace_id = ${workspaceId}
+      AND client_id = ${clientId}
+      AND id = ${tileId}
+  `;
+}
+
+/** Bulk-update the status of several tiles at once (multi-select actions). */
+export async function bulkSetTileStatus(
+  clientId: string,
+  ids: string[],
+  status: TileStatus,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb() || ids.length === 0) return;
+  for (const id of ids) {
+    await sql()`
+      UPDATE social_posts SET status = ${status}
+      WHERE workspace_id = ${workspaceId}
+        AND client_id = ${clientId}
+        AND id = ${id}
+    `;
+  }
+}
+
+/** Bulk-delete several tiles at once (multi-select actions). */
+export async function bulkDeleteTiles(
+  clientId: string,
+  ids: string[],
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb() || ids.length === 0) return;
+  for (const id of ids) {
+    await sql()`
+      DELETE FROM social_posts
+      WHERE workspace_id = ${workspaceId}
+        AND client_id = ${clientId}
+        AND id = ${id}
+    `;
+  }
 }
 
 /** Persist the feed order — writes order_index in the given id sequence. */
