@@ -354,10 +354,19 @@ export function GridWorkspace({
             </div>
 
             {tiles.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 border-t border-oxblood/10 px-4 py-12 text-center">
-                <ImageIcon className="h-6 w-6 text-ink/65" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
-                  Use Add Post above to get started
+              <div className="border-t border-oxblood/10">
+                <div className="grid grid-cols-3 gap-0.5 bg-oxblood/5">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex aspect-square items-center justify-center border border-dashed border-oxblood/15 bg-oat/40"
+                    >
+                      <ImageIcon className="h-4 w-4 text-oxblood/20" />
+                    </div>
+                  ))}
+                </div>
+                <p className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70">
+                  Use Add Post above to start planning your feed
                 </p>
               </div>
             ) : (
@@ -578,7 +587,7 @@ export function GridWorkspace({
         </div>
       </div>
 
-      {tiles.length > 0 && <GridIntelligence feed={feed} />}
+      <GridIntelligence feed={feed} />
 
       {editOpen && (
         <Modal title="Edit profile" onClose={() => setEditOpen(false)}>
@@ -800,8 +809,10 @@ function GridIntelligence({
 }: {
   feed: { harmony: number; palette: string[]; total: number };
 }) {
-  const verdict =
-    feed.harmony >= 80
+  const empty = feed.total === 0;
+  const verdict = empty
+    ? "Add posts and this reads your feed's colour consistency."
+    : feed.harmony >= 80
       ? "Your tiles are consistent — this feed reads as one brand."
       : feed.harmony >= 60
         ? "Fairly consistent — a couple of outliers break the rhythm."
@@ -811,6 +822,11 @@ function GridIntelligence({
     <section className="mt-8 border-t border-oxblood/10 pt-6">
       <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
         <span className="text-oxblood">( 02b )</span> Grid intelligence
+        {empty && (
+          <span className="rounded-full bg-oat px-2 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-ink/60">
+            Preview — add posts to activate
+          </span>
+        )}
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {/* Feed harmony */}
@@ -819,12 +835,14 @@ function GridIntelligence({
             <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/55">
               Feed harmony
             </p>
-            <p className="font-display text-lg text-oxblood">{feed.harmony}%</p>
+            <p className="font-display text-lg text-oxblood">
+              {empty ? "—" : `${feed.harmony}%`}
+            </p>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-oat">
             <div
               className="h-full rounded-full bg-gradient-to-r from-oxblood to-rose transition-all duration-700"
-              style={{ width: `${feed.harmony}%` }}
+              style={{ width: empty ? "0%" : `${feed.harmony}%` }}
             />
           </div>
           <p className="mt-2 text-[11px] text-ink/55">{verdict}</p>
@@ -836,16 +854,20 @@ function GridIntelligence({
             Your palette
           </p>
           <div className="mt-2 flex gap-1.5">
-            {feed.palette.map((c, i) => (
-              <span
-                key={`${c}-${i}`}
-                className="h-7 flex-1 rounded-md ring-1 ring-black/5"
-                style={{ backgroundColor: c }}
-              />
-            ))}
+            {(empty ? [null, null, null, null, null] : feed.palette).map(
+              (c, i) => (
+                <span
+                  key={`${c ?? "ghost"}-${i}`}
+                  className={`h-7 flex-1 rounded-md ring-1 ring-black/5 ${c ? "" : "border border-dashed border-oxblood/20 bg-oat/50 ring-0"}`}
+                  style={c ? { backgroundColor: c } : undefined}
+                />
+              ),
+            )}
           </div>
           <p className="mt-2 text-[11px] text-ink/55">
-            Pulled from your {feed.total} planned tiles.
+            {empty
+              ? "Your palette appears as you plan tiles."
+              : `Pulled from your ${feed.total} planned tiles.`}
           </p>
         </div>
 
