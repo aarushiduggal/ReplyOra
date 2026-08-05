@@ -21,8 +21,8 @@ export async function saveWorkspaceBillingAction(
 /** Toggle paid add-ons (chatbox / reports). Re-gates the dashboard nav + pages. */
 export async function saveAddonsAction(addons: SocialAddons): Promise<void> {
   await setAddons(addons);
-  revalidatePath("/settings");
-  revalidatePath("/clients", "layout");
+  // Re-gate every route (the client sub-nav lives in a nested layout).
+  revalidatePath("/", "layout");
 }
 
 export async function saveProfileNameAction(fullName: string): Promise<void> {

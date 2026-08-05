@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { cookies } from "next/headers";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import {
@@ -58,6 +59,22 @@ function sql() {
 
 const MEM = new Map<string, WorkspaceBilling>();
 
+// Mock mode (no Neon) has no durable store, and module memory doesn't survive
+// between dev requests — so add-ons are persisted in a cookie there instead,
+// which makes the Settings toggles actually stick and re-gate the nav.
+const ADDONS_COOKIE = "ro_addons";
+
+async function readMockAddons(): Promise<SocialAddons | null> {
+  try {
+    const raw = (await cookies()).get(ADDONS_COOKIE)?.value;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SocialAddons>;
+    return { ...EMPTY_ADDONS, ...parsed };
+  } catch {
+    return null;
+  }
+}
+
 // Contact (email/phone) is packed into the address JSONB so no schema change
 // is needed beyond migration 0003's workspace_billing table.
 interface AddressJson extends Partial<Address> {
@@ -80,7 +97,11 @@ interface Row {
 
 export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
   const workspaceId = await getCurrentWorkspaceId();
-  if (!hasDb()) return MEM.get(workspaceId) ?? { ...DEFAULTS };
+  if (!hasDb()) {
+    const base = MEM.get(workspaceId) ?? { ...DEFAULTS };
+    const cookieAddons = await readMockAddons();
+    return cookieAddons ? { ...base, addons: cookieAddons } : base;
+  }
   const rows = (await sql()`
     SELECT business_name, logo_url, address, report_title, tax_rate, terms, currency
     FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
@@ -173,6 +194,12 @@ export async function setAddons(addons: SocialAddons): Promise<void> {
   if (!hasDb()) {
     const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
     MEM.set(workspaceId, { ...cur, addons });
+    // Durable across dev requests (module memory isn't).
+    (await cookies()).set(ADDONS_COOKIE, JSON.stringify(addons), {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
     return;
   }
   const rows = (await sql()`

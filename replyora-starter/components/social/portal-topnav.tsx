@@ -37,7 +37,7 @@ export function PortalTopNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "pb-1 transition-colors",
+                  "pb-1 transition-colors hover:font-bold",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
                     : "text-ink/85 hover:text-oxblood",
@@ -50,7 +50,7 @@ export function PortalTopNav() {
           <button
             type="button"
             onClick={() => void signOut({ redirectTo: "/login" })}
-            className="pb-1 uppercase tracking-[0.2em] text-ink/85 transition-colors hover:text-oxblood"
+            className="pb-1 uppercase tracking-[0.2em] text-ink/85 transition-colors hover:font-bold hover:text-oxblood"
           >
             Logout
           </button>

@@ -221,11 +221,17 @@ function BillingTab({
   const [busy, setBusy] = useState(false);
   const [addonState, setAddonState] = useState<SocialAddons>(addons);
   const [, startAddon] = useTransition();
+  const addonRouter = useRouter();
 
   function toggleAddon(key: keyof SocialAddons) {
     const next = { ...addonState, [key]: !addonState[key] };
     setAddonState(next);
-    startAddon(() => saveAddonsAction(next));
+    startAddon(async () => {
+      await saveAddonsAction(next);
+      // Re-fetch server components (incl. the client sub-nav) so the section
+      // appears/disappears immediately across the app.
+      addonRouter.refresh();
+    });
   }
 
   async function switchTo(plan: SocialPlan) {

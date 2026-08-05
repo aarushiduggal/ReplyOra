@@ -52,7 +52,7 @@ export function ClientSubNav({
                 key={item.slug || "overview"}
                 href={href}
                 className={cn(
-                  "pb-1 transition-colors",
+                  "pb-1 transition-colors hover:font-bold",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
                     : "text-ink/85 hover:text-oxblood",
