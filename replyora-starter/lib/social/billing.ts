@@ -2,10 +2,12 @@ import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import {
+  EMPTY_ADDONS,
   EMPTY_ADDRESS,
   SOCIAL_PRICE_ENV,
   type Address,
   type BillingInterval,
+  type SocialAddons,
   type SocialPlan,
   type WorkspaceBilling,
 } from "@/lib/social/plans";
@@ -34,6 +36,7 @@ const DEFAULTS: WorkspaceBilling = {
   plan: "personal",
   planStatus: "trialing",
   accountType: null,
+  addons: EMPTY_ADDONS,
 };
 
 export function socialPriceId(plan: SocialPlan, interval: BillingInterval): string | null {
@@ -63,6 +66,7 @@ interface AddressJson extends Partial<Address> {
   plan?: SocialPlan;
   planStatus?: string;
   accountType?: SocialPlan | null;
+  addons?: SocialAddons;
 }
 interface Row {
   business_name: string | null;
@@ -103,6 +107,7 @@ export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
     plan: addr.plan ?? "personal",
     planStatus: addr.planStatus ?? "trialing",
     accountType: addr.accountType ?? null,
+    addons: { ...EMPTY_ADDONS, ...(addr.addons ?? {}) },
   };
 }
 
@@ -123,6 +128,7 @@ export async function saveWorkspaceBilling(
     plan: next.plan,
     planStatus: next.planStatus,
     accountType: next.accountType,
+    addons: next.addons,
   };
   await sql()`
     INSERT INTO workspace_billing
@@ -154,6 +160,25 @@ export async function setAccountType(type: SocialPlan | null): Promise<void> {
     SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
   `) as { address: AddressJson | null }[];
   const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), accountType: type };
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
+  `;
+}
+
+/** Update the workspace's paid add-ons (build-your-plan toggles in Settings). */
+export async function setAddons(addons: SocialAddons): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
+    MEM.set(workspaceId, { ...cur, addons });
+    return;
+  }
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), addons };
   await sql()`
     INSERT INTO workspace_billing (workspace_id, address)
     VALUES (${workspaceId}, ${JSON.stringify(addressJson)})

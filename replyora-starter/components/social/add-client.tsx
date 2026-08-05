@@ -1,16 +1,80 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import Link from "next/link";
+import { Lock, Plus, X } from "lucide-react";
 
 import { createClientAction } from "@/app/(social)/clients/actions";
 
 /**
  * "+ ADD CLIENT" button + name dialog. On submit the server action creates the
  * client row in Neon and redirects to its Overview.
+ *
+ * When the workspace is at its plan's client limit, the button becomes an
+ * upsell that explains the limit instead of opening the create form.
  */
-export function AddClient() {
+export function AddClient({
+  atLimit = false,
+  maxClients,
+}: {
+  atLimit?: boolean;
+  maxClients?: number;
+}) {
   const [open, setOpen] = useState(false);
+  const [limitOpen, setLimitOpen] = useState(false);
+
+  if (atLimit) {
+    const agencyMax = maxClients && maxClients >= 10;
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setLimitOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood transition-colors hover:bg-oxblood/5"
+        >
+          <Lock className="h-3.5 w-3.5" /> Add client
+        </button>
+        {limitOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4"
+            onClick={() => setLimitOpen(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-2xl bg-white p-7 text-center shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-oxblood/10 text-oxblood">
+                <Lock className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 font-display text-2xl text-oxblood">
+                {agencyMax ? "That's your 10-client max" : "Client limit reached"}
+              </h3>
+              <p className="mx-auto mt-2 max-w-xs text-sm text-ink/75">
+                {agencyMax
+                  ? "Managing more than 10 brands? Get in touch and we'll unlock a higher tier for you."
+                  : `Your plan includes ${maxClients ?? 1} client. Upgrade to Agency to manage more brands from one workspace.`}
+              </p>
+              {agencyMax ? (
+                <a
+                  href="mailto:hello@replyora.net?subject=More%20than%2010%20clients"
+                  className="mt-6 inline-flex rounded-full bg-oxblood px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-opacity hover:opacity-90"
+                >
+                  Contact us
+                </a>
+              ) : (
+                <Link
+                  href="/settings?tab=plan"
+                  className="mt-6 inline-flex rounded-full bg-oxblood px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-opacity hover:opacity-90"
+                >
+                  Upgrade plan
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <>

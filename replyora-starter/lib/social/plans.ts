@@ -29,6 +29,54 @@ export interface WorkspaceBilling {
   planStatus: string;
   /** Chosen at onboarding. null = not onboarded yet → send to /onboarding. */
   accountType: SocialPlan | null;
+  /** Paid add-ons the workspace has enabled (build-your-plan). */
+  addons: SocialAddons;
+}
+
+/** Optional paid features layered on top of the base plan. */
+export interface SocialAddons {
+  /** Website chatbox (lead capture widget) per client. */
+  chatbox: boolean;
+  /** Client-facing performance reports. */
+  reports: boolean;
+}
+
+export const EMPTY_ADDONS: SocialAddons = {
+  chatbox: false,
+  reports: false,
+};
+
+/** What a workspace is actually allowed to do, resolved from plan + add-ons. */
+export interface Entitlements {
+  /** Max clients this workspace can create (Personal = 1, Agency = up to 10). */
+  maxClients: number;
+  /** Website chatbox available (add-on). */
+  chatbox: boolean;
+  /** Performance reports available (add-on). */
+  reports: boolean;
+}
+
+/** Base client limits per account type. Agency is the multi-client tier. */
+export const CLIENT_LIMIT: Record<SocialPlan, number> = {
+  personal: 1,
+  agency: 10,
+};
+
+/**
+ * Resolve entitlements from the chosen account type + enabled add-ons.
+ * Client-safe (pure) so both the nav and server guards use the same rules.
+ */
+export function entitlementsFor(
+  accountType: SocialPlan | null,
+  addons: SocialAddons | undefined,
+): Entitlements {
+  const type: SocialPlan = accountType ?? "personal";
+  const a = addons ?? EMPTY_ADDONS;
+  return {
+    maxClients: CLIENT_LIMIT[type],
+    chatbox: a.chatbox,
+    reports: a.reports,
+  };
 }
 
 export const EMPTY_ADDRESS: Address = {

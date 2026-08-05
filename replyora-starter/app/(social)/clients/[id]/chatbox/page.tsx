@@ -1,6 +1,9 @@
 import { ChatboxWorkspace } from "@/components/social/chatbox/chatbox-workspace";
+import { LockedSection } from "@/components/social/locked-section";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
+import { getWorkspaceBilling } from "@/lib/social/billing";
+import { entitlementsFor } from "@/lib/social/plans";
 import {
   getOrCreateClientAssistant,
   listKnowledge,
@@ -14,8 +17,24 @@ export default async function ClientChatboxPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await getClient(id);
+  const [client, billing] = await Promise.all([
+    getClient(id),
+    getWorkspaceBilling(),
+  ]);
   const name = client?.name ?? sampleName(id);
+
+  // Plan gate: the website chatbox is a paid add-on.
+  const ent = entitlementsFor(billing.accountType, billing.addons);
+  if (!ent.chatbox) {
+    return (
+      <LockedSection
+        title="Website chatbox isn't on your plan"
+        description="Add the chatbox to capture leads from each client's website with an on-brand assistant."
+        addonLabel="Chatbox add-on"
+        priceLabel="+$20/mo"
+      />
+    );
+  }
 
   const [assistant, knowledge] = await Promise.all([
     getOrCreateClientAssistant(id, name),

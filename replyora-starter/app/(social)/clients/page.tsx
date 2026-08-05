@@ -4,6 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listClients } from "@/lib/social/clients";
 import { getStudioOverview } from "@/lib/social/overview";
+import { getWorkspaceBilling } from "@/lib/social/billing";
+import { entitlementsFor } from "@/lib/social/plans";
 import { PageShell } from "@/components/social/page-shell";
 import { SectionHeader } from "@/components/social/section-header";
 import { AddClient } from "@/components/social/add-client";
@@ -13,12 +15,15 @@ import { Cockpit, ActivityFeed } from "@/components/social/dashboard/home-widget
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const [user, clients, overview] = await Promise.all([
+  const [user, clients, overview, billing] = await Promise.all([
     getCurrentUser(),
     listClients(),
     getStudioOverview(),
+    getWorkspaceBilling(),
   ]);
   const count = clients.length;
+  const ent = entitlementsFor(billing.accountType, billing.addons);
+  const atLimit = count >= ent.maxClients;
 
   return (
     <PageShell>
@@ -29,10 +34,13 @@ export default async function ClientsPage() {
           <GuideTrigger pageKey="clients" />
         </span>
         <div className="flex items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
-          <span>{count} active</span>
+          <span>
+            {count}
+            {ent.maxClients < 999 ? ` / ${ent.maxClients}` : ""} active
+          </span>
           <span className="text-ink/60">·</span>
           <span className="text-ink">{user.fullName}</span>
-          <AddClient />
+          <AddClient atLimit={atLimit} maxClients={ent.maxClients} />
         </div>
       </div>
 

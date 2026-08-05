@@ -13,12 +13,16 @@ import { cn } from "@/lib/utils";
 export function ClientSubNav({
   clientId,
   clientName,
+  lockedSlugs = [],
 }: {
   clientId: string;
   clientName: string;
+  /** Section slugs the plan hasn't unlocked — hidden from the nav. */
+  lockedSlugs?: string[];
 }) {
   const pathname = usePathname();
   const base = `/clients/${clientId}`;
+  const nav = CLIENT_NAV.filter((n) => !lockedSlugs.includes(n.slug));
   const currentSlug = pathname.startsWith(base + "/")
     ? pathname.slice(base.length + 1).split("/")[0]
     : "";
@@ -40,7 +44,7 @@ export function ClientSubNav({
 
         {/* sub-nav */}
         <nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.16em]">
-          {CLIENT_NAV.map((item) => {
+          {nav.map((item) => {
             const href = item.slug ? `${base}/${item.slug}` : base;
             const active = item.slug === (current?.slug ?? "");
             return (

@@ -3,9 +3,15 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import type { WorkspaceBilling, SocialPlan, BillingInterval } from "@/lib/social/plans";
+import type {
+  WorkspaceBilling,
+  SocialPlan,
+  SocialAddons,
+  BillingInterval,
+} from "@/lib/social/plans";
 import { SOCIAL_PLAN_PRICE } from "@/lib/social/plans";
 import {
+  saveAddonsAction,
   saveProfileNameAction,
   saveWorkspaceBillingAction,
 } from "@/app/(social)/settings/actions";
@@ -24,6 +30,7 @@ export function SettingsWorkspace({
   currentPlan,
   planStatus,
   stripeReady,
+  initialTab,
 }: {
   fullName: string;
   email: string;
@@ -31,8 +38,9 @@ export function SettingsWorkspace({
   currentPlan: SocialPlan;
   planStatus: string;
   stripeReady: boolean;
+  initialTab?: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>("Profile");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "Profile");
 
   return (
     <div>
@@ -64,7 +72,7 @@ export function SettingsWorkspace({
         {tab === "Profile" && <ProfileTab fullName={fullName} email={email} />}
         {tab === "Workspace" && <WorkspaceTab billing={billing} />}
         {tab === "Billing" && (
-          <BillingTab currentPlan={currentPlan} planStatus={planStatus} stripeReady={stripeReady} />
+          <BillingTab currentPlan={currentPlan} planStatus={planStatus} stripeReady={stripeReady} addons={billing.addons} />
         )}
         {tab === "Preferences" && (
           <Placeholder text="Email notifications, timezone and default posting times live here." />
@@ -178,17 +186,47 @@ function WorkspaceTab({ billing }: { billing: WorkspaceBilling }) {
   );
 }
 
+const ADDON_META: {
+  key: keyof SocialAddons;
+  label: string;
+  desc: string;
+  price: string;
+}[] = [
+  {
+    key: "chatbox",
+    label: "Website chatbox",
+    desc: "Lead-capture assistant on each client's site.",
+    price: "+$20/mo",
+  },
+  {
+    key: "reports",
+    label: "Performance reports",
+    desc: "Monthly client-facing results reports.",
+    price: "+$15/mo",
+  },
+];
+
 function BillingTab({
   currentPlan,
   planStatus,
   stripeReady,
+  addons,
 }: {
   currentPlan: SocialPlan;
   planStatus: string;
   stripeReady: boolean;
+  addons: SocialAddons;
 }) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [busy, setBusy] = useState(false);
+  const [addonState, setAddonState] = useState<SocialAddons>(addons);
+  const [, startAddon] = useTransition();
+
+  function toggleAddon(key: keyof SocialAddons) {
+    const next = { ...addonState, [key]: !addonState[key] };
+    setAddonState(next);
+    startAddon(() => saveAddonsAction(next));
+  }
 
   async function switchTo(plan: SocialPlan) {
     setBusy(true);
@@ -264,6 +302,43 @@ function BillingTab({
             Add your Stripe keys + the four price IDs in Netlify to enable live switching.
           </p>
         )}
+      </Card>
+
+      <Card title="Add-ons">
+        <p className="text-[11px] text-ink/70">
+          Turn features on or off — the dashboard unlocks them instantly.
+        </p>
+        <div className="mt-2 space-y-2">
+          {ADDON_META.map((a) => {
+            const on = addonState[a.key];
+            return (
+              <div
+                key={a.key}
+                className="flex items-center justify-between rounded-xl border border-ink/12 p-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-ink">
+                    {a.label}{" "}
+                    <span className="text-[11px] font-medium text-ink/60">
+                      {a.price}
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-ink/70">{a.desc}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleAddon(a.key)}
+                  aria-label={`${on ? "Disable" : "Enable"} ${a.label}`}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-oxblood" : "bg-ink/20"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${on ? "left-[22px]" : "left-0.5"}`}
+                  />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </Card>
     </div>
   );

@@ -1,8 +1,10 @@
 import { ReportsWorkspace } from "@/components/social/reports/reports-workspace";
+import { LockedSection } from "@/components/social/locked-section";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
 import { getWorkspaceBilling } from "@/lib/social/billing";
+import { entitlementsFor } from "@/lib/social/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,19 @@ export default async function ClientReportsPage({
     getWorkspaceBilling(),
   ]);
   const name = client?.name ?? sampleName(id);
+
+  // Plan gate: client-facing reports are a paid add-on.
+  const ent = entitlementsFor(billing.accountType, billing.addons);
+  if (!ent.reports) {
+    return (
+      <LockedSection
+        title="Reports aren't on your plan"
+        description="Add reports to send clients a polished monthly performance summary of reach, engagement and growth."
+        addonLabel="Reports add-on"
+        priceLabel="+$15/mo"
+      />
+    );
+  }
   const connected = (client?.platforms ?? []).includes("instagram");
 
   const now = new Date();

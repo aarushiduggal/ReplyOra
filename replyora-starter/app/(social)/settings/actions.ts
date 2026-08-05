@@ -4,13 +4,25 @@ import { revalidatePath } from "next/cache";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { updateUserName } from "@/lib/auth/users";
-import { saveWorkspaceBilling, type WorkspaceBilling } from "@/lib/social/billing";
+import {
+  saveWorkspaceBilling,
+  setAddons,
+  type SocialAddons,
+  type WorkspaceBilling,
+} from "@/lib/social/billing";
 
 export async function saveWorkspaceBillingAction(
   patch: Partial<WorkspaceBilling>,
 ): Promise<void> {
   await saveWorkspaceBilling(patch);
   revalidatePath("/settings");
+}
+
+/** Toggle paid add-ons (chatbox / reports). Re-gates the dashboard nav + pages. */
+export async function saveAddonsAction(addons: SocialAddons): Promise<void> {
+  await setAddons(addons);
+  revalidatePath("/settings");
+  revalidatePath("/clients", "layout");
 }
 
 export async function saveProfileNameAction(fullName: string): Promise<void> {
