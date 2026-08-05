@@ -1,12 +1,88 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Instagram, Printer } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { animate } from "framer-motion";
+import { Instagram, Printer, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import { PLATFORM_LABEL } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
+
+/* ------------------------------- helpers --------------------------------- */
+
+function dayKey(p: ClientPost): string {
+  return (p.scheduledFor ?? p.createdAt).slice(0, 10);
+}
+
+/** Count-up number (settles on its target even when off-screen). */
+function Counter({ to }: { to: number }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    const c = animate(0, to, {
+      duration: 0.9,
+      ease: [0.2, 0.7, 0.3, 1],
+      onUpdate: (x) => setV(Math.round(x)),
+    });
+    return () => c.stop();
+  }, [to]);
+  return <>{v.toLocaleString("en-AU")}</>;
+}
+
+/** Bucket posts into ~8 even columns across the range for the cadence chart. */
+function cadenceBuckets(posts: ClientPost[], from: string, to: string) {
+  const start = new Date(from).getTime();
+  const end = new Date(to).getTime();
+  const span = Math.max(1, end - start);
+  const N = 8;
+  const buckets = Array.from({ length: N }, () => 0);
+  for (const p of posts) {
+    const t = new Date(dayKey(p)).getTime();
+    if (t < start || t > end) continue;
+    const idx = Math.min(N - 1, Math.floor(((t - start) / span) * N));
+    buckets[idx] = (buckets[idx] ?? 0) + 1;
+  }
+  return buckets;
+}
+
+/** Plain-English "what changed" paragraph, generated from the real numbers. */
+function buildInsight(
+  clientName: string,
+  count: number,
+  prev: number,
+  days: number,
+  topPillar: [string, number] | undefined,
+  published: number,
+  firstHalf: number,
+  secondHalf: number,
+): string {
+  if (count === 0) {
+    return `No posts went out for ${clientName} in this window. Schedule a few from the Studio to start building momentum.`;
+  }
+  const delta = count - prev;
+  const dir =
+    delta > 0 ? `up ${delta}` : delta < 0 ? `down ${Math.abs(delta)}` : "flat";
+  const share = topPillar ? Math.round((topPillar[1] / count) * 100) : 0;
+  const trend =
+    secondHalf > firstHalf
+      ? "Cadence picked up through the period — the back half was busier than the start."
+      : secondHalf < firstHalf
+        ? "Cadence eased off toward the end — worth topping up the schedule to hold rhythm."
+        : "Cadence held steady across the period.";
+  const pillarLine = topPillar
+    ? ` ${topPillar[0]} led the mix at ${share}% of posts.`
+    : "";
+  const pubLine =
+    published > 0 ? ` ${published} of them are already published.` : "";
+  return (
+    `Over the last ${days} days, ${clientName} posted ${count} times — ${dir} vs the previous ${days} days.` +
+    pillarLine +
+    pubLine +
+    ` ${trend} Keep leaning into what's landing and hold the cadence.`
+  );
+}
+
+/* ------------------------------ component -------------------------------- */
 
 export function ReportsWorkspace({
   clientId,
@@ -32,24 +108,29 @@ export function ReportsWorkspace({
   const [from, setFrom] = useState(monthAgo);
   const [to, setTo] = useState(todayISO);
   const [range, setRange] = useState({ from: monthAgo, to: todayISO });
-  const [summary, setSummary] = useState(
-    `${clientName} stayed consistent this period. Educational content led reach; keep the cadence and lean into what's working.`,
-  );
 
   const inRange = useMemo(
     () =>
       posts.filter((p) => {
-        const d = (p.scheduledFor ?? p.createdAt).slice(0, 10);
+        const d = dayKey(p);
         return d >= range.from && d <= range.to;
       }),
     [posts, range],
   );
 
+  const days = useMemo(
+    () =>
+      Math.max(
+        1,
+        Math.round(
+          (new Date(range.to).getTime() - new Date(range.from).getTime()) /
+            86400000,
+        ),
+      ),
+    [range],
+  );
+
   const prevWindow = useMemo(() => {
-    const days = Math.max(
-      1,
-      Math.round((new Date(range.to).getTime() - new Date(range.from).getTime()) / 86400000),
-    );
     const prevTo = new Date(range.from);
     prevTo.setDate(prevTo.getDate() - 1);
     const prevFrom = new Date(prevTo);
@@ -57,10 +138,10 @@ export function ReportsWorkspace({
     const pf = prevFrom.toISOString().slice(0, 10);
     const pt = prevTo.toISOString().slice(0, 10);
     return posts.filter((p) => {
-      const d = (p.scheduledFor ?? p.createdAt).slice(0, 10);
+      const d = dayKey(p);
       return d >= pf && d <= pt;
     }).length;
-  }, [posts, range]);
+  }, [posts, range, days]);
 
   const pillars = useMemo(() => {
     const map = new Map<string, number>();
@@ -72,33 +153,62 @@ export function ReportsWorkspace({
   }, [inRange]);
   const maxPillar = pillars[0]?.[1] ?? 1;
 
+  const published = useMemo(
+    () => inRange.filter((p) => p.status === "published").length,
+    [inRange],
+  );
+  const perWeek = Math.round((inRange.length / days) * 7 * 10) / 10;
   const delta = inRange.length - prevWindow;
 
-  if (!connected) {
-    return (
-      <div>
-        <Header title={reportTitle} clientId={clientId} />
-        <div className="mt-8 rounded-2xl border border-dashed border-ink/25 px-8 py-16 text-center">
-          <Instagram className="mx-auto h-8 w-8 text-ink/60" />
-          <h3 className="mt-3 font-display text-2xl text-oxblood">Instagram not connected</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-ink/90">
-            Connect {clientName}&apos;s Instagram to pull live performance data — reach,
-            engagement and follower growth.
-          </p>
-          <Link
-            href={`/clients/${clientId}/integrations`}
-            className="mt-5 inline-block rounded-full bg-oxblood px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
-          >
-            Connect under Integrations
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const buckets = useMemo(
+    () => cadenceBuckets(inRange, range.from, range.to),
+    [inRange, range],
+  );
+  const half = Math.floor(buckets.length / 2);
+  const firstHalf = buckets.slice(0, half).reduce((a, b) => a + b, 0);
+  const secondHalf = buckets.slice(half).reduce((a, b) => a + b, 0);
+
+  const autoInsight = useMemo(
+    () =>
+      buildInsight(
+        clientName,
+        inRange.length,
+        prevWindow,
+        days,
+        pillars[0],
+        published,
+        firstHalf,
+        secondHalf,
+      ),
+    [clientName, inRange.length, prevWindow, days, pillars, published, firstHalf, secondHalf],
+  );
+
+  const [summary, setSummary] = useState(autoInsight);
+  const [edited, setEdited] = useState(false);
+  // Keep the summary in sync with the data until the user edits it by hand.
+  useEffect(() => {
+    if (!edited) setSummary(autoInsight);
+  }, [autoInsight, edited]);
 
   return (
     <div>
       <Header title={reportTitle} clientId={clientId} />
+
+      {!connected && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-oxblood/20 bg-oxblood/5 px-4 py-3">
+          <p className="flex items-center gap-2 text-[12px] font-medium text-ink/80">
+            <Instagram className="h-4 w-4 text-oxblood" />
+            Reach & engagement populate once {clientName}&apos;s Instagram is
+            connected. Activity below is live from your plan.
+          </p>
+          <Link
+            href={`/clients/${clientId}/integrations`}
+            className="rounded-full bg-oxblood px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 print:hidden"
+          >
+            Connect Instagram
+          </Link>
+        </div>
+      )}
 
       {/* date range */}
       <div className="mt-6 flex flex-wrap items-end gap-3">
@@ -125,13 +235,21 @@ export function ReportsWorkspace({
           <Printer className="h-3.5 w-3.5" /> Save as PDF
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-ink/75">Data available for the last 365 days.</p>
 
       {/* stat cards */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Posts this period" value={String(inRange.length)} sub={`${delta >= 0 ? "+" : ""}${delta} vs previous`} up={delta >= 0} />
-        <Stat label="Previous period" value={String(prevWindow)} sub="same length window" />
-        <Stat label="Content pillars" value={String(pillars.length)} sub="in play this period" />
+      <div className="mt-6 grid gap-3 sm:grid-cols-4">
+        <Stat label="Posts this period" value={inRange.length} delta={delta} />
+        <Stat label="Published" value={published} sub="live on socials" />
+        <Stat label="Avg / week" value={perWeek} sub="posting cadence" decimal />
+        <Stat label="Pillars in play" value={pillars.length} sub="content themes" />
+      </div>
+
+      {/* cadence chart */}
+      <div className="mt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
+          Posting cadence
+        </p>
+        <CadenceChart buckets={buckets} />
       </div>
 
       {/* pillar breakdown */}
@@ -144,12 +262,50 @@ export function ReportsWorkspace({
             {pillars.map(([name, n]) => (
               <div key={name} className="flex items-center gap-3">
                 <span className="w-32 shrink-0 text-[12px] font-medium text-ink/80">{name}</span>
-                <span className="h-3 rounded-full bg-oxblood" style={{ width: `${(n / maxPillar) * 100}%`, minWidth: "8px" }} />
-                <span className="text-[11px] text-ink/80">{n}</span>
+                <span className="h-3 flex-1 overflow-hidden rounded-full bg-oat">
+                  <span
+                    className="block h-full rounded-full bg-gradient-to-r from-oxblood to-rose transition-[width] duration-700 ease-out"
+                    style={{ width: `${(n / maxPillar) * 100}%` }}
+                  />
+                </span>
+                <span className="w-6 text-right text-[11px] text-ink/80">{n}</span>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* auto insight */}
+      <div className="mt-8 rounded-2xl border border-oxblood/15 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
+            <Sparkles className="h-3.5 w-3.5" /> What changed this month
+          </p>
+          {edited && (
+            <button
+              type="button"
+              onClick={() => {
+                setEdited(false);
+                setSummary(autoInsight);
+              }}
+              className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/60 hover:text-oxblood print:hidden"
+            >
+              Regenerate
+            </button>
+          )}
+        </div>
+        <textarea
+          value={summary}
+          onChange={(e) => {
+            setSummary(e.target.value);
+            setEdited(true);
+          }}
+          rows={4}
+          className="mt-3 w-full resize-none rounded-xl border border-oxblood/15 bg-cream/40 px-3 py-2 text-sm leading-relaxed text-ink outline-none focus:border-oxblood"
+        />
+        <p className="mt-2 text-[10px] text-ink/55 print:hidden">
+          Auto-written from this period&apos;s data — edit any line before you send it.
+        </p>
       </div>
 
       {/* top posts */}
@@ -167,22 +323,49 @@ export function ReportsWorkspace({
           {inRange.length === 0 && <p className="text-[12px] text-ink/80">No posts to rank yet.</p>}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* editable exec summary */}
-      <div className="mt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Executive summary</p>
-        <textarea
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-          rows={4}
-          className="mt-2 w-full rounded-xl border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+/* ------------------------------ sub-parts -------------------------------- */
+
+function CadenceChart({ buckets }: { buckets: number[] }) {
+  const max = Math.max(1, ...buckets);
+  const w = 100;
+  const h = 32;
+  const step = buckets.length > 1 ? w / (buckets.length - 1) : w;
+  const pts = buckets.map((b, i) => {
+    const x = i * step;
+    const y = h - (b / max) * (h - 4) - 2;
+    return [x, y] as const;
+  });
+  const line = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x} ${y}`).join(" ");
+  const area = `${line} L${w} ${h} L0 ${h} Z`;
+
+  return (
+    <div className="mt-3 rounded-2xl border border-oxblood/10 bg-white p-4">
+      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-24 w-full">
+        <defs>
+          <linearGradient id="cadFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#B26B62" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#B26B62" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#cadFill)" />
+        <path
+          d={line}
+          fill="none"
+          stroke="#5C1A1A"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
         />
+      </svg>
+      <div className="mt-1 flex justify-between text-[9px] uppercase tracking-[0.1em] text-ink/45">
+        <span>Start of period</span>
+        <span>Now</span>
       </div>
-
-      <p className="mt-6 text-[11px] text-ink/75">
-        Reach, impressions and engagement populate here once Instagram is connected with
-        analytics access.
-      </p>
     </div>
   );
 }
@@ -199,12 +382,33 @@ function Header({ title, clientId }: { title: string; clientId: string }) {
   );
 }
 
-function Stat({ label, value, sub, up }: { label: string; value: string; sub: string; up?: boolean }) {
+function Stat({
+  label,
+  value,
+  sub,
+  delta,
+  decimal,
+}: {
+  label: string;
+  value: number;
+  sub?: string;
+  delta?: number;
+  decimal?: boolean;
+}) {
   return (
     <div className="rounded-xl border border-ink/10 px-4 py-3">
-      <p className="font-display text-3xl text-oxblood">{value}</p>
+      <p className="font-display text-3xl text-oxblood">
+        {decimal ? value.toFixed(1) : <Counter to={value} />}
+      </p>
       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">{label}</p>
-      <p className={`mt-0.5 text-[11px] font-medium ${up === undefined ? "text-ink/75" : up ? "text-emerald-700" : "text-rose-700"}`}>{sub}</p>
+      {delta !== undefined ? (
+        <p className={`mt-0.5 flex items-center gap-1 text-[11px] font-medium ${delta >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+          {delta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {delta >= 0 ? "+" : ""}{delta} vs previous
+        </p>
+      ) : (
+        <p className="mt-0.5 text-[11px] font-medium text-ink/75">{sub}</p>
+      )}
     </div>
   );
 }
