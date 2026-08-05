@@ -13,6 +13,7 @@ import {
   sendForApprovalAction,
 } from "@/app/(social)/clients/[id]/calendar/actions";
 import { GuideTrigger } from "@/components/social/guide";
+import { PublishAssist } from "@/components/social/publish-assist";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -55,7 +56,15 @@ export function CalendarWorkspace({
   const [month, setMonth] = useState(todayM);
   const [shareMonth, setShareMonth] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
+  const [publishPost, setPublishPost] = useState<ClientPost | null>(null);
   const [, startTransition] = useTransition();
+
+  function markPosted(p: ClientPost) {
+    startTransition(async () => {
+      await updateCalendarPostAction(clientId, p.id, { status: "published" });
+      setPublishPost(null);
+    });
+  }
 
   const postsByDate = useMemo(() => {
     const map = new Map<string, ClientPost[]>();
@@ -251,7 +260,18 @@ export function CalendarWorkspace({
                     {p.pillar ? ` · ${p.pillar}` : ""}
                   </p>
                 </div>
-                <ApprovalBadge status={approvals[p.id]} />
+                <div className="flex items-center gap-3">
+                  <ApprovalBadge status={approvals[p.id]} />
+                  {p.status !== "published" && (
+                    <button
+                      type="button"
+                      onClick={() => setPublishPost(p)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90"
+                    >
+                      <Send className="h-3 w-3" /> Publish
+                    </button>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -319,6 +339,16 @@ export function CalendarWorkspace({
           date={createDate}
           onClose={() => setCreateDate(null)}
           startTransition={startTransition}
+        />
+      )}
+
+      {publishPost && (
+        <PublishAssist
+          platform={publishPost.platform}
+          caption={publishPost.caption}
+          hashtags={publishPost.hashtags}
+          onClose={() => setPublishPost(null)}
+          onPosted={() => markPosted(publishPost)}
         />
       )}
     </div>

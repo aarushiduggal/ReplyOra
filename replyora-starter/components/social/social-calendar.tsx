@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { CheckCircle2, Clock, Loader2, Trash2 } from "lucide-react";
+import { Clock, Loader2, Send, Trash2 } from "lucide-react";
+
+import { PublishAssist } from "@/components/social/publish-assist";
 
 import { deletePost, markStatus } from "@/lib/social/actions";
 import { PLATFORM_LABEL, type Platform, type PostStatus } from "@/lib/social/types";
@@ -30,6 +32,7 @@ function Row({ row, onGone }: { row: SocialRow; onGone: (id: string) => void }) 
   const [status, setStatus] = useState(row.status);
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
+  const [assistOpen, setAssistOpen] = useState(false);
 
   const pill = STATUS_PILL[status];
 
@@ -39,7 +42,8 @@ function Row({ row, onGone }: { row: SocialRow; onGone: (id: string) => void }) 
       await markStatus(row.id, "published");
       setStatus("published");
       setBusy(null);
-      toast({ title: "Marked as published", type: "success" });
+      setAssistOpen(false);
+      toast({ title: "Marked as posted", type: "success" });
     });
   }
 
@@ -81,13 +85,8 @@ function Row({ row, onGone }: { row: SocialRow; onGone: (id: string) => void }) 
 
         <div className="flex items-center gap-2 pt-1">
           {status !== "published" && (
-            <Button size="sm" variant="outline" disabled={pending} onClick={publish}>
-              {pending && busy === "publish" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
-              Mark published
+            <Button size="sm" variant="outline" disabled={pending} onClick={() => setAssistOpen(true)}>
+              <Send className="h-4 w-4" /> Publish
             </Button>
           )}
           <Button size="sm" variant="ghost" disabled={pending} onClick={remove}>
@@ -100,6 +99,17 @@ function Row({ row, onGone }: { row: SocialRow; onGone: (id: string) => void }) 
           </Button>
         </div>
       </CardContent>
+
+      {assistOpen && (
+        <PublishAssist
+          platform={row.platform}
+          caption={row.caption}
+          hashtags={row.hashtags}
+          posting={pending && busy === "publish"}
+          onClose={() => setAssistOpen(false)}
+          onPosted={publish}
+        />
+      )}
     </Card>
   );
 }

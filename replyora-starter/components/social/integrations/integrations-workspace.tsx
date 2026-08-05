@@ -76,8 +76,8 @@ export function IntegrationsWorkspace({
 
       <p className="mt-6 text-[11px] text-ink/75">
         {metaReady || tiktokReady
-          ? "Connect authorises this client's account so scheduled posts publish for real."
-          : "Add the Meta & TikTok app credentials in Netlify to turn on real publishing. Until then, Connect just marks the platform as active."}
+          ? "Connect authorises this client's account so scheduled posts publish automatically."
+          : "You can publish today with no connection — the Calendar's Publish button hands you the ready-to-post caption and opens the app. Connect an account to upgrade to hands-off auto-publishing."}
       </p>
     </div>
   );
