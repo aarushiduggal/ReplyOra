@@ -1,0 +1,103 @@
+import type { AgencySummary } from "@/lib/admin/overview";
+
+/**
+ * Seeded sample agencies for MOCK/local mode, so the staff god-view is fully
+ * populated (KPIs, revenue, attention queue) without a database. On Neon the
+ * real workspaces are used instead.
+ */
+function iso(daysAgo: number): string {
+  return new Date(Date.now() - daysAgo * 86400000).toISOString();
+}
+
+export const DEMO_AGENCIES: AgencySummary[] = [
+  {
+    id: "ws_demo",
+    name: "Bloom Studio Co.",
+    ownerName: "Amara Nguyen",
+    ownerEmail: "amara@bloomstudio.co",
+    accountType: "agency",
+    status: "active",
+    addons: { chatbox: true, reports: true },
+    brands: 6,
+    postsThisMonth: 92,
+    mrr: 235,
+    createdAt: iso(40),
+    lastActiveDays: 0,
+    trialEndsInDays: null,
+  },
+  {
+    id: "ws_marie",
+    name: "Marie Beers",
+    ownerName: "Marie Beers",
+    ownerEmail: "hello@mariebeers.com",
+    accountType: "personal",
+    status: "active",
+    addons: { chatbox: false, reports: true },
+    brands: 1,
+    postsThisMonth: 14,
+    mrr: 65,
+    createdAt: iso(20),
+    lastActiveDays: 1,
+    trialEndsInDays: null,
+  },
+  {
+    id: "ws_harbour",
+    name: "Harbour Social",
+    ownerName: "Priya Shah",
+    ownerEmail: "priya@harboursocial.com.au",
+    accountType: "agency",
+    status: "trialing",
+    addons: { chatbox: false, reports: false },
+    brands: 3,
+    postsThisMonth: 22,
+    mrr: 200,
+    createdAt: iso(5),
+    lastActiveDays: 0,
+    trialEndsInDays: 2,
+  },
+  {
+    id: "ws_lumen",
+    name: "Lumen Agency",
+    ownerName: "Dan Cole",
+    ownerEmail: "dan@lumen.agency",
+    accountType: "agency",
+    status: "past_due",
+    addons: { chatbox: true, reports: false },
+    brands: 8,
+    postsThisMonth: 61,
+    mrr: 220,
+    createdAt: iso(120),
+    lastActiveDays: 3,
+    trialEndsInDays: null,
+  },
+  {
+    id: "ws_coastal",
+    name: "Coastal Creative",
+    ownerName: "Jess Patel",
+    ownerEmail: "jess@coastalcreative.au",
+    accountType: "personal",
+    status: "trialing",
+    addons: { chatbox: false, reports: false },
+    brands: 1,
+    postsThisMonth: 5,
+    mrr: 50,
+    createdAt: iso(1),
+    lastActiveDays: 0,
+    trialEndsInDays: 1,
+  },
+  {
+    id: "ws_rosewood",
+    name: "Rosewood Media",
+    ownerName: "Tom Reyes",
+    ownerEmail: "tom@rosewood.media",
+    accountType: "agency",
+    status: "active",
+    addons: { chatbox: false, reports: false },
+    brands: 10,
+    postsThisMonth: 138,
+    mrr: 200,
+    createdAt: iso(200),
+    lastActiveDays: 20,
+    trialEndsInDays: null,
+  },
+];

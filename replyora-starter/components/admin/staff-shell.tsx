@@ -8,12 +8,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { label: "Command center", href: "/admin" },
-  { label: "Clients", href: "/admin/clients" },
-  { label: "Leads", href: "/admin/leads" },
-  { label: "Waitlist", href: "/admin/waitlist" },
-  { label: "Service", href: "/admin/service" },
-  { label: "Billing", href: "/admin/billing" },
-  { label: "Quality", href: "/admin/quality" },
+  { label: "Revenue", href: "/admin/billing" },
   { label: "Staff & audit", href: "/admin/staff" },
   { label: "Broadcast", href: "/admin/broadcast" },
 ];
@@ -78,7 +73,7 @@ export function StaffShell({
               {staffRole}
             </span>
             <Link
-              href="/dashboard"
+              href="/clients"
               className="inline-flex items-center gap-1.5 rounded-full border border-cream/40 px-3 py-1 text-cream/90 transition-colors hover:bg-cream/10"
             >
               <Eye className="h-3.5 w-3.5" /> Client view
