@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { HAS_META, HAS_TIKTOK } from "@/lib/social/publish";
+import { HAS_META, HAS_INSTAGRAM_LOGIN, HAS_TIKTOK } from "@/lib/social/publish";
 import {
   HAS_POSTPEER,
   ensureClientProfile,
@@ -45,8 +45,28 @@ export async function GET(
   }
 
   if (platform === "instagram") {
-    if (!HAS_META) return NextResponse.redirect(`${back}?integration=not_configured`);
     const redirectUri = `${APP_URL}/api/social/connect/instagram/callback`;
+
+    // Preferred: Instagram API with Instagram Login (client logs in with IG,
+    // no linked Facebook Page needed).
+    if (HAS_INSTAGRAM_LOGIN) {
+      const scope = [
+        "instagram_business_basic",
+        "instagram_business_content_publish",
+        "instagram_business_manage_comments",
+        "instagram_business_manage_insights",
+      ].join(",");
+      const url =
+        `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1` +
+        `&client_id=${process.env.INSTAGRAM_APP_ID}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=code&scope=${encodeURIComponent(scope)}` +
+        `&state=${encodeURIComponent(clientId)}`;
+      return NextResponse.redirect(url);
+    }
+
+    // Fallback: Facebook Login (IG must be linked to a Facebook Page).
+    if (!HAS_META) return NextResponse.redirect(`${back}?integration=not_configured`);
     const scope =
       "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,business_management";
     const url =

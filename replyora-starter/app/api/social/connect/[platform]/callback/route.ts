@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { HAS_META, HAS_TIKTOK } from "@/lib/social/publish";
+import { HAS_META, HAS_INSTAGRAM_LOGIN, HAS_TIKTOK } from "@/lib/social/publish";
 import { upsertConnection } from "@/lib/social/connections";
 
 export const runtime = "nodejs";
@@ -27,6 +27,59 @@ export async function GET(
   }
 
   try {
+    // Instagram API with Instagram Login — exchange via api.instagram.com.
+    if (platform === "instagram" && HAS_INSTAGRAM_LOGIN) {
+      const redirectUri = `${APP_URL}/api/social/connect/instagram/callback`;
+      // 1) code → short-lived IG user token + user_id
+      const tokRes = await fetch("https://api.instagram.com/oauth/access_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.INSTAGRAM_APP_ID ?? "",
+          client_secret: process.env.INSTAGRAM_APP_SECRET ?? "",
+          grant_type: "authorization_code",
+          redirect_uri: redirectUri,
+          code,
+        }),
+      });
+      const tok = (await tokRes.json()) as { access_token?: string; user_id?: string | number };
+      if (!tok.access_token || !tok.user_id) {
+        return NextResponse.redirect(`${back}?integration=error`);
+      }
+
+      // 2) → long-lived IG token (~60 days)
+      const llRes = await fetch(
+        `https://graph.instagram.com/access_token?grant_type=ig_exchange_token` +
+          `&client_secret=${process.env.INSTAGRAM_APP_SECRET}` +
+          `&access_token=${tok.access_token}`,
+      );
+      const ll = (await llRes.json()) as { access_token?: string; expires_in?: number };
+      const token = ll.access_token ?? tok.access_token;
+      const expiresAt = ll.expires_in
+        ? new Date(Date.now() + ll.expires_in * 1000).toISOString()
+        : null;
+
+      // 3) username for display
+      let username: string | null = null;
+      try {
+        const meRes = await fetch(
+          `https://graph.instagram.com/me?fields=user_id,username&access_token=${token}`,
+        );
+        const me = (await meRes.json()) as { username?: string };
+        username = me.username ?? null;
+      } catch {
+        /* username is optional */
+      }
+
+      await upsertConnection(clientId, "instagram", {
+        externalAccountId: String(tok.user_id),
+        externalUsername: username,
+        accessToken: token,
+        expiresAt,
+      });
+      return NextResponse.redirect(`${back}?connected=instagram`);
+    }
+
     if (platform === "instagram" && HAS_META) {
       const redirectUri = `${APP_URL}/api/social/connect/instagram/callback`;
       // 1) code → short-lived user token

@@ -15,6 +15,14 @@ import { neon } from "@neondatabase/serverless";
 export const HAS_META = Boolean(
   process.env.META_APP_ID && process.env.META_APP_SECRET,
 );
+/**
+ * Instagram API with Instagram Login (the smoother flow — clients log in with
+ * Instagram directly, no linked Facebook Page needed). When these are set we
+ * prefer it over Facebook Login and talk to graph.instagram.com.
+ */
+export const HAS_INSTAGRAM_LOGIN = Boolean(
+  process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET,
+);
 export const HAS_TIKTOK = Boolean(
   process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET,
 );
@@ -28,9 +36,12 @@ export const HAS_TIKTOK = Boolean(
 export const HAS_POSTPEER = Boolean(process.env.POSTPEER_API_KEY);
 
 /** True when a post can actually go live (any real engine is configured). */
-export const HAS_PUBLISHER = HAS_POSTPEER || HAS_META || HAS_TIKTOK;
+export const HAS_PUBLISHER =
+  HAS_POSTPEER || HAS_META || HAS_INSTAGRAM_LOGIN || HAS_TIKTOK;
 
 const GRAPH = "https://graph.facebook.com/v21.0";
+/** Instagram-Login tokens publish via graph.instagram.com (same endpoints). */
+const IG_GRAPH = "https://graph.instagram.com/v21.0";
 const POSTPEER = "https://api.postpeer.dev/v1";
 
 const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
@@ -223,6 +234,10 @@ async function publishInstagram(
   const token = conn.access_token!;
   if (!igUser) return { ok: false, error: "no_ig_account" };
 
+  // Instagram-Login tokens use graph.instagram.com; Facebook-Login page tokens
+  // use graph.facebook.com. Same media / media_publish endpoints on both.
+  const base = HAS_INSTAGRAM_LOGIN ? IG_GRAPH : GRAPH;
+
   const caption = fullCaption(post);
   const isVideo = post.media_kind === "video";
   const createParams = new URLSearchParams({ caption, access_token: token });
@@ -233,7 +248,7 @@ async function publishInstagram(
     createParams.set("image_url", post.media_url!);
   }
 
-  const createRes = await fetch(`${GRAPH}/${igUser}/media`, {
+  const createRes = await fetch(`${base}/${igUser}/media`, {
     method: "POST",
     body: createParams,
   });
@@ -242,7 +257,7 @@ async function publishInstagram(
     return { ok: false, error: created.error?.message ?? "ig_container_failed" };
   }
 
-  const pubRes = await fetch(`${GRAPH}/${igUser}/media_publish`, {
+  const pubRes = await fetch(`${base}/${igUser}/media_publish`, {
     method: "POST",
     body: new URLSearchParams({ creation_id: created.id, access_token: token }),
   });

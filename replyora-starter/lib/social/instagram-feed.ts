@@ -1,6 +1,7 @@
 import "server-only";
 
 import { listClientConnections } from "@/lib/social/connections";
+import { HAS_INSTAGRAM_LOGIN } from "@/lib/social/publish";
 
 /**
  * Live Instagram feed for the Grid. Reads the client's connected IG Business
@@ -11,7 +12,11 @@ import { listClientConnections } from "@/lib/social/connections";
  * or the Graph call fails — the grid then falls back to the planned tiles.
  */
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+// Instagram-Login tokens read via graph.instagram.com; Facebook-Login page
+// tokens via graph.facebook.com. Same /{user-id}/media endpoint on both.
+const GRAPH = HAS_INSTAGRAM_LOGIN
+  ? "https://graph.instagram.com/v21.0"
+  : "https://graph.facebook.com/v21.0";
 
 export interface LiveMedia {
   id: string;
