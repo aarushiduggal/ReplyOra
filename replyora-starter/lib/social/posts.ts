@@ -36,6 +36,7 @@ export interface NewClientPost {
   hashtags?: string[];
   status?: PostStatus;
   scheduledFor?: string | null;
+  mediaUrl?: string | null;
 }
 
 const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
@@ -141,11 +142,12 @@ export async function createClientPost(
   await sql()`
     INSERT INTO social_posts
       (id, workspace_id, client_id, platform, pillar, topic, caption,
-       hashtags, status, scheduled_for, order_index, created_at)
+       hashtags, status, scheduled_for, order_index, created_at, media_url)
     VALUES
       (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
        ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
-       ${post.status}, ${post.scheduledFor}, ${post.orderIndex}, ${post.createdAt})
+       ${post.status}, ${post.scheduledFor}, ${post.orderIndex}, ${post.createdAt},
+       ${input.mediaUrl ?? null})
   `;
   return post;
 }

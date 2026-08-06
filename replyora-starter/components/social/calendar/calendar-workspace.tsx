@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarClock, ChevronLeft, ChevronRight, Plus, Send, Trash2, X } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
@@ -452,6 +453,7 @@ function SpreadsheetRow({
   status?: ApprovalStatus;
   startTransition: (cb: () => void) => void;
 }) {
+  const router = useRouter();
   const [caption, setCaption] = useState(post.caption);
   return (
     <tr className="border-b border-ink/10 align-top">
@@ -478,7 +480,11 @@ function SpreadsheetRow({
           <button
             type="button"
             onClick={() =>
-              startTransition(() => sendForApprovalAction(clientId, post.id))
+              startTransition(async () => {
+                await sendForApprovalAction(clientId, post.id);
+                router.refresh();
+                toast({ title: "Sent to client for review", type: "success" });
+              })
             }
             className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline"
           >

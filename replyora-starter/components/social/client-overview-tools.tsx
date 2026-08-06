@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Settings2 } from "lucide-react";
+import { Check, Palette, Settings2 } from "lucide-react";
 
 import type { ClientDetail } from "@/lib/social/client-detail";
 import { ClientEditModal, type Tab } from "@/components/social/client-edit-modal";
@@ -54,6 +54,13 @@ export function ClientOverviewTools({
           className="inline-flex items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood hover:text-cream"
         >
           <Settings2 className="h-3.5 w-3.5" /> Edit client
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenTab("Brand Kit")}
+          className="inline-flex items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood hover:text-cream"
+        >
+          <Palette className="h-3.5 w-3.5" /> Brand kit
         </button>
         {!allDone && (
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60">

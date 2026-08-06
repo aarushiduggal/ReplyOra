@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles } from "lucide-react";
+import { Check, ImagePlus, Sparkles, X } from "lucide-react";
 
 import type { Asset } from "@/lib/social/assets";
 import type { GeneratedPost } from "@/lib/social/generate";
@@ -12,11 +12,13 @@ import {
   saveDraftsAction,
 } from "@/app/(social)/clients/[id]/studio/actions";
 import { GuideTrigger } from "@/components/social/guide";
+import { toast } from "@/lib/toast";
 
 interface Draft extends GeneratedPost {
   id: string;
   pillar: string;
   platform: Platform;
+  mediaUrl: string | null;
   selected: boolean;
 }
 
@@ -32,13 +34,12 @@ export function StudioWorkspace({
   assets: Asset[];
 }) {
   const router = useRouter();
-  const [batchName, setBatchName] = useState("");
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [pillar, setPillar] = useState<string>(PILLARS[0]);
   const [count, setCount] = useState(3);
   const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [pickedAssets, setPickedAssets] = useState<string[]>([]);
+  const [pickingFor, setPickingFor] = useState<string | null>(null); // draft id awaiting an image
   const [genPending, startGen] = useTransition();
   const [savePending, startSave] = useTransition();
 
@@ -53,16 +54,22 @@ export function StudioWorkspace({
         topic,
         count,
       });
+      // Pre-fill each new draft's image from the library in order (if any).
       setDrafts(
         posts.map((p, i) => ({
           ...p,
-          id: `d${i}-${p.caption.length}`,
+          id: `d${i}-${Date.now()}-${p.caption.length}`,
           pillar,
           platform,
+          mediaUrl: assets[i]?.url ?? null,
           selected: true,
         })),
       );
     });
+  }
+
+  function patchDraft(id: string, patch: Partial<Draft>) {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   }
 
   function save() {
@@ -76,14 +83,20 @@ export function StudioWorkspace({
           hashtags: d.hashtags,
           pillar: d.pillar,
           platform: d.platform,
+          mediaUrl: d.mediaUrl,
         })),
       );
       setDrafts([]);
       setTopic("");
-      setBatchName("");
       router.refresh();
+      toast({
+        title: `${chosen.length} draft${chosen.length === 1 ? "" : "s"} saved to the grid`,
+        type: "success",
+      });
     });
   }
+
+  const selectedCount = drafts.filter((d) => d.selected).length;
 
   return (
     <div>
@@ -94,18 +107,22 @@ export function StudioWorkspace({
         </div>
       </div>
       <p className="mb-6 text-[12px] font-medium text-ink/85">
-        Batch-create a set of posts for {clientName} — pick assets, generate captions,
-        save drafts. They land on the Grid and Calendar.
+        Create a batch of posts for {clientName} — write a brief, generate captions, attach photos,
+        and save. They land on the Grid &amp; Calendar as drafts, ready to schedule.
       </p>
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-        {/* Batch setup */}
-        <aside className="space-y-4">
-          <L label="Batch name">
-            <input value={batchName} onChange={(e) => setBatchName(e.target.value)} placeholder="e.g. August launch" className={inp} />
-          </L>
-          <L label="Topic / brief">
-            <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={3} placeholder="What's this batch about?" className={inp} />
+        {/* Brief */}
+        <aside className="space-y-4 self-start rounded-2xl border border-ink/10 bg-ink/[0.01] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">The brief</p>
+          <L label="What's this batch about?">
+            <textarea
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              rows={3}
+              placeholder="e.g. Spring colour promo — book now, 20% off toner top-ups"
+              className={inp}
+            />
           </L>
           <div className="grid grid-cols-2 gap-3">
             <L label="Platform">
@@ -119,47 +136,37 @@ export function StudioWorkspace({
               </select>
             </L>
           </div>
-          <L label="How many">
-            <input type="number" min={1} max={9} value={count} onChange={(e) => setCount(Math.max(1, Math.min(9, Number(e.target.value))))} className={inp} />
+          <L label="How many posts">
+            <div className="flex flex-wrap gap-1.5">
+              {[1, 3, 6, 9, 12].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setCount(n)}
+                  className={`h-9 w-9 rounded-full border text-[12px] font-semibold transition-colors ${
+                    count === n
+                      ? "border-oxblood bg-oxblood text-cream"
+                      : "border-ink/20 text-ink/70 hover:border-oxblood"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </L>
           <button
             type="button"
             onClick={generate}
-            disabled={genPending}
+            disabled={genPending || !topic.trim()}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            <Sparkles className="h-3.5 w-3.5" /> {genPending ? "Generating…" : "Generate captions"}
+            <Sparkles className="h-3.5 w-3.5" /> {genPending ? "Generating…" : `Generate ${count} posts`}
           </button>
-
-          {/* asset picker */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Library ({assets.length})</p>
-            {assets.length === 0 ? (
-              <p className="mt-2 text-[11px] text-ink/75">No assets yet — upload some on the Assets tab.</p>
-            ) : (
-              <div className="mt-2 grid grid-cols-4 gap-1.5">
-                {assets.slice(0, 12).map((a) => {
-                  const picked = pickedAssets.includes(a.id);
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() =>
-                        setPickedAssets((prev) =>
-                          picked ? prev.filter((x) => x !== a.id) : [...prev, a.id],
-                        )
-                      }
-                      className={`relative aspect-square overflow-hidden rounded-md border-2 ${picked ? "border-oxblood" : "border-transparent"}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={a.url} alt="" className="h-full w-full object-cover" />
-                      {picked && <span className="absolute right-0.5 top-0.5 rounded-full bg-oxblood p-0.5 text-cream"><Check className="h-2.5 w-2.5" /></span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <p className="text-[10px] text-ink/60">
+            {assets.length > 0
+              ? `${assets.length} photo${assets.length === 1 ? "" : "s"} in the library will be attached automatically — swap any per post.`
+              : "Tip: upload photos on the Assets tab and they'll attach here automatically."}
+          </p>
         </aside>
 
         {/* Drafts */}
@@ -167,40 +174,120 @@ export function StudioWorkspace({
           {drafts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-ink/20 px-6 py-16 text-center">
               <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/80">
-                Generate a batch to see draft captions here
+                Write a brief and generate — your posts appear here
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
-                  {drafts.filter((d) => d.selected).length} of {drafts.length} selected
+                  {selectedCount} of {drafts.length} selected
                 </p>
                 <button
                   type="button"
                   onClick={save}
-                  disabled={savePending}
+                  disabled={savePending || selectedCount === 0}
                   className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {savePending ? "Saving…" : "Save as drafts"}
+                  {savePending ? "Saving…" : `Save ${selectedCount} to grid`}
                 </button>
               </div>
+
               {drafts.map((d) => (
-                <label key={d.id} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${d.selected ? "border-oxblood/40 bg-oxblood/[0.03]" : "border-ink/10"}`}>
-                  <input
-                    type="checkbox"
-                    checked={d.selected}
-                    onChange={() => setDrafts((prev) => prev.map((x) => (x.id === d.id ? { ...x, selected: !x.selected } : x)))}
-                    className="mt-1 accent-oxblood"
-                  />
-                  <div>
-                    <p className="whitespace-pre-line text-sm text-ink">{d.caption}</p>
-                    <p className="mt-1 text-[11px] text-oxblood">{d.hashtags.join(" ")}</p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/70">
-                      {PLATFORM_LABEL[d.platform]} · {d.pillar}
-                    </p>
+                <div
+                  key={d.id}
+                  className={`rounded-xl border p-3 ${d.selected ? "border-oxblood/40 bg-oxblood/[0.03]" : "border-ink/10"}`}
+                >
+                  <div className="flex gap-3">
+                    <input
+                      type="checkbox"
+                      checked={d.selected}
+                      onChange={() => patchDraft(d.id, { selected: !d.selected })}
+                      className="mt-1 accent-oxblood"
+                    />
+
+                    {/* Image slot */}
+                    <div className="shrink-0">
+                      {d.mediaUrl ? (
+                        <div className="group relative h-16 w-16 overflow-hidden rounded-lg">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={d.mediaUrl} alt="" className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => patchDraft(d.id, { mediaUrl: null })}
+                            className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                            aria-label="Remove photo"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPickingFor(pickingFor === d.id ? null : d.id)}
+                            className="absolute inset-x-0 bottom-0 bg-ink/60 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white"
+                          >
+                            Swap
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPickingFor(pickingFor === d.id ? null : d.id)}
+                          className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-oxblood/30 text-oxblood/70 hover:border-oxblood hover:text-oxblood"
+                        >
+                          <ImagePlus className="h-4 w-4" />
+                          <span className="text-[8px] font-semibold uppercase">Photo</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Caption (editable) */}
+                    <div className="min-w-0 flex-1">
+                      <textarea
+                        value={d.caption}
+                        onChange={(e) => patchDraft(d.id, { caption: e.target.value })}
+                        rows={3}
+                        className="w-full resize-none rounded-lg border border-transparent bg-transparent text-sm text-ink hover:border-ink/15 focus:border-oxblood focus:bg-white focus:outline-none"
+                      />
+                      <p className="mt-1 text-[11px] text-oxblood">{d.hashtags.join(" ")}</p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/70">
+                        {PLATFORM_LABEL[d.platform]} · {d.pillar}
+                      </p>
+                    </div>
                   </div>
-                </label>
+
+                  {/* Inline asset picker for this draft */}
+                  {pickingFor === d.id && (
+                    <div className="mt-3 border-t border-ink/10 pt-3">
+                      {assets.length === 0 ? (
+                        <p className="text-[11px] text-ink/70">
+                          No photos yet — upload some on the Assets tab.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-8 gap-1.5">
+                          {assets.map((a) => (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => {
+                                patchDraft(d.id, { mediaUrl: a.url });
+                                setPickingFor(null);
+                              }}
+                              className={`relative aspect-square overflow-hidden rounded-md border-2 ${d.mediaUrl === a.url ? "border-oxblood" : "border-transparent hover:border-oxblood/40"}`}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={a.url} alt="" className="h-full w-full object-cover" />
+                              {d.mediaUrl === a.url && (
+                                <span className="absolute right-0.5 top-0.5 rounded-full bg-oxblood p-0.5 text-cream">
+                                  <Check className="h-2.5 w-2.5" />
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}

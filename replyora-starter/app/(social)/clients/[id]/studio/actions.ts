@@ -24,7 +24,13 @@ export async function generateDraftsAction(input: {
 /** Save selected drafts to the client — they appear on Grid + Calendar. */
 export async function saveDraftsAction(
   clientId: string,
-  drafts: { caption: string; hashtags: string[]; pillar: string; platform: Platform }[],
+  drafts: {
+    caption: string;
+    hashtags: string[];
+    pillar: string;
+    platform: Platform;
+    mediaUrl?: string | null;
+  }[],
 ): Promise<void> {
   for (const d of drafts) {
     await createClientPost({
@@ -36,6 +42,7 @@ export async function saveDraftsAction(
       hashtags: d.hashtags,
       status: "draft",
       scheduledFor: null,
+      mediaUrl: d.mediaUrl ?? null,
     });
   }
   revalidatePath(`/clients/${clientId}/studio`);

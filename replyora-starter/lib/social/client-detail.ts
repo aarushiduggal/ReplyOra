@@ -169,7 +169,11 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   detail.packageDeliverables = b.package_deliverables ?? "";
   detail.privateNotes = b.private_notes ?? "";
 
+  // The extended-column, pillars, invites and PDF reads are independent of one
+  // another — run them concurrently so we pay one round-trip, not four.
+  await Promise.all([
   // Extended columns — resilient (may not exist before 0008 runs).
+  (async () => {
   try {
     const rows = (await sql()`
       SELECT brand_voice, package_plan, started_on, logo_url, brand_colors,
@@ -196,8 +200,10 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   } catch {
     /* 0008 not applied yet — keep defaults */
   }
+  })(),
 
   // Pillars (table exists from 0003).
+  (async () => {
   try {
     const p = (await sql()`
       SELECT id, name, colour FROM pillars WHERE client_id = ${id} ORDER BY name
@@ -206,8 +212,10 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   } catch {
     /* ignore */
   }
+  })(),
 
   // Invites (table from 0008).
+  (async () => {
   try {
     const inv = (await sql()`
       SELECT id, recipient, email, role, token, expires_at, created_at
@@ -251,6 +259,8 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   } catch {
     /* url column / table not present yet */
   }
+  })(),
+  ]);
 
   return detail;
 }
