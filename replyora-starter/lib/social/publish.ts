@@ -234,9 +234,11 @@ async function publishInstagram(
   const token = conn.access_token!;
   if (!igUser) return { ok: false, error: "no_ig_account" };
 
-  // Instagram-Login tokens use graph.instagram.com; Facebook-Login page tokens
-  // use graph.facebook.com. Same media / media_publish endpoints on both.
+  // Instagram-Login tokens use graph.instagram.com + /me (the stored id doesn't
+  // resolve on the publish endpoint); Facebook-Login page tokens use
+  // graph.facebook.com + the explicit IG business id.
   const base = HAS_INSTAGRAM_LOGIN ? IG_GRAPH : GRAPH;
+  const target = HAS_INSTAGRAM_LOGIN ? "me" : igUser;
 
   const caption = fullCaption(post);
   const isVideo = post.media_kind === "video";
@@ -248,7 +250,7 @@ async function publishInstagram(
     createParams.set("image_url", post.media_url!);
   }
 
-  const createRes = await fetch(`${base}/${igUser}/media`, {
+  const createRes = await fetch(`${base}/${target}/media`, {
     method: "POST",
     body: createParams,
   });
@@ -257,7 +259,7 @@ async function publishInstagram(
     return { ok: false, error: created.error?.message ?? "ig_container_failed" };
   }
 
-  const pubRes = await fetch(`${base}/${igUser}/media_publish`, {
+  const pubRes = await fetch(`${base}/${target}/media_publish`, {
     method: "POST",
     body: new URLSearchParams({ creation_id: created.id, access_token: token }),
   });

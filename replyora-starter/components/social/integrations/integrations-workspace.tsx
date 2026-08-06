@@ -47,7 +47,7 @@ export function IntegrationsWorkspace({
       : errorParam === "no_page"
         ? { kind: "err" as const, text: "Connected, but no Facebook Page was found on that login. Make sure the account admins a Page, then try again." }
       : errorParam === "not_configured"
-        ? { kind: "err" as const, text: "Instagram isn't configured yet — check the Netlify keys." }
+        ? { kind: "err" as const, text: "That platform isn't configured yet — Instagram needs INSTAGRAM_APP_ID/SECRET; Facebook needs META_APP_ID/SECRET in Netlify." }
         : errorParam === "error"
           ? { kind: "err" as const, text: "Couldn't connect. The login was cancelled or the redirect URL doesn't match — try again." }
           : null;
