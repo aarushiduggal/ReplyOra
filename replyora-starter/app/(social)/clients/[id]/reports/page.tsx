@@ -5,6 +5,7 @@ import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
 import { getWorkspaceBilling } from "@/lib/social/billing";
 import { entitlementsFor } from "@/lib/social/plans";
+import { fetchInstagramInsights } from "@/lib/social/instagram-insights";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,13 @@ export default async function ClientReportsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, posts, billing] = await Promise.all([
+  const [client, posts, billing, insights] = await Promise.all([
     getClient(id),
     listClientPosts(id),
     getWorkspaceBilling(),
+    // Real Meta Insights (reach/engagement) — exercises manage_insights and
+    // powers the "at a glance" numbers. null when IG isn't connected.
+    fetchInstagramInsights(id).catch(() => null),
   ]);
   const name = client?.name ?? sampleName(id);
 
@@ -44,6 +48,7 @@ export default async function ClientReportsPage({
       clientName={name}
       connected={connected}
       posts={posts}
+      insights={insights}
       reportTitle={billing.reportTitle || "Performance Analytics"}
       todayISO={todayISO}
     />

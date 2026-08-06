@@ -65,6 +65,7 @@ export default function ReportsPreviewPage() {
             clientName="Bloom Hair Studio"
             connected={false}
             posts={posts}
+            insights={null}
             reportTitle="Performance Report"
             todayISO={todayISO}
           />

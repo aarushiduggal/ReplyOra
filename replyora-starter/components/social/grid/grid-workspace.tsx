@@ -19,6 +19,7 @@ import {
   QrCode,
   Redo2,
   Repeat2,
+  Send,
   Square,
   Trash2,
   Undo2,
@@ -42,6 +43,7 @@ import {
   scheduleTilesAction,
   unscheduleTileAction,
 } from "@/app/(social)/clients/[id]/grid/actions";
+import { publishNowAction } from "@/app/(social)/clients/[id]/calendar/actions";
 
 export interface GridAsset {
   id: string;
@@ -160,8 +162,8 @@ export function GridWorkspace({
   // client's IG is connected and we're viewing the Instagram mock.
   const liveAvailable =
     platform === "instagram" && Boolean(liveFeed?.connected) && (liveFeed?.media.length ?? 0) > 0;
-  const [showLive, setShowLive] = useState(true); // default to the real feed when connected
-  const live = showLive && liveAvailable;
+  // When connected we always show the real feed (planned tiles sit on top of it).
+  const live = liveAvailable;
 
   // "+" on the mock → create an empty planned tile at the top, ready for a photo.
   function addEmptyTile() {
@@ -174,6 +176,24 @@ export function GridWorkspace({
   function removeTile(id: string) {
     setTiles((ts) => ts.filter((t) => t.id !== id));
     startTransition(() => bulkDeleteAction(clientId, [id]));
+  }
+
+  // Click a planned tile → open its action sheet (post now / schedule / remove).
+  const [actionTile, setActionTile] = useState<GridTile | null>(null);
+  const [postingId, setPostingId] = useState<string | null>(null);
+  function postTileNow(t: GridTile) {
+    setPostingId(t.id);
+    startTransition(async () => {
+      const res = await publishNowAction(clientId, t.id);
+      setPostingId(null);
+      setActionTile(null);
+      if (res.ok) {
+        setTiles((ts) => ts.map((x) => (x.id === t.id ? { ...x, status: "published" } : x)));
+        toast({ title: "Posted to Instagram 🎉", type: "success" });
+      } else {
+        toast({ title: "Couldn’t publish", body: res.error ?? "Try again.", type: "error" });
+      }
+    });
   }
 
   // Separate feed per platform: only show this platform's posts.
@@ -528,24 +548,10 @@ export function GridWorkspace({
               )}
             </div>
 
-            {/* Planned / Live toggle — only when the client's IG is connected */}
+            {/* Live view: real feed with planned tiles on top. Small label. */}
             {liveAvailable && (
-              <div className="flex items-center justify-center gap-1 border-t border-oxblood/10 bg-oxblood/[0.03] py-1.5">
-                {(["planned", "live"] as const).map((mode) => {
-                  const on = mode === "live" ? showLive : !showLive;
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setShowLive(mode === "live")}
-                      className={`rounded-full px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                        on ? "bg-oxblood text-cream" : "text-ink/70 hover:text-oxblood"
-                      }`}
-                    >
-                      {mode === "live" ? "● Live feed" : "Planned"}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center justify-center gap-1.5 border-t border-oxblood/10 bg-oxblood/[0.03] py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-oxblood">
+                <span className="h-1.5 w-1.5 rounded-full bg-oxblood" /> Live feed · planned posts on top
               </div>
             )}
 
@@ -567,11 +573,12 @@ export function GridWorkspace({
                         }}
                         onDragLeave={() => setDropTarget((d) => (d === t.id ? null : d))}
                         onDrop={() => onDrop(t.id)}
+                        onClick={() => t.mediaUrl && setActionTile(t)}
                         className={`group relative aspect-square bg-cover bg-center ring-1 ring-inset ${
                           isTarget ? "ring-2 ring-oxblood" : "ring-oxblood/40"
-                        } ${t.mediaUrl ? "" : "flex items-center justify-center border border-dashed border-oxblood/30 bg-oat/40"}`}
+                        } ${t.mediaUrl ? "cursor-pointer" : "flex items-center justify-center border border-dashed border-oxblood/30 bg-oat/40"}`}
                         style={t.mediaUrl ? { backgroundImage: `url(${t.mediaUrl})` } : undefined}
-                        title={t.mediaUrl ? firstWords(t.caption, 12) : "Drag a photo here"}
+                        title={t.mediaUrl ? "Click to post or schedule" : "Drag a photo here"}
                       >
                         <span className="absolute left-1 top-1 z-10 rounded-sm bg-oxblood px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
                           Planned
@@ -579,7 +586,10 @@ export function GridWorkspace({
                         {!t.mediaUrl && <ImageIcon className="h-5 w-5 text-oxblood/30" />}
                         <button
                           type="button"
-                          onClick={() => removeTile(t.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeTile(t.id);
+                          }}
                           className="absolute right-1 top-1 z-10 rounded-full bg-ink/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
                           aria-label="Remove tile"
                         >
@@ -897,6 +907,60 @@ export function GridWorkspace({
           onClose={() => setScheduleOpen(false)}
           onConfirm={applySchedule}
         />
+      )}
+
+      {actionTile && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4"
+          onClick={() => setActionTile(null)}
+        >
+          <div
+            className="w-full max-w-xs rounded-2xl border border-oxblood/15 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center gap-3">
+              <span
+                className="h-12 w-12 shrink-0 rounded-lg bg-cover bg-center"
+                style={actionTile.mediaUrl ? { backgroundImage: `url(${actionTile.mediaUrl})` } : undefined}
+              />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood">Planned post</p>
+                <p className="line-clamp-1 text-[12px] text-ink/80">{firstWords(actionTile.caption, 8) || "No caption yet"}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled={postingId === actionTile.id}
+                onClick={() => postTileNow(actionTile)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                <Send className="h-3.5 w-3.5" /> {postingId === actionTile.id ? "Posting…" : "Post now"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected(new Set([actionTile.id]));
+                  setActionTile(null);
+                  setScheduleOpen(true);
+                }}
+                className="flex w-full items-center justify-center gap-1.5 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood/5"
+              >
+                <CalendarClock className="h-3.5 w-3.5" /> Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeTile(actionTile.id);
+                  setActionTile(null);
+                }}
+                className="w-full rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60 hover:text-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

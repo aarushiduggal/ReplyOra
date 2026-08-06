@@ -6,8 +6,16 @@ import { animate } from "framer-motion";
 import { Instagram, Printer, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
+import type { InsightsSummary } from "@/lib/social/instagram-insights";
 import { PLATFORM_LABEL } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
+
+/** Compact number: 8800 → "8.8K". */
+function compact(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
 
 /* ------------------------------- helpers --------------------------------- */
 
@@ -89,6 +97,7 @@ export function ReportsWorkspace({
   clientName,
   connected,
   posts,
+  insights,
   reportTitle,
   todayISO,
 }: {
@@ -96,6 +105,7 @@ export function ReportsWorkspace({
   clientName: string;
   connected: boolean;
   posts: ClientPost[];
+  insights: InsightsSummary | null;
   reportTitle: string;
   todayISO: string;
 }) {
@@ -194,7 +204,21 @@ export function ReportsWorkspace({
     <div>
       <Header title={reportTitle} clientId={clientId} />
 
-      {!connected && (
+      {insights && (
+        <div className="mt-5">
+          <p className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-oxblood">
+            <Instagram className="h-3.5 w-3.5" /> Live from Instagram · last {insights.posts} posts
+          </p>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <LiveStat label="Reach" value={compact(insights.reach)} />
+            <LiveStat label="Engagements" value={compact(insights.engagements)} />
+            <LiveStat label="Avg engagement rate" value={`${insights.avgEngagementRate.toFixed(1)}%`} />
+            <LiveStat label="Saves" value={compact(insights.saves)} />
+          </div>
+        </div>
+      )}
+
+      {!insights && !connected && (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-oxblood/20 bg-oxblood/5 px-4 py-3">
           <p className="flex items-center gap-2 text-[12px] font-medium text-ink/80">
             <Instagram className="h-4 w-4 text-oxblood" />
@@ -378,6 +402,16 @@ function Header({ title, clientId }: { title: string; clientId: string }) {
         <GuideTrigger pageKey="reports" clientId={clientId} />
       </div>
       <h2 className="mt-3 font-display text-3xl text-oxblood">{title}</h2>
+    </div>
+  );
+}
+
+/** Real-number stat (pre-formatted string, e.g. "8.8K") for live Instagram metrics. */
+function LiveStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-oxblood/20 bg-oxblood/[0.03] px-4 py-3">
+      <p className="font-display text-3xl text-oxblood">{value}</p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">{label}</p>
     </div>
   );
 }
