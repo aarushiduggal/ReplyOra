@@ -68,12 +68,6 @@ const STATUS_DOT: Record<GridTile["status"], string> = {
   published: "bg-oxblood",
 };
 
-/** Fake view counts for the TikTok mock thumbnails. */
-const TIKTOK_VIEWS = [
-  "12.4K", "8.1K", "23.7K", "5.6K", "41.2K", "9.9K",
-  "3.3K", "18.0K", "6.7K", "2.1K", "15.5K", "7.2K",
-];
-
 /** Live feed analysis — harmony %, palette, pillar mix. Computed from tiles. */
 function analyzeFeed(tiles: GridTile[]) {
   const total = tiles.length;
@@ -543,10 +537,11 @@ export function GridWorkspace({
                           {firstWords(t.caption, 6)}
                         </span>
                       )}
-                      {isTikTok && (
-                        <span className="absolute bottom-1 left-1 flex items-center gap-0.5 text-[8px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
+                      {/* Video/play marker only on posts that have actually gone
+                          live — no fake view counts on planned content. */}
+                      {isTikTok && t.status === "published" && (
+                        <span className="absolute bottom-1 left-1 text-[8px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
                           <Play className="h-2.5 w-2.5 fill-white text-white" />
-                          {TIKTOK_VIEWS[i % TIKTOK_VIEWS.length]}
                         </span>
                       )}
                       {isTarget && (
