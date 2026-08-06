@@ -54,6 +54,7 @@ export interface BriefPdf {
   id: string;
   title: string;
   url: string | null;
+  kind: "brief" | "contract";
   createdAt: string;
 }
 
@@ -237,13 +238,14 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
   // Brand-brief PDFs (knowledge_sources, type = 'pdf').
   try {
     const pdfs = (await sql()`
-      SELECT id, title, url, created_at FROM knowledge_sources
-      WHERE client_id = ${id} AND type = 'pdf' ORDER BY created_at DESC
-    `) as { id: string; title: string | null; url: string | null; created_at: string | Date }[];
+      SELECT id, title, url, type, created_at FROM knowledge_sources
+      WHERE client_id = ${id} AND type IN ('pdf', 'contract') ORDER BY created_at DESC
+    `) as { id: string; title: string | null; url: string | null; type: string | null; created_at: string | Date }[];
     detail.briefPdfs = pdfs.map((p) => ({
       id: p.id,
       title: p.title ?? "Document",
       url: p.url,
+      kind: p.type === "contract" ? "contract" : "brief",
       createdAt: new Date(p.created_at).toISOString(),
     }));
   } catch {
@@ -256,7 +258,7 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
 /** Record an uploaded brand-brief PDF (stored in R2, referenced here). */
 export async function addBriefPdf(
   clientId: string,
-  input: { title: string; url: string },
+  input: { title: string; url: string; kind?: "brief" | "contract" },
 ): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return;
@@ -264,10 +266,11 @@ export async function addBriefPdf(
     SELECT 1 FROM clients WHERE id = ${clientId} AND workspace_id = ${workspaceId} LIMIT 1
   `) as unknown[];
   if (owns.length === 0) return;
+  const type = input.kind === "contract" ? "contract" : "pdf";
   try {
     await sql()`
       INSERT INTO knowledge_sources (id, client_id, type, title, url, status)
-      VALUES (${genId("kn")}, ${clientId}, 'pdf', ${input.title}, ${input.url}, 'ready')
+      VALUES (${genId("kn")}, ${clientId}, ${type}, ${input.title}, ${input.url}, 'ready')
     `;
   } catch {
     /* url column missing (0008 not applied) */

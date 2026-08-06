@@ -42,7 +42,7 @@ export async function createInviteAction(
 
 export async function addBriefPdfAction(
   clientId: string,
-  input: { title: string; url: string },
+  input: { title: string; url: string; kind?: "brief" | "contract" },
 ): Promise<void> {
   await addBriefPdf(clientId, input);
   revalidate(clientId);

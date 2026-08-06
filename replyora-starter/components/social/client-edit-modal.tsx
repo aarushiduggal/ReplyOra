@@ -33,7 +33,6 @@ const TABS = [
 export type Tab = (typeof TABS)[number];
 
 const PLATFORMS = ["instagram", "tiktok", "facebook", "pinterest", "linkedin"];
-const PLANS = ["Starter", "Growth", "Pro"];
 
 const field =
   "mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood";
@@ -121,13 +120,13 @@ export function ClientEditModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelC}>Package / plan</label>
-                  <select className={field} value={d.packagePlan} onChange={(e) => patch("packagePlan", e.target.value)}>
-                    <option value="">Select package</option>
-                    {PLANS.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
+                  <label className={labelC}>Package name</label>
+                  <input
+                    className={field}
+                    placeholder="e.g. Premium Social, Growth Retainer…"
+                    value={d.packagePlan}
+                    onChange={(e) => patch("packagePlan", e.target.value)}
+                  />
                 </div>
                 <div>
                   <label className={labelC}>Client started on</label>
@@ -215,6 +214,7 @@ export function ClientEditModal({
               notes={d.briefNotes}
               onNotes={(v) => patch("briefNotes", v)}
               pdfs={d.briefPdfs}
+              onDocAdded={(doc) => patch("briefPdfs", [doc, ...d.briefPdfs])}
               pending={pending}
               onSaveNotes={() => save({ briefNotes: d.briefNotes }, "Brief saved")}
             />
@@ -421,6 +421,7 @@ function BriefTab({
   notes,
   onNotes,
   pdfs,
+  onDocAdded,
   pending,
   onSaveNotes,
 }: {
@@ -428,15 +429,16 @@ function BriefTab({
   notes: string;
   onNotes: (v: string) => void;
   pdfs: BriefPdf[];
+  onDocAdded: (doc: BriefPdf) => void;
   pending: boolean;
   onSaveNotes: () => void;
 }) {
   const router = useRouter();
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<"brief" | "contract" | null>(null);
 
-  async function uploadPdf(file: File | null) {
+  async function uploadPdf(file: File | null, kind: "brief" | "contract") {
     if (!file) return;
-    setUploading(true);
+    setUploading(kind);
     try {
       const form = new FormData();
       form.append("file", file);
@@ -445,16 +447,26 @@ function BriefTab({
       const res = await fetch("/api/social/assets/upload", { method: "POST", body: form });
       const data = (await res.json().catch(() => ({}))) as { url?: string };
       if (res.ok && data.url) {
-        await addBriefPdfAction(clientId, { title: file.name, url: data.url });
+        await addBriefPdfAction(clientId, { title: file.name, url: data.url, kind });
+        onDocAdded({
+          id: `tmp_${data.url.slice(-8)}`,
+          title: file.name,
+          url: data.url,
+          kind,
+          createdAt: new Date().toISOString(),
+        });
         router.refresh();
-        toast({ title: "PDF added", type: "success" });
+        toast({ title: kind === "contract" ? "Contract added" : "PDF added", type: "success" });
       } else {
         toast({ title: "Upload failed — is storage connected?", type: "error" });
       }
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
+
+  const strategyPdfs = pdfs.filter((p) => p.kind !== "contract");
+  const contracts = pdfs.filter((p) => p.kind === "contract");
 
   return (
     <div className="space-y-6">
@@ -476,29 +488,48 @@ function BriefTab({
       <div className="border-t border-ink/10 pt-5">
         <label className={labelC}>Brand strategy PDFs</label>
         <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood hover:bg-oxblood/5">
-          {uploading ? "Uploading…" : "Upload PDF"}
-          <input type="file" accept="application/pdf" className="hidden" onChange={(e) => uploadPdf(e.target.files?.[0] ?? null)} />
+          {uploading === "brief" ? "Uploading…" : "Upload PDF"}
+          <input type="file" accept="application/pdf" className="hidden" onChange={(e) => uploadPdf(e.target.files?.[0] ?? null, "brief")} />
         </label>
         <div className="mt-3 space-y-1.5">
-          {pdfs.length === 0 ? (
+          {strategyPdfs.length === 0 ? (
             <p className="text-[12px] italic text-ink/50">No documents yet.</p>
           ) : (
-            pdfs.map((p) => (
-              <a
-                key={p.id}
-                href={p.url ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-ink/10 bg-white px-3 py-2 text-[12px] text-ink/80 hover:border-oxblood/30"
-              >
-                <span className="truncate">{p.title}</span>
-                <span className="text-oxblood">Open →</span>
-              </a>
-            ))
+            strategyPdfs.map((p) => <DocRow key={p.id} pdf={p} />)
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-ink/10 pt-5">
+        <label className={labelC}>Contract</label>
+        <p className="mt-1 text-[11px] text-ink/60">Your signed agreement with this client — kept on file for reference.</p>
+        <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood hover:bg-oxblood/5">
+          {uploading === "contract" ? "Uploading…" : "Upload contract"}
+          <input type="file" accept="application/pdf" className="hidden" onChange={(e) => uploadPdf(e.target.files?.[0] ?? null, "contract")} />
+        </label>
+        <div className="mt-3 space-y-1.5">
+          {contracts.length === 0 ? (
+            <p className="text-[12px] italic text-ink/50">No contract on file yet.</p>
+          ) : (
+            contracts.map((p) => <DocRow key={p.id} pdf={p} />)
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function DocRow({ pdf }: { pdf: BriefPdf }) {
+  return (
+    <a
+      href={pdf.url ?? "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-between rounded-lg border border-ink/10 bg-white px-3 py-2 text-[12px] text-ink/80 hover:border-oxblood/30"
+    >
+      <span className="truncate">{pdf.title}</span>
+      <span className="text-oxblood">Open →</span>
+    </a>
   );
 }
 
