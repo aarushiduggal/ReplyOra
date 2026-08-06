@@ -18,7 +18,6 @@ export function IntegrationsWorkspace({
   platforms,
   metaReady,
   tiktokReady,
-  ayrshareReady,
   postpeerReady,
   linkedAccounts,
   linkedHandles,
@@ -28,7 +27,6 @@ export function IntegrationsWorkspace({
   platforms: string[];
   metaReady: boolean;
   tiktokReady: boolean;
-  ayrshareReady: boolean;
   postpeerReady: boolean;
   linkedAccounts: Record<string, string>;
   linkedHandles: Record<string, string>;
@@ -152,7 +150,7 @@ export function IntegrationsWorkspace({
           </div>
 
           <p className="mt-6 text-[11px] text-ink/75">
-            {metaReady || tiktokReady || ayrshareReady
+            {metaReady || tiktokReady
               ? "Connect authorises this client's account so scheduled posts publish automatically."
               : "You can publish today with no connection — the Calendar's Publish button hands you the ready-to-post caption and opens the app. Connect an account to upgrade to hands-off auto-publishing."}
           </p>

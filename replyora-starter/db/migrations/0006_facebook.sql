@@ -1,5 +1,5 @@
 -- ReplyOra Social — add Facebook as a third publishable platform.
--- Run once in the Neon SQL editor, AFTER 0005_ayrshare.sql.
+-- Run once in the Neon SQL editor, AFTER 0004_publishing.sql.
 --
 -- client_connections.platform was CHECK (platform IN ('instagram','tiktok')).
 -- Widen it to allow 'facebook' so a client can link a Facebook Page too.

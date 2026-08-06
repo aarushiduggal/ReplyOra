@@ -88,7 +88,7 @@ export function CalendarWorkspace({
     });
   }
 
-  /** Real publish — pushes the post live via the configured engine (Ayrshare /
+  /** Real publish — pushes the post live via the configured engine (PostPeer /
    *  Meta / TikTok). Falls back to the copy-and-paste assist when none is set. */
   function publishNow(p: ClientPost) {
     if (!publishReady) {
