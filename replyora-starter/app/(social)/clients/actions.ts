@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { addClient, deleteClient, listClients } from "@/lib/social/clients";
+import { addClient, deleteClient, renameClient, listClients } from "@/lib/social/clients";
 import { getWorkspaceBilling } from "@/lib/social/billing";
 import { entitlementsFor } from "@/lib/social/plans";
 
@@ -35,4 +35,14 @@ export async function createClientAction(formData: FormData): Promise<void> {
 export async function deleteClientAction(clientId: string): Promise<void> {
   await deleteClient(clientId);
   revalidatePath("/clients");
+}
+
+/** Rename a client. Scoped to the agency's workspace. */
+export async function renameClientAction(
+  clientId: string,
+  name: string,
+): Promise<void> {
+  await renameClient(clientId, name);
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
 }

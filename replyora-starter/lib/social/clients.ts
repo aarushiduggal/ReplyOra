@@ -230,6 +230,22 @@ export async function addClient(name: string): Promise<Client> {
   };
 }
 
+/** Rename a client. Scoped to the agency's workspace. */
+export async function renameClient(id: string, name: string): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  const clean = name.trim();
+  if (!clean) return;
+  if (!hasDb()) {
+    const c = CLIENTS.find((x) => x.id === id && x.workspaceId === workspaceId);
+    if (c) c.name = clean;
+    return;
+  }
+  await sql()`
+    UPDATE clients SET name = ${clean}
+    WHERE id = ${id} AND workspace_id = ${workspaceId}
+  `;
+}
+
 /** Delete a client and everything it owns (all child rows cascade-delete). */
 export async function deleteClient(id: string): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
