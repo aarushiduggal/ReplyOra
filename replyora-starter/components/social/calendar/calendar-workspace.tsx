@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { CalendarClock, ChevronLeft, ChevronRight, Plus, Send, X } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Plus, Send, Trash2, X } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import type { ApprovalStatus } from "@/lib/social/approvals";
@@ -77,6 +77,7 @@ export function CalendarWorkspace({
   const [month, setMonth] = useState(todayM);
   const [shareMonth, setShareMonth] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
+  const [editPost, setEditPost] = useState<ClientPost | null>(null);
   const [publishPost, setPublishPost] = useState<ClientPost | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -252,12 +253,10 @@ export function CalendarWorkspace({
               const isToday =
                 d === todayD && month === todayM && year === todayY;
               return (
-                <button
+                <div
                   key={key}
-                  type="button"
-                  disabled={!d}
                   onClick={() => d && setCreateDate(dateKey(year, month, d))}
-                  className={`min-h-[92px] border-b border-r border-ink/10 p-1.5 text-left align-top last:border-r-0 ${d ? "hover:bg-oxblood/[0.04]" : "bg-ink/[0.01]"}`}
+                  className={`min-h-[92px] border-b border-r border-ink/10 p-1.5 text-left align-top last:border-r-0 ${d ? "cursor-pointer hover:bg-oxblood/[0.04]" : "bg-ink/[0.01]"}`}
                 >
                   {d && (
                     <>
@@ -266,12 +265,18 @@ export function CalendarWorkspace({
                       </span>
                       <span className="mt-1 flex flex-col gap-1">
                         {dayPosts.slice(0, 3).map((p) => (
-                          <span
+                          <button
                             key={p.id}
-                            className="truncate rounded bg-oxblood/10 px-1 py-0.5 text-[9px] font-medium text-oxblood"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditPost(p);
+                            }}
+                            title="Edit or remove this post"
+                            className="truncate rounded bg-oxblood/10 px-1 py-0.5 text-left text-[9px] font-medium text-oxblood hover:bg-oxblood/20"
                           >
                             {p.caption ? p.caption.slice(0, 22) : PLATFORM_LABEL[p.platform]}
-                          </span>
+                          </button>
                         ))}
                         {dayPosts.length > 3 && (
                           <span className="text-[9px] text-ink/80">
@@ -281,7 +286,7 @@ export function CalendarWorkspace({
                       </span>
                     </>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -385,6 +390,15 @@ export function CalendarWorkspace({
           clientId={clientId}
           date={createDate}
           onClose={() => setCreateDate(null)}
+          startTransition={startTransition}
+        />
+      )}
+
+      {editPost && (
+        <EditPostModal
+          clientId={clientId}
+          post={editPost}
+          onClose={() => setEditPost(null)}
           startTransition={startTransition}
         />
       )}
@@ -582,6 +596,119 @@ function CreatePostModal({
             <button type="button" onClick={onClose} className="w-full rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood">
               Cancel
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditPostModal({
+  clientId,
+  post,
+  onClose,
+  startTransition,
+}: {
+  clientId: string;
+  post: ClientPost;
+  onClose: () => void;
+  startTransition: (cb: () => void) => void;
+}) {
+  const [caption, setCaption] = useState(post.caption);
+  const [pillar, setPillar] = useState<string>(post.pillar || PILLARS[0]);
+  const [platform, setPlatform] = useState<Platform>(post.platform);
+  const initial = post.scheduledFor ? new Date(post.scheduledFor) : null;
+  const [date, setDate] = useState(
+    initial ? initial.toISOString().slice(0, 10) : "",
+  );
+  const [time, setTime] = useState(
+    initial ? initial.toISOString().slice(11, 16) : "09:00",
+  );
+
+  function save() {
+    const scheduledFor = date ? new Date(`${date}T${time}:00`).toISOString() : post.scheduledFor;
+    startTransition(async () => {
+      await updateCalendarPostAction(clientId, post.id, { caption, pillar, platform, scheduledFor });
+      toast({ title: "Post updated", type: "success" });
+    });
+    onClose();
+  }
+
+  function remove() {
+    startTransition(async () => {
+      await deleteCalendarPostAction(clientId, post.id);
+      toast({ title: "Post removed", type: "info" });
+    });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-oxblood/15 bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-xl text-oxblood">Edit post</h3>
+          <button onClick={onClose} className="text-ink/80 hover:text-oxblood" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Caption</label>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Pillar</label>
+              <select value={pillar} onChange={(e) => setPillar(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
+                {PILLARS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Platform</label>
+              <select value={platform} onChange={(e) => setPlatform(e.target.value as Platform)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
+                {PLATFORMS.map((p) => (
+                  <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Date</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Time</label>
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <button
+              type="button"
+              onClick={remove}
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-300 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-red-600 transition-colors hover:bg-red-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Remove
+            </button>
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={save}
+                className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
+              >
+                Save changes
+              </button>
+            </div>
           </div>
         </div>
       </div>
