@@ -85,6 +85,24 @@ export async function GET(
     return NextResponse.redirect(url);
   }
 
+  if (platform === "facebook") {
+    // Facebook Page publishing via Facebook Login (for Business). The person
+    // logs in with their Facebook profile that admins the Page.
+    if (!HAS_META) return NextResponse.redirect(`${back}?integration=not_configured`);
+    const redirectUri = `${APP_URL}/api/social/connect/facebook/callback`;
+    const configId = process.env.META_LOGIN_CONFIG_ID;
+    const grant = configId
+      ? `&config_id=${encodeURIComponent(configId)}`
+      : `&scope=${encodeURIComponent("pages_show_list,pages_read_engagement,pages_manage_posts,business_management")}`;
+    const url =
+      `https://www.facebook.com/v21.0/dialog/oauth?client_id=${process.env.META_APP_ID}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${encodeURIComponent(clientId)}` +
+      grant +
+      `&response_type=code`;
+    return NextResponse.redirect(url);
+  }
+
   if (platform === "tiktok") {
     if (!HAS_TIKTOK) return NextResponse.redirect(`${back}?integration=not_configured`);
     const redirectUri = `${APP_URL}/api/social/connect/tiktok/callback`;

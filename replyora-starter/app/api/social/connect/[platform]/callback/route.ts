@@ -130,6 +130,47 @@ export async function GET(
       return NextResponse.redirect(`${back}?connected=instagram`);
     }
 
+    if (platform === "facebook" && HAS_META) {
+      const redirectUri = `${APP_URL}/api/social/connect/facebook/callback`;
+      // 1) code → short-lived user token
+      const tokRes = await fetch(
+        `${GRAPH}/oauth/access_token?client_id=${process.env.META_APP_ID}` +
+          `&client_secret=${process.env.META_APP_SECRET}` +
+          `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+          `&code=${encodeURIComponent(code)}`,
+      );
+      const tok = (await tokRes.json()) as { access_token?: string };
+      if (!tok.access_token) return NextResponse.redirect(`${back}?integration=error`);
+
+      // 2) → long-lived user token
+      const llRes = await fetch(
+        `${GRAPH}/oauth/access_token?grant_type=fb_exchange_token` +
+          `&client_id=${process.env.META_APP_ID}` +
+          `&client_secret=${process.env.META_APP_SECRET}` +
+          `&fb_exchange_token=${tok.access_token}`,
+      );
+      const ll = (await llRes.json()) as { access_token?: string };
+      const userToken = ll.access_token ?? tok.access_token;
+
+      // 3) pick the Page the person admins → store its long-lived page token
+      const pagesRes = await fetch(
+        `${GRAPH}/me/accounts?fields=id,name,access_token&access_token=${userToken}`,
+      );
+      const pages = (await pagesRes.json()) as {
+        data?: { id: string; name: string; access_token: string }[];
+      };
+      const page = pages.data?.[0];
+      if (!page) return NextResponse.redirect(`${back}?integration=no_page`);
+
+      await upsertConnection(clientId, "facebook", {
+        externalAccountId: page.id,
+        externalUsername: page.name ?? null,
+        accessToken: page.access_token,
+        expiresAt: null, // page tokens don't expire
+      });
+      return NextResponse.redirect(`${back}?connected=facebook`);
+    }
+
     if (platform === "tiktok" && HAS_TIKTOK) {
       const redirectUri = `${APP_URL}/api/social/connect/tiktok/callback`;
       const res = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {

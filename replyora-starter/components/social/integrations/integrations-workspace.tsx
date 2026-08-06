@@ -44,6 +44,8 @@ export function IntegrationsWorkspace({
     ? { kind: "ok" as const, text: `${cap(connectedParam)} connected 🎉` }
     : errorParam === "no_ig"
       ? { kind: "err" as const, text: "Connected, but no Instagram Business account was found on that login. Make sure the account is a Professional (Business/Creator) account, then try again." }
+      : errorParam === "no_page"
+        ? { kind: "err" as const, text: "Connected, but no Facebook Page was found on that login. Make sure the account admins a Page, then try again." }
       : errorParam === "not_configured"
         ? { kind: "err" as const, text: "Instagram isn't configured yet — check the Netlify keys." }
         : errorParam === "error"
