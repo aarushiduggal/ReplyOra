@@ -17,6 +17,7 @@ import { ClientNameProvider } from "@/components/social/client-name-context";
 import { GuideProvider } from "@/components/social/guide";
 import { OwnerPanel } from "@/components/social/owner-panel";
 import { ImpersonationBanner } from "@/components/social/impersonation-banner";
+import { Toaster } from "@/components/ui/toaster";
 
 /**
  * replyora Social portal shell. Gated by getCurrentUser() (→ /login when signed
@@ -72,6 +73,9 @@ export default async function SocialPortalLayout({
           {owner && !impersonatingName && (
             <OwnerPanel accountType={ownerAccountType} />
           )}
+          {/* Renders success/error toasts (publish results, connect, etc.).
+              Was missing here, so all dashboard feedback fired invisibly. */}
+          <Toaster />
         </div>
       </GuideProvider>
     </ClientNameProvider>
