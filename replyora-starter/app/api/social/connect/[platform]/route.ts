@@ -65,15 +65,22 @@ export async function GET(
       return NextResponse.redirect(url);
     }
 
-    // Fallback: Facebook Login (IG must be linked to a Facebook Page).
+    // Facebook Login (IG must be linked to a Facebook Page — the person logs in
+    // with their Facebook profile that admins the Page).
     if (!HAS_META) return NextResponse.redirect(`${back}?integration=not_configured`);
-    const scope =
-      "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,business_management";
+    // "Facebook Login for Business" uses a saved Configuration (config_id) that
+    // defines the permissions/assets. When META_LOGIN_CONFIG_ID is set we use it;
+    // otherwise we fall back to a classic scope-based request.
+    const configId = process.env.META_LOGIN_CONFIG_ID;
+    const grant = configId
+      ? `&config_id=${encodeURIComponent(configId)}`
+      : `&scope=${encodeURIComponent("instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,business_management")}`;
     const url =
       `https://www.facebook.com/v21.0/dialog/oauth?client_id=${process.env.META_APP_ID}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&state=${encodeURIComponent(clientId)}` +
-      `&scope=${encodeURIComponent(scope)}&response_type=code`;
+      grant +
+      `&response_type=code`;
     return NextResponse.redirect(url);
   }
 
