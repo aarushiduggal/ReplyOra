@@ -13,11 +13,14 @@ import { getCurrentWorkspaceId } from "@/lib/auth/session";
  */
 
 export type ApprovalStatus = "pending" | "approved" | "changes";
+export type ChangeResolution = "pending" | "resolved" | "unresolved";
 
 export interface Approval {
   postId: string;
   status: ApprovalStatus;
   clientNote: string | null;
+  agencyReply: string | null;
+  resolution: ChangeResolution | null;
   decidedAt: string | null;
 }
 
@@ -39,6 +42,8 @@ interface Row {
   post_id: string;
   status: string;
   client_note: string | null;
+  agency_reply?: string | null;
+  resolution?: string | null;
   decided_at: string | Date | null;
 }
 
@@ -47,6 +52,8 @@ function toApproval(r: Row): Approval {
     postId: r.post_id,
     status: (r.status as ApprovalStatus) ?? "pending",
     clientNote: r.client_note,
+    agencyReply: r.agency_reply ?? null,
+    resolution: (r.resolution as ChangeResolution | null) ?? null,
     decidedAt: r.decided_at ? new Date(r.decided_at).toISOString() : null,
   };
 }
@@ -57,15 +64,60 @@ export async function getClientApprovals(
 ): Promise<Map<string, Approval>> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return new Map(MEM);
-  const rows = (await sql()`
-    SELECT a.post_id, a.status, a.client_note, a.decided_at
-    FROM approvals a
-    JOIN social_posts p ON p.id = a.post_id
-    WHERE p.workspace_id = ${workspaceId} AND p.client_id = ${clientId}
-  `) as Row[];
+  let rows: Row[];
+  try {
+    rows = (await sql()`
+      SELECT a.post_id, a.status, a.client_note, a.agency_reply, a.resolution, a.decided_at
+      FROM approvals a
+      JOIN social_posts p ON p.id = a.post_id
+      WHERE p.workspace_id = ${workspaceId} AND p.client_id = ${clientId}
+    `) as Row[];
+  } catch {
+    // agency_reply / resolution columns not present yet (0009 not applied).
+    rows = (await sql()`
+      SELECT a.post_id, a.status, a.client_note, a.decided_at
+      FROM approvals a
+      JOIN social_posts p ON p.id = a.post_id
+      WHERE p.workspace_id = ${workspaceId} AND p.client_id = ${clientId}
+    `) as Row[];
+  }
   const map = new Map<string, Approval>();
   for (const r of rows) map.set(r.post_id, toApproval(r));
   return map;
+}
+
+/**
+ * Agency replies to a client's change request and sets its resolution state
+ * (pending | resolved | unresolved). Workspace-scoped.
+ */
+export async function respondToChangeRequest(
+  postId: string,
+  input: { reply?: string; resolution?: ChangeResolution },
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const existing = MEM.get(postId);
+    if (existing) {
+      if (input.reply !== undefined) existing.agencyReply = input.reply;
+      if (input.resolution !== undefined) existing.resolution = input.resolution;
+    }
+    return;
+  }
+  const owns = (await sql()`
+    SELECT 1 FROM social_posts
+    WHERE id = ${postId} AND workspace_id = ${workspaceId} LIMIT 1
+  `) as unknown[];
+  if (owns.length === 0) return;
+  try {
+    if (input.reply !== undefined) {
+      await sql()`UPDATE approvals SET agency_reply = ${input.reply} WHERE post_id = ${postId}`;
+    }
+    if (input.resolution !== undefined) {
+      await sql()`UPDATE approvals SET resolution = ${input.resolution} WHERE post_id = ${postId}`;
+    }
+  } catch {
+    /* columns not present yet */
+  }
 }
 
 /** Agency sends a post to the client for review (status → pending). */
@@ -76,6 +128,8 @@ export async function sendForApproval(postId: string): Promise<void> {
       postId,
       status: "pending",
       clientNote: null,
+      agencyReply: null,
+      resolution: null,
       decidedAt: null,
     });
     return;

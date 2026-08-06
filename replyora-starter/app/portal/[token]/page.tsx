@@ -42,7 +42,7 @@ export default async function ClientPortalPage({
         </p>
 
         <div className="mt-8">
-          <PortalReview token={token} posts={data.posts} approvals={data.approvals} />
+          <PortalReview token={token} posts={data.posts} approvals={data.approvals} agencyReplies={data.agencyReplies} />
         </div>
       </main>
 

@@ -13,3 +13,9 @@ CREATE TABLE IF NOT EXISTS deletion_requests (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS deletion_requests_ws_idx ON deletion_requests (workspace_id);
+
+-- Approvals: agency reply to a client's change request + its resolution state
+-- (pending | resolved | unresolved). Lets the agency answer "here are the
+-- changes" and mark whether the request is handled.
+ALTER TABLE approvals ADD COLUMN IF NOT EXISTS agency_reply TEXT;
+ALTER TABLE approvals ADD COLUMN IF NOT EXISTS resolution   TEXT;

@@ -53,6 +53,7 @@ export interface PortalData {
   clientName: string;
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
+  agencyReplies: Record<string, string | null>;
 }
 
 interface PostRow {
@@ -76,9 +77,9 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
       const posts = demoPosts(Date.now()).filter(
         (p) => p.status === "scheduled" || p.status === "published",
       );
-      return { clientName: DEMO_CLIENT.name, posts, approvals: {} };
+      return { clientName: DEMO_CLIENT.name, posts, approvals: {}, agencyReplies: {} };
     }
-    return { clientName: "Client", posts: [], approvals: {} };
+    return { clientName: "Client", posts: [], approvals: {}, agencyReplies: {} };
   }
 
   const clientRows = (await sql()`
@@ -109,16 +110,31 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
     createdAt: new Date(r.created_at).toISOString(),
   }));
 
-  const apprRows = (await sql()`
-    SELECT a.post_id, a.status
-    FROM approvals a
-    JOIN social_posts p ON p.id = a.post_id
-    WHERE p.client_id = ${clientId}
-  `) as { post_id: string; status: string }[];
+  let apprRows: { post_id: string; status: string; agency_reply?: string | null }[];
+  try {
+    apprRows = (await sql()`
+      SELECT a.post_id, a.status, a.agency_reply
+      FROM approvals a
+      JOIN social_posts p ON p.id = a.post_id
+      WHERE p.client_id = ${clientId}
+    `) as { post_id: string; status: string; agency_reply: string | null }[];
+  } catch {
+    // agency_reply column not present yet (0009 not applied).
+    apprRows = (await sql()`
+      SELECT a.post_id, a.status
+      FROM approvals a
+      JOIN social_posts p ON p.id = a.post_id
+      WHERE p.client_id = ${clientId}
+    `) as { post_id: string; status: string }[];
+  }
   const approvals: Record<string, ApprovalStatus> = {};
-  for (const r of apprRows) approvals[r.post_id] = r.status as ApprovalStatus;
+  const agencyReplies: Record<string, string | null> = {};
+  for (const r of apprRows) {
+    approvals[r.post_id] = r.status as ApprovalStatus;
+    agencyReplies[r.post_id] = r.agency_reply ?? null;
+  }
 
-  return { clientName: clientRow.name, posts, approvals };
+  return { clientName: clientRow.name, posts, approvals, agencyReplies };
 }
 
 /** Client's Approve / Request-changes decision (public, token-authorised). */

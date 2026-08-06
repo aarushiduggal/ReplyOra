@@ -20,10 +20,12 @@ export function PortalReview({
   token,
   posts,
   approvals,
+  agencyReplies,
 }: {
   token: string;
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
+  agencyReplies: Record<string, string | null>;
 }) {
   const scheduled = posts.filter((p) => p.scheduledFor);
 
@@ -70,7 +72,7 @@ export function PortalReview({
             posts
               .filter((p) => approvals[p.id])
               .map((p) => (
-                <ReviewRow key={p.id} token={token} post={p} status={approvals[p.id]!} />
+                <ReviewRow key={p.id} token={token} post={p} status={approvals[p.id]!} agencyReply={agencyReplies[p.id] ?? null} />
               ))
           )}
         </div>
@@ -83,10 +85,12 @@ function ReviewRow({
   token,
   post,
   status,
+  agencyReply,
 }: {
   token: string;
   post: ClientPost;
   status: ApprovalStatus;
+  agencyReply: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -123,6 +127,12 @@ function ReviewRow({
           </span>
         )}
       </div>
+
+      {status === "changes" && agencyReply && (
+        <p className="mt-2 rounded-lg bg-oxblood/5 px-3 py-2 text-[12px] text-ink/85">
+          <span className="font-semibold text-oxblood">Your team replied:</span> “{agencyReply}”
+        </p>
+      )}
 
       {status === "pending" && (
         <div className="mt-3">

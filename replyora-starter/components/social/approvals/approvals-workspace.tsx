@@ -5,10 +5,14 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, MessageSquareWarning, Send } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
-import type { ApprovalStatus } from "@/lib/social/approvals";
+import type { ApprovalStatus, ChangeResolution } from "@/lib/social/approvals";
 import { PLATFORM_LABEL } from "@/lib/social/types";
-import { sendForReviewAction } from "@/app/(social)/clients/[id]/approvals/actions";
+import {
+  sendForReviewAction,
+  respondToChangeAction,
+} from "@/app/(social)/clients/[id]/approvals/actions";
 import { GuideTrigger } from "@/components/social/guide";
+import { toast } from "@/lib/toast";
 
 export function ApprovalsWorkspace({
   clientId,
@@ -16,6 +20,8 @@ export function ApprovalsWorkspace({
   posts,
   approvals,
   notes,
+  replies,
+  resolutions,
   portalUrl,
 }: {
   clientId: string;
@@ -23,6 +29,8 @@ export function ApprovalsWorkspace({
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
   notes: Record<string, string | null>;
+  replies: Record<string, string | null>;
+  resolutions: Record<string, ChangeResolution | null>;
   portalUrl: string;
 }) {
   const router = useRouter();
@@ -45,6 +53,21 @@ export function ApprovalsWorkspace({
     startTransition(async () => {
       await sendForReviewAction(clientId, postId);
       router.refresh();
+    });
+  }
+
+  function respond(
+    postId: string,
+    input: { reply?: string; resolution?: ChangeResolution },
+  ) {
+    startTransition(async () => {
+      await respondToChangeAction(clientId, postId, input);
+      router.refresh();
+      if (input.resolution) {
+        toast({ title: `Marked ${RESOLUTION_LABEL[input.resolution]}`, type: "success" });
+      } else {
+        toast({ title: "Reply sent to client", type: "success" });
+      }
     });
   }
 
@@ -89,13 +112,19 @@ export function ApprovalsWorkspace({
         <Stat label="Changes requested" n={changes.length} tone="text-rose-700" />
       </div>
 
-      <Group title={`In review (${pending.length})`} posts={pending} approvals={approvals} notes={notes} onSend={send} />
-      <Group title={`Changes requested (${changes.length})`} posts={changes} approvals={approvals} notes={notes} onSend={send} />
-      <Group title={`Approved (${approved.length})`} posts={approved} approvals={approvals} notes={notes} onSend={send} />
-      <Group title={`Not sent yet (${notSent.length})`} posts={notSent} approvals={approvals} notes={notes} onSend={send} showSend />
+      <Group title={`In review (${pending.length})`} posts={pending} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group title={`Changes requested (${changes.length})`} posts={changes} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group title={`Approved (${approved.length})`} posts={approved} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group title={`Not sent yet (${notSent.length})`} posts={notSent} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} showSend />
     </div>
   );
 }
+
+const RESOLUTION_LABEL: Record<ChangeResolution, string> = {
+  pending: "Pending",
+  resolved: "Resolved",
+  unresolved: "Not resolved",
+};
 
 function Stat({ label, n, tone }: { label: string; n: number; tone: string }) {
   return (
@@ -111,14 +140,20 @@ function Group({
   posts,
   approvals,
   notes,
+  replies,
+  resolutions,
   onSend,
+  onRespond,
   showSend,
 }: {
   title: string;
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
   notes: Record<string, string | null>;
+  replies: Record<string, string | null>;
+  resolutions: Record<string, ChangeResolution | null>;
   onSend: (id: string) => void;
+  onRespond: (id: string, input: { reply?: string; resolution?: ChangeResolution }) => void;
   showSend?: boolean;
 }) {
   if (posts.length === 0) return null;
@@ -127,32 +162,120 @@ function Group({
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">{title}</p>
       <div className="space-y-2">
         {posts.map((p) => (
-          <div key={p.id} className="flex items-start justify-between gap-3 rounded-xl border border-ink/10 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-ink">
-                {p.caption ? p.caption.slice(0, 70) : "(untitled)"}
-              </p>
-              <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
-                {p.scheduledFor?.slice(0, 10) ?? "Unscheduled"} · {PLATFORM_LABEL[p.platform]}
-              </p>
-              {approvals[p.id] === "changes" && notes[p.id] && (
-                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-rose-700">
-                  <MessageSquareWarning className="mt-0.5 h-3 w-3 shrink-0" />
-                  “{notes[p.id]}”
+          <div key={p.id} className="rounded-xl border border-ink/10 px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  {p.caption ? p.caption.slice(0, 70) : "(untitled)"}
                 </p>
+                <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
+                  {p.scheduledFor?.slice(0, 10) ?? "Unscheduled"} · {PLATFORM_LABEL[p.platform]}
+                </p>
+              </div>
+              {showSend && (
+                <button
+                  type="button"
+                  onClick={() => onSend(p.id)}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-oxblood/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:bg-oxblood hover:text-cream"
+                >
+                  <Send className="h-3 w-3" /> Send for review
+                </button>
               )}
             </div>
-            {showSend && (
-              <button
-                type="button"
-                onClick={() => onSend(p.id)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-oxblood/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:bg-oxblood hover:text-cream"
-              >
-                <Send className="h-3 w-3" /> Send for review
-              </button>
+
+            {approvals[p.id] === "changes" && (
+              <ChangeThread
+                postId={p.id}
+                clientNote={notes[p.id] ?? null}
+                reply={replies[p.id] ?? null}
+                resolution={resolutions[p.id] ?? null}
+                onRespond={onRespond}
+              />
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** The client's change request + the agency's reply and resolution controls. */
+function ChangeThread({
+  postId,
+  clientNote,
+  reply,
+  resolution,
+  onRespond,
+}: {
+  postId: string;
+  clientNote: string | null;
+  reply: string | null;
+  resolution: ChangeResolution | null;
+  onRespond: (id: string, input: { reply?: string; resolution?: ChangeResolution }) => void;
+}) {
+  const [draft, setDraft] = useState(reply ?? "");
+  const current: ChangeResolution = resolution ?? "pending";
+
+  const badgeTone: Record<ChangeResolution, string> = {
+    pending: "bg-amber-100 text-amber-800",
+    resolved: "bg-emerald-100 text-emerald-800",
+    unresolved: "bg-rose-100 text-rose-800",
+  };
+
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-rose-200/70 bg-rose-50/40 p-3">
+      {/* Client's request */}
+      {clientNote && (
+        <p className="flex items-start gap-1.5 text-[12px] text-rose-800">
+          <MessageSquareWarning className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span><span className="font-semibold">Client:</span> “{clientNote}”</span>
+        </p>
+      )}
+
+      {/* Status + resolution controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${badgeTone[current]}`}>
+          {RESOLUTION_LABEL[current]}
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/50">Mark as:</span>
+        {(["pending", "resolved", "unresolved"] as ChangeResolution[]).map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => onRespond(postId, { resolution: r })}
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+              current === r
+                ? "border-oxblood bg-oxblood text-cream"
+                : "border-ink/20 text-ink/70 hover:border-oxblood hover:text-oxblood"
+            }`}
+          >
+            {RESOLUTION_LABEL[r]}
+          </button>
+        ))}
+      </div>
+
+      {/* Agency reply */}
+      <div className="space-y-1.5">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={2}
+          placeholder="Reply to the client — “here are the changes I made…”"
+          className="w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-[12px] text-ink outline-none focus:border-oxblood"
+        />
+        <button
+          type="button"
+          onClick={() => onRespond(postId, { reply: draft.trim() })}
+          disabled={!draft.trim() || draft.trim() === (reply ?? "")}
+          className="rounded-full bg-oxblood px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cream transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          Send reply
+        </button>
+        {reply && (
+          <p className="text-[11px] text-ink/70">
+            <span className="font-semibold text-oxblood">You replied:</span> “{reply}”
+          </p>
+        )}
       </div>
     </div>
   );
