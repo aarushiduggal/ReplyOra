@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { setClientPlatform } from "@/lib/social/clients";
-import { deleteConnection, type ConnPlatform } from "@/lib/social/connections";
+import {
+  deleteConnection,
+  upsertConnection,
+  type ConnPlatform,
+} from "@/lib/social/connections";
 
 /**
  * OAuth stub — records a platform connection for this client. When real Meta /
@@ -15,6 +19,29 @@ export async function toggleIntegrationAction(
   connected: boolean,
 ): Promise<void> {
   await setClientPlatform(clientId, platform, connected);
+  revalidatePath(`/clients/${clientId}/integrations`);
+  revalidatePath(`/clients/${clientId}/reports`);
+  revalidatePath(`/clients/${clientId}/grid`);
+}
+
+/**
+ * Link a client's account to our publisher (PostPeer) by storing its account id.
+ * The id comes from the PostPeer dashboard's connected-accounts list. Passing an
+ * empty id unlinks the platform.
+ */
+export async function linkPublisherAccountAction(
+  clientId: string,
+  platform: "instagram" | "tiktok",
+  accountId: string,
+): Promise<void> {
+  const id = accountId.trim();
+  if (id) {
+    await upsertConnection(clientId, platform, { externalAccountId: id });
+    await setClientPlatform(clientId, platform, true);
+  } else {
+    await deleteConnection(clientId, platform);
+    await setClientPlatform(clientId, platform, false);
+  }
   revalidatePath(`/clients/${clientId}/integrations`);
   revalidatePath(`/clients/${clientId}/reports`);
   revalidatePath(`/clients/${clientId}/grid`);

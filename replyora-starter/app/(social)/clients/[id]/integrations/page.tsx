@@ -2,7 +2,7 @@ import { IntegrationsWorkspace } from "@/components/social/integrations/integrat
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientConnections } from "@/lib/social/connections";
-import { HAS_META, HAS_TIKTOK, HAS_AYRSHARE } from "@/lib/social/publish";
+import { HAS_META, HAS_TIKTOK, HAS_AYRSHARE, HAS_POSTPEER } from "@/lib/social/publish";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,12 @@ export default async function ClientIntegrationsPage({
     ]),
   );
 
+  // PostPeer account ids we've stored per platform (shown in the link form).
+  const linkedAccounts: Record<string, string> = {};
+  for (const c of connections) {
+    if (c.externalAccountId) linkedAccounts[c.platform] = c.externalAccountId;
+  }
+
   return (
     <IntegrationsWorkspace
       clientId={id}
@@ -35,6 +41,8 @@ export default async function ClientIntegrationsPage({
       metaReady={HAS_META}
       tiktokReady={HAS_TIKTOK}
       ayrshareReady={HAS_AYRSHARE}
+      postpeerReady={HAS_POSTPEER}
+      linkedAccounts={linkedAccounts}
     />
   );
 }
