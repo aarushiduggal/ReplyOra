@@ -119,6 +119,28 @@ export async function updateTaskStatus(
   `;
 }
 
+export async function updateTask(
+  id: string,
+  fields: { title?: string; dueAt?: string | null },
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  const title = fields.title?.trim();
+  if (!hasDb()) {
+    const t = MEM.find((x) => x.id === id && x.workspaceId === workspaceId);
+    if (t) {
+      if (title !== undefined) t.title = title;
+      if (fields.dueAt !== undefined) t.dueAt = fields.dueAt;
+    }
+    return;
+  }
+  if (title !== undefined) {
+    await sql()`UPDATE tasks SET title = ${title} WHERE workspace_id = ${workspaceId} AND id = ${id}`;
+  }
+  if (fields.dueAt !== undefined) {
+    await sql()`UPDATE tasks SET due_at = ${fields.dueAt} WHERE workspace_id = ${workspaceId} AND id = ${id}`;
+  }
+}
+
 export async function deleteTask(id: string): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) {

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   createTask,
   deleteTask,
+  updateTask,
   updateTaskStatus,
   type TaskStatus,
 } from "@/lib/social/tasks";
@@ -21,6 +22,14 @@ export async function createTaskAction(input: {
 
 export async function moveTaskAction(id: string, status: TaskStatus): Promise<void> {
   await updateTaskStatus(id, status);
+  revalidatePath("/tasks");
+}
+
+export async function updateTaskAction(
+  id: string,
+  fields: { title?: string; dueAt?: string | null },
+): Promise<void> {
+  await updateTask(id, fields);
   revalidatePath("/tasks");
 }
 
