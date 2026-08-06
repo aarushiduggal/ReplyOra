@@ -7,6 +7,7 @@ import {
   bulkSetTileStatus,
   reorderClientTiles,
   saveProfilePreview,
+  scheduleTiles,
   setTileMedia,
   unscheduleTile,
   type ProfilePreview,
@@ -58,6 +59,17 @@ export async function bulkDeleteAction(
 ): Promise<void> {
   await bulkDeleteTiles(clientId, ids);
   revalidatePath(`/clients/${clientId}/grid`);
+}
+
+/** Schedule the selected tiles for a real date/time — they appear on the calendar. */
+export async function scheduleTilesAction(
+  clientId: string,
+  ids: string[],
+  scheduledForIso: string,
+): Promise<void> {
+  await scheduleTiles(clientId, ids, scheduledForIso);
+  revalidatePath(`/clients/${clientId}/grid`);
+  revalidatePath(`/clients/${clientId}/calendar`);
 }
 
 /** Remove a single post from the schedule (back to draft, clears the date). */

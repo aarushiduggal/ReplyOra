@@ -132,6 +132,25 @@ export async function bulkSetTileStatus(
   }
 }
 
+/** Schedule several tiles for a real date/time (moves them to the calendar). */
+export async function scheduleTiles(
+  clientId: string,
+  ids: string[],
+  scheduledForIso: string,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb() || ids.length === 0) return;
+  for (const id of ids) {
+    await sql()`
+      UPDATE social_posts
+         SET status = 'scheduled', scheduled_for = ${scheduledForIso}
+       WHERE workspace_id = ${workspaceId}
+         AND client_id = ${clientId}
+         AND id = ${id}
+    `;
+  }
+}
+
 /** Remove a post from the schedule — back to draft, clears its scheduled time. */
 export async function unscheduleTile(
   clientId: string,

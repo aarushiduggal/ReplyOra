@@ -37,6 +37,7 @@ import {
   placeAssetAction,
   reorderTilesAction,
   saveProfilePreviewAction,
+  scheduleTilesAction,
   unscheduleTileAction,
 } from "@/app/(social)/clients/[id]/grid/actions";
 
@@ -110,6 +111,7 @@ export function GridWorkspace({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragAssetUrl, setDragAssetUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<ProfilePreview>({
@@ -230,6 +232,27 @@ export function GridWorkspace({
     setTiles((ts) => ts.filter((t) => !selected.has(t.id)));
     startTransition(() => bulkDeleteAction(clientId, ids));
     toast({ title: `${ids.length} deleted`, type: "info" });
+    clearSelection();
+  }
+
+  function applySchedule(dateIso: string, time: string) {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const scheduledFor = new Date(`${dateIso}T${time}:00`).toISOString();
+    setTiles((ts) =>
+      ts.map((t) =>
+        selected.has(t.id)
+          ? { ...t, status: "scheduled" as TileStatus, scheduledFor }
+          : t,
+      ),
+    );
+    startTransition(() => scheduleTilesAction(clientId, ids, scheduledFor));
+    toast({
+      title: `${ids.length} scheduled for ${dateIso}, ${time}`,
+      body: "They now appear on the calendar.",
+      type: "success",
+    });
+    setScheduleOpen(false);
     clearSelection();
   }
 
@@ -597,12 +620,13 @@ export function GridWorkspace({
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/85">
                 {selected.size} selected
               </span>
-              <Link
-                href={`${base}/calendar`}
+              <button
+                type="button"
+                onClick={() => setScheduleOpen(true)}
                 className="inline-flex items-center gap-1 rounded-full bg-oxblood px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-cream"
               >
-                <CalendarClock className="h-3 w-3" /> Schedule in calendar
-              </Link>
+                <CalendarClock className="h-3 w-3" /> Schedule
+              </button>
               <button
                 type="button"
                 onClick={() => applyBulkStatus("draft")}
@@ -751,6 +775,89 @@ export function GridWorkspace({
       )}
 
       {qrOpen && <PhoneUploadModal clientName={clientName} onClose={() => setQrOpen(false)} />}
+
+      {scheduleOpen && (
+        <ScheduleModal
+          count={selected.size}
+          onClose={() => setScheduleOpen(false)}
+          onConfirm={applySchedule}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Pick a date + time for the selected tiles, then push them onto the calendar. */
+function ScheduleModal({
+  count,
+  onClose,
+  onConfirm,
+}: {
+  count: number;
+  onClose: () => void;
+  onConfirm: (dateIso: string, time: string) => void;
+}) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(todayIso);
+  const [time, setTime] = useState("09:00");
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-oxblood/15 bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-xl text-oxblood">
+            Schedule {count} {count === 1 ? "post" : "posts"}
+          </h3>
+          <button onClick={onClose} className="text-ink/80 hover:text-oxblood" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">
+              Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              min={todayIso}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">
+              Time
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={!date}
+          onClick={() => onConfirm(date, time)}
+          className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          <CalendarClock className="h-3.5 w-3.5" /> Schedule for {date || "—"}, {time}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-2 w-full rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
