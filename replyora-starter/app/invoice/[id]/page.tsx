@@ -34,12 +34,19 @@ export default async function InvoicePrintPage({
         <div className="mb-8 flex items-start justify-between">
           <div>
             {billing.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={billing.logoUrl} alt="" className="mb-2 h-10" />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={billing.logoUrl} alt="" className="mb-2 h-10" />
+                <p className="mt-1 text-sm font-semibold text-ink">
+                  {billing.businessName || "Your business"}
+                </p>
+              </>
             ) : (
-              <p className="font-wordmark text-2xl lowercase text-oxblood">replyora°</p>
+              // No logo yet → lead with the agency's own business name (never Replyora).
+              <p className="font-display text-2xl text-oxblood">
+                {billing.businessName || "Your business"}
+              </p>
             )}
-            <p className="mt-1 text-sm font-semibold text-ink">{billing.businessName || "Your Studio"}</p>
             {billing.address.street && (
               <p className="text-[12px] text-ink/85">
                 {billing.address.street}, {billing.address.city} {billing.address.state} {billing.address.zip}

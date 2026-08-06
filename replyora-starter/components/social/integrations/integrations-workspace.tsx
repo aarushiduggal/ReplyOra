@@ -193,18 +193,15 @@ function ConnectAccount({
         )}
       </div>
       {connected && handle && (
-        <p className="mt-2 text-[12px] font-medium text-ink/70">@{handle}</p>
+        <p className="mt-2 text-[12px] font-medium text-ink/70">
+          @{handle.replace(/^@+/, "")}
+        </p>
       )}
       <div className="mt-4">
         {connected ? (
-          <a
-            href="https://www.postpeer.dev/dashboard"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 transition-colors hover:border-oxblood hover:text-oxblood"
-          >
-            Manage in PostPeer
-          </a>
+          <span className="text-[11px] font-medium text-ink/55">
+            Posts publish to this account automatically.
+          </span>
         ) : (
           <a
             href={`/api/social/connect/${platform}?client=${clientId}`}

@@ -9,6 +9,7 @@ import { subtotalCents, totalWithTax } from "@/lib/social/invoice-types";
 import {
   createInvoiceAction,
   updateInvoiceStatusAction,
+  deleteInvoiceAction,
 } from "@/app/(social)/clients/[id]/invoices/actions";
 import { GuideTrigger } from "@/components/social/guide";
 
@@ -184,6 +185,13 @@ function RowActions({
       router.refresh();
     });
   }
+  function remove() {
+    if (!window.confirm("Delete this invoice? This can't be undone.")) return;
+    startTransition(async () => {
+      await deleteInvoiceAction(clientId, id);
+      router.refresh();
+    });
+  }
   return (
     <>
       {status === "draft" && (
@@ -204,6 +212,14 @@ function RowActions({
           Mark paid
         </button>
       )}
+      <button
+        type="button"
+        onClick={remove}
+        className="text-ink/40 transition-colors hover:text-rose"
+        aria-label="Delete invoice"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
     </>
   );
 }

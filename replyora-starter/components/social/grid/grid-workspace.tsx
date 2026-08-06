@@ -265,7 +265,7 @@ export function GridWorkspace({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Platform
             </p>
-            <div className="mt-2 flex gap-4 text-sm font-semibold">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
               {(["instagram", "tiktok", "facebook"] as Platform[]).map((p) => {
                 const active = platform === p;
                 const Icon =

@@ -166,3 +166,15 @@ export async function updateInvoiceStatus(
     WHERE workspace_id = ${workspaceId} AND id = ${id}
   `;
 }
+
+export async function deleteInvoice(id: string): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const idx = MEM.findIndex((x) => x.id === id && x.workspaceId === workspaceId);
+    if (idx !== -1) MEM.splice(idx, 1);
+    return;
+  }
+  await sql()`
+    DELETE FROM invoices WHERE workspace_id = ${workspaceId} AND id = ${id}
+  `;
+}

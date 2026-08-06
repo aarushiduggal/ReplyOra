@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   createInvoice,
   updateInvoiceStatus,
+  deleteInvoice,
   type BillTo,
   type InvoiceStatus,
   type LineItem,
@@ -30,5 +31,13 @@ export async function updateInvoiceStatusAction(
   status: InvoiceStatus,
 ): Promise<void> {
   await updateInvoiceStatus(id, status);
+  revalidatePath(`/clients/${clientId}/invoices`);
+}
+
+export async function deleteInvoiceAction(
+  clientId: string,
+  id: string,
+): Promise<void> {
+  await deleteInvoice(id);
   revalidatePath(`/clients/${clientId}/invoices`);
 }
