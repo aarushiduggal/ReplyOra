@@ -25,6 +25,8 @@ export interface GridTile {
   orderIndex: number;
   /** Placed image (Instagram media). null until an asset is dropped on the tile. */
   mediaUrl: string | null;
+  /** ISO datetime this post is scheduled to publish (null unless scheduled). */
+  scheduledFor: string | null;
 }
 
 export interface ProfilePreview {
@@ -69,13 +71,14 @@ interface TileRow {
   pillar: string | null;
   order_index: number | null;
   media_url: string | null;
+  scheduled_for: string | Date | null;
 }
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
-    SELECT id, caption, status, pillar, order_index, media_url
+    SELECT id, caption, status, pillar, order_index, media_url, scheduled_for
     FROM social_posts
     WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
     ORDER BY order_index ASC NULLS LAST, created_at DESC
@@ -87,6 +90,7 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
     pillar: r.pillar ?? "",
     orderIndex: r.order_index ?? i,
     mediaUrl: r.media_url ?? null,
+    scheduledFor: r.scheduled_for ? new Date(r.scheduled_for).toISOString() : null,
   }));
 }
 
@@ -122,6 +126,19 @@ export async function bulkSetTileStatus(
         AND id = ${id}
     `;
   }
+}
+
+/** Remove a post from the schedule — back to draft, clears its scheduled time. */
+export async function unscheduleTile(
+  clientId: string,
+  id: string,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return;
+  await sql()`
+    UPDATE social_posts SET status = 'draft', scheduled_for = NULL
+    WHERE workspace_id = ${workspaceId} AND client_id = ${clientId} AND id = ${id}
+  `;
 }
 
 /** Bulk-delete several tiles at once (multi-select actions). */

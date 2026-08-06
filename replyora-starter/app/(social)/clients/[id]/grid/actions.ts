@@ -8,6 +8,7 @@ import {
   reorderClientTiles,
   saveProfilePreview,
   setTileMedia,
+  unscheduleTile,
   type ProfilePreview,
   type TileStatus,
 } from "@/lib/social/grid";
@@ -57,4 +58,14 @@ export async function bulkDeleteAction(
 ): Promise<void> {
   await bulkDeleteTiles(clientId, ids);
   revalidatePath(`/clients/${clientId}/grid`);
+}
+
+/** Remove a single post from the schedule (back to draft, clears the date). */
+export async function unscheduleTileAction(
+  clientId: string,
+  tileId: string,
+): Promise<void> {
+  await unscheduleTile(clientId, tileId);
+  revalidatePath(`/clients/${clientId}/grid`);
+  revalidatePath(`/clients/${clientId}/calendar`);
 }

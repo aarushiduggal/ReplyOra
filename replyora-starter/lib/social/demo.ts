@@ -72,6 +72,10 @@ export function demoTiles(): GridTile[] {
     pillar: pillars[i % pillars.length] ?? "Education",
     orderIndex: i,
     mediaUrl: r[2] ? `/marketing/${r[2]}` : null,
+    scheduledFor:
+      r[1] === "scheduled"
+        ? new Date(Date.now() + (i - 5) * 86_400_000).toISOString()
+        : null,
   }));
 }
 

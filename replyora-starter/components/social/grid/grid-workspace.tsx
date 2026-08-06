@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CalendarClock,
   Check,
@@ -36,6 +37,7 @@ import {
   placeAssetAction,
   reorderTilesAction,
   saveProfilePreviewAction,
+  unscheduleTileAction,
 } from "@/app/(social)/clients/[id]/grid/actions";
 
 export interface GridAsset {
@@ -558,13 +560,12 @@ export function GridWorkspace({
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/85">
                 {selected.size} selected
               </span>
-              <button
-                type="button"
-                onClick={() => applyBulkStatus("scheduled")}
+              <Link
+                href={`${base}/calendar`}
                 className="inline-flex items-center gap-1 rounded-full bg-oxblood px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-cream"
               >
-                <CalendarClock className="h-3 w-3" /> Schedule
-              </button>
+                <CalendarClock className="h-3 w-3" /> Schedule in calendar
+              </Link>
               <button
                 type="button"
                 onClick={() => applyBulkStatus("draft")}
@@ -665,13 +666,13 @@ export function GridWorkspace({
                   + Carousel
                 </Link>
               </div>
-              <Column tiles={drafts} empty="No drafts yet" base={base} />
+              <Column tiles={drafts} empty="No drafts yet" base={base} clientId={clientId} variant="draft" />
             </div>
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                 Scheduled ({scheduled.length})
               </p>
-              <Column tiles={scheduled} empty="Nothing scheduled" base={base} />
+              <Column tiles={scheduled} empty="Nothing scheduled" base={base} clientId={clientId} variant="scheduled" />
             </div>
           </div>
         </div>
@@ -850,15 +851,41 @@ function Modal({
   );
 }
 
+function scheduleLabel(iso: string | null): string {
+  if (!iso) return "No date — set in Calendar";
+  return new Date(iso).toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function Column({
   tiles,
   empty,
   base,
+  clientId,
+  variant,
 }: {
   tiles: GridTile[];
   empty: string;
   base: string;
+  clientId: string;
+  variant: "draft" | "scheduled";
 }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  // Scheduled cards jump to the Calendar (where a real date is set); drafts to Studio.
+  const href = variant === "scheduled" ? `${base}/calendar` : `${base}/studio`;
+
+  function unschedule(id: string) {
+    startTransition(async () => {
+      await unscheduleTileAction(clientId, id);
+      router.refresh();
+    });
+  }
+
   if (tiles.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-oxblood/15 px-3 py-6 text-center text-[11px] font-medium text-ink/80">
@@ -869,23 +896,42 @@ function Column({
   return (
     <div className="space-y-2">
       {tiles.map((t) => (
-        <Link
+        <div
           key={t.id}
-          href={`${base}/studio`}
           className="flex items-center gap-2 rounded-xl border border-oxblood/10 bg-white p-2 hover:border-oxblood/30"
         >
-          <span
-            className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center"
-            style={
-              t.mediaUrl
-                ? { backgroundImage: `url(${t.mediaUrl})` }
-                : { backgroundColor: tileColor(t) }
-            }
-          />
-          <span className="line-clamp-2 text-[11px] font-medium text-ink/90">
-            {firstWords(t.caption, 8)}
-          </span>
-        </Link>
+          <Link href={href} className="flex min-w-0 flex-1 items-center gap-2">
+            <span
+              className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center"
+              style={
+                t.mediaUrl
+                  ? { backgroundImage: `url(${t.mediaUrl})` }
+                  : { backgroundColor: tileColor(t) }
+              }
+            />
+            <span className="min-w-0">
+              <span className="line-clamp-1 text-[11px] font-medium text-ink/90">
+                {firstWords(t.caption, 8)}
+              </span>
+              {variant === "scheduled" && (
+                <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-oxblood/80">
+                  {scheduleLabel(t.scheduledFor)}
+                </span>
+              )}
+            </span>
+          </Link>
+          {variant === "scheduled" && (
+            <button
+              type="button"
+              onClick={() => unschedule(t.id)}
+              disabled={pending}
+              aria-label="Remove from schedule"
+              className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-rose/10 hover:text-rose disabled:opacity-50"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       ))}
     </div>
   );
