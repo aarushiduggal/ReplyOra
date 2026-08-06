@@ -5,9 +5,12 @@ import { SectionHeader } from "@/components/social/section-header";
 import { GuideTrigger } from "@/components/social/guide";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
+import { getClientDetail } from "@/lib/social/client-detail";
 import { listClientPosts } from "@/lib/social/posts";
+import { listClientAssets } from "@/lib/social/assets";
 import { getClientApprovals } from "@/lib/social/approvals";
 import { listClientInvoices } from "@/lib/social/invoices";
+import { ClientOverviewTools } from "@/components/social/client-overview-tools";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +20,27 @@ export default async function ClientOverviewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, posts, approvals, invoices] = await Promise.all([
+  const [client, detail, posts, assets, approvals, invoices] = await Promise.all([
     getClient(id),
+    getClientDetail(id),
     listClientPosts(id),
+    listClientAssets(id).catch(() => []),
     getClientApprovals(id),
     listClientInvoices(id),
   ]);
   const name = client?.name ?? sampleName(id);
+
+  const setup = detail
+    ? {
+        brandKit: Boolean(detail.logoUrl || detail.brandColors.length || detail.fontDisplay),
+        pillars: detail.pillars.length >= 3,
+        invite: detail.invites.length > 0,
+        connected: detail.platforms.length > 0,
+        assets: assets.length > 0,
+        gridContent: posts.length > 0,
+        calendar: posts.some((p) => p.scheduledFor),
+      }
+    : null;
 
   const scheduled = posts.filter((p) => p.status === "scheduled").length;
   const drafts = posts.filter((p) => p.status === "draft").length;
@@ -61,6 +78,8 @@ export default async function ClientOverviewPage({
       <p className="mt-2 max-w-md text-sm font-medium text-ink/90">
         The account cockpit — status at a glance, and a jump to any part of the work.
       </p>
+
+      {detail && setup && <ClientOverviewTools detail={detail} setup={setup} />}
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         {stats.map((s) => (
