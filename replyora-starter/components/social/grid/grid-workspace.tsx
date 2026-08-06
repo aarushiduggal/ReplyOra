@@ -30,6 +30,7 @@ import {
 
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
 import type { LiveFeed } from "@/lib/social/instagram-feed";
+import type { FeedAnalysis } from "@/lib/social/feed-analysis";
 import { PLATFORM_LABEL, type Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
@@ -101,6 +102,7 @@ export function GridWorkspace({
   assets = [],
   connectedPlatforms = [],
   liveFeed,
+  feedAnalysis,
 }: {
   clientId: string;
   clientName: string;
@@ -109,6 +111,7 @@ export function GridWorkspace({
   assets?: GridAsset[];
   connectedPlatforms?: string[];
   liveFeed?: LiveFeed;
+  feedAnalysis?: FeedAnalysis | null;
 }) {
   const base = `/clients/${clientId}`;
   const [tiles, setTiles] = useState<GridTile[]>(initialTiles);
@@ -864,7 +867,7 @@ export function GridWorkspace({
         </div>
       </div>
 
-      <GridIntelligence feed={feed} />
+      <GridIntelligence feed={feed} analysis={feedAnalysis ?? null} />
 
       {editOpen && (
         <Modal title="Edit profile" onClose={() => setEditOpen(false)}>
@@ -1265,15 +1268,23 @@ const RECOMMENDED_TIMES = ["Tue 7pm", "Thu 6pm", "Sun 11am"];
 
 function GridIntelligence({
   feed,
+  analysis,
 }: {
   feed: { harmony: number; palette: string[]; total: number };
+  analysis: FeedAnalysis | null;
 }) {
-  const empty = feed.total === 0;
+  // Prefer the LIVE analysis (real feed colours) when the account's connected.
+  const live = Boolean(analysis && analysis.posts > 0);
+  const harmony = live ? analysis!.liveHarmony : feed.harmony;
+  const palette = live ? analysis!.palette : feed.palette;
+  const total = live ? analysis!.posts : feed.total;
+  const delta = live ? analysis!.delta : 0;
+  const empty = total === 0;
   const verdict = empty
     ? "Add posts and this reads your feed's colour consistency."
-    : feed.harmony >= 80
+    : harmony >= 80
       ? "Your tiles are consistent — this feed reads as one brand."
-      : feed.harmony >= 60
+      : harmony >= 60
         ? "Fairly consistent — a couple of outliers break the rhythm."
         : "Mixed themes — group similar posts to tighten the look.";
 
@@ -1281,10 +1292,16 @@ function GridIntelligence({
     <section className="mt-8 border-t border-oxblood/10 pt-6">
       <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
         <span className="text-oxblood">( 02b )</span> Grid intelligence
-        {empty && (
-          <span className="rounded-full bg-oat px-2 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-ink/60">
-            Preview — add posts to activate
+        {live ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-oxblood px-2 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-cream">
+            <span className="h-1.5 w-1.5 rounded-full bg-cream" /> Live · {total} real posts
           </span>
+        ) : (
+          empty && (
+            <span className="rounded-full bg-oat px-2 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-ink/60">
+              Preview — add posts to activate
+            </span>
+          )
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-3">
@@ -1295,16 +1312,22 @@ function GridIntelligence({
               Feed harmony
             </p>
             <p className="font-display text-lg text-oxblood">
-              {empty ? "—" : `${feed.harmony}%`}
+              {empty ? "—" : `${harmony}%`}
             </p>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-oat">
             <div
               className="h-full rounded-full bg-gradient-to-r from-oxblood to-rose transition-all duration-700"
-              style={{ width: empty ? "0%" : `${feed.harmony}%` }}
+              style={{ width: empty ? "0%" : `${harmony}%` }}
             />
           </div>
           <p className="mt-2 text-[11px] text-ink/55">{verdict}</p>
+          {live && delta !== 0 && (
+            <p className={`mt-1 text-[11px] font-semibold ${delta >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+              Your planned posts {delta >= 0 ? "lift" : "drop"} harmony to {analysis!.projectedHarmony}%
+              {delta >= 0 ? " — on brand ✓" : " — a bit off-brand"}
+            </p>
+          )}
         </div>
 
         {/* Palette */}
@@ -1313,7 +1336,7 @@ function GridIntelligence({
             Your palette
           </p>
           <div className="mt-2 flex gap-1.5">
-            {(empty ? [null, null, null, null, null] : feed.palette).map(
+            {(empty ? [null, null, null, null, null] : palette).map(
               (c, i) => (
                 <span
                   key={`${c ?? "ghost"}-${i}`}
@@ -1326,7 +1349,9 @@ function GridIntelligence({
           <p className="mt-2 text-[11px] text-ink/55">
             {empty
               ? "Your palette appears as you plan tiles."
-              : `Pulled from your ${feed.total} planned tiles.`}
+              : live
+                ? `Extracted from your live Instagram feed (${total} posts).`
+                : `Pulled from your ${total} planned tiles.`}
           </p>
         </div>
 
