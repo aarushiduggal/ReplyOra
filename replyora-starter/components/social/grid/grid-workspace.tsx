@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
+import type { LiveFeed } from "@/lib/social/instagram-feed";
 import { PLATFORM_LABEL, type Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
@@ -96,6 +97,7 @@ export function GridWorkspace({
   profile: initialProfile,
   assets = [],
   connectedPlatforms = [],
+  liveFeed,
 }: {
   clientId: string;
   clientName: string;
@@ -103,6 +105,7 @@ export function GridWorkspace({
   profile: ProfilePreview;
   assets?: GridAsset[];
   connectedPlatforms?: string[];
+  liveFeed?: LiveFeed;
 }) {
   const base = `/clients/${clientId}`;
   const [tiles, setTiles] = useState<GridTile[]>(initialTiles);
@@ -151,6 +154,13 @@ export function GridWorkspace({
   const [platform, setPlatform] = useState<Platform>("instagram");
   const isTikTok = platform === "tiktok";
   const [, startTransition] = useTransition();
+
+  // Live Instagram feed (real, via Meta Graph API) — only offered when the
+  // client's IG is connected and we're viewing the Instagram mock.
+  const liveAvailable =
+    platform === "instagram" && Boolean(liveFeed?.connected) && (liveFeed?.media.length ?? 0) > 0;
+  const [showLive, setShowLive] = useState(false);
+  const live = showLive && liveAvailable;
 
   // Separate feed per platform: only show this platform's posts.
   const visible = useMemo(
@@ -494,7 +504,46 @@ export function GridWorkspace({
               )}
             </div>
 
-            {visible.length === 0 ? (
+            {/* Planned / Live toggle — only when the client's IG is connected */}
+            {liveAvailable && (
+              <div className="flex items-center justify-center gap-1 border-t border-oxblood/10 bg-oxblood/[0.03] py-1.5">
+                {(["planned", "live"] as const).map((mode) => {
+                  const on = mode === "live" ? showLive : !showLive;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setShowLive(mode === "live")}
+                      className={`rounded-full px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                        on ? "bg-oxblood text-cream" : "text-ink/70 hover:text-oxblood"
+                      }`}
+                    >
+                      {mode === "live" ? "● Live feed" : "Planned"}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {live ? (
+              <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
+                {liveFeed!.media.map((m) => (
+                  <a
+                    key={m.id}
+                    href={m.permalink ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative aspect-square bg-cover bg-center"
+                    style={{ backgroundImage: `url(${m.mediaUrl})` }}
+                    title={m.caption ?? ""}
+                  >
+                    {m.mediaType === "VIDEO" && (
+                      <Play className="absolute right-1 top-1 h-3 w-3 fill-white text-white [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.5))]" />
+                    )}
+                  </a>
+                ))}
+              </div>
+            ) : visible.length === 0 ? (
               <div className="border-t border-oxblood/10">
                 <div className="grid grid-cols-3 gap-0.5 bg-oxblood/5">
                   {Array.from({ length: 9 }).map((_, i) => (
