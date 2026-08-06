@@ -161,6 +161,39 @@ export async function setClientPlatform(
   }
 }
 
+/**
+ * The client's PostPeer profile id (each client = one profile grouping their own
+ * connected accounts). Column added in migration 0007; missing column or mock
+ * mode returns null so callers fall back gracefully.
+ */
+export async function getClientProfileId(
+  clientId: string,
+): Promise<string | null> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return null;
+  try {
+    const rows = (await sql()`
+      SELECT postpeer_profile_id FROM clients
+      WHERE id = ${clientId} AND workspace_id = ${workspaceId} LIMIT 1
+    `) as { postpeer_profile_id: string | null }[];
+    return rows[0]?.postpeer_profile_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setClientProfileId(
+  clientId: string,
+  profileId: string,
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return;
+  await sql()`
+    UPDATE clients SET postpeer_profile_id = ${profileId}
+    WHERE id = ${clientId} AND workspace_id = ${workspaceId}
+  `;
+}
+
 export async function addClient(name: string): Promise<Client> {
   const workspaceId = await getCurrentWorkspaceId();
   const clean = name.trim() || "New client";

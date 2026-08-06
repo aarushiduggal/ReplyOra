@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { HAS_META, HAS_TIKTOK } from "@/lib/social/publish";
+import {
+  HAS_POSTPEER,
+  ensureClientProfile,
+  getConnectUrl,
+  type PPPlatform,
+} from "@/lib/social/postpeer";
+import { getClient } from "@/lib/social/clients";
 
 export const runtime = "nodejs";
 
@@ -18,6 +25,24 @@ export async function GET(
   const { platform } = await params;
   const clientId = new URL(req.url).searchParams.get("client") ?? "";
   const back = `${APP_URL}/clients/${clientId}/integrations`;
+
+  // Managed API (PostPeer): the CLIENT connects their own account. We create/reuse
+  // the client's profile, then send them to PostPeer's OAuth URL for this platform.
+  if (
+    HAS_POSTPEER &&
+    (platform === "instagram" || platform === "tiktok" || platform === "facebook")
+  ) {
+    if (!clientId) return NextResponse.redirect(`${back}?integration=error`);
+    try {
+      const client = await getClient(clientId);
+      if (!client) return NextResponse.redirect(`${back}?integration=error`);
+      const profileId = await ensureClientProfile(clientId, client.name);
+      const url = await getConnectUrl(platform as PPPlatform, profileId);
+      return NextResponse.redirect(url);
+    } catch {
+      return NextResponse.redirect(`${back}?integration=error`);
+    }
+  }
 
   if (platform === "instagram") {
     if (!HAS_META) return NextResponse.redirect(`${back}?integration=not_configured`);
