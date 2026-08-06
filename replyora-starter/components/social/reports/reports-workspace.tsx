@@ -332,11 +332,59 @@ export function ReportsWorkspace({
         </p>
       </div>
 
-      {/* top posts */}
+      {/* Formats — real per-format performance (Video / Carousel / Post) */}
+      {insights && insights.perFormat.length > 0 && (
+        <div className="mt-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
+            Formats · which drove engagement
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {[...insights.perFormat]
+              .sort((a, b) => b.engagements / Math.max(1, b.posts) - a.engagements / Math.max(1, a.posts))
+              .map((f) => (
+                <div key={f.format} className="rounded-2xl border border-ink/10 bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-display text-lg text-ink">{f.format}</p>
+                    <p className="text-[11px] text-ink/60">{f.posts} post{f.posts === 1 ? "" : "s"}</p>
+                  </div>
+                  <p className="mt-2 font-display text-2xl text-oxblood">
+                    {Math.round(f.engagements / Math.max(1, f.posts))}
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/55">
+                    avg engagements · {compact(f.reach)} reach
+                  </p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* top posts — real (by engagement) when connected, else planned */}
       <div className="mt-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Top posts</p>
         <div className="mt-3 space-y-2">
-          {(() => {
+          {insights && insights.topPosts.length > 0 ? (
+            insights.topPosts.map((p) => (
+              <a
+                key={p.id}
+                href={p.permalink ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 rounded-xl border border-ink/10 px-4 py-2.5 hover:border-oxblood/30"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  {p.mediaUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.mediaUrl} alt="" className="h-9 w-9 shrink-0 rounded-md object-cover" />
+                  )}
+                  <span className="truncate text-[13px] text-ink">{p.caption?.slice(0, 60) || p.format}</span>
+                </span>
+                <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood">
+                  {compact(p.engagements)} eng · {compact(p.reach)} reach
+                </span>
+              </a>
+            ))
+          ) : (() => {
             const ranked = inRange.filter((p) => p.caption?.trim()).slice(0, 5);
             return ranked.length > 0 ? (
               ranked.map((p) => (
