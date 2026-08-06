@@ -3,6 +3,7 @@ import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { getProfilePreview, listClientTiles } from "@/lib/social/grid";
 import { listClientAssets } from "@/lib/social/assets";
+import { listClientConnections } from "@/lib/social/connections";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +13,22 @@ export default async function ClientGridPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, tiles, profile, assets] = await Promise.all([
+  const [client, tiles, profile, assets, connections] = await Promise.all([
     getClient(id),
     listClientTiles(id),
     getProfilePreview(id),
     listClientAssets(id).catch(() => []),
+    listClientConnections(id).catch(() => []),
   ]);
   const name = client?.name ?? sampleName(id);
+
+  // A platform counts as connected if it has a stored connection or the flag.
+  const connectedPlatforms = Array.from(
+    new Set([
+      ...(client?.platforms ?? []),
+      ...connections.map((c) => c.platform),
+    ]),
+  );
 
   return (
     <GridWorkspace
@@ -27,6 +37,7 @@ export default async function ClientGridPage({
       tiles={tiles}
       profile={profile}
       assets={assets.filter((a) => a.kind === "image").map((a) => ({ id: a.id, url: a.url }))}
+      connectedPlatforms={connectedPlatforms}
     />
   );
 }

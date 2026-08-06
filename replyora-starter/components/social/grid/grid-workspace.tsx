@@ -100,12 +100,14 @@ export function GridWorkspace({
   tiles: initialTiles,
   profile: initialProfile,
   assets = [],
+  connectedPlatforms = [],
 }: {
   clientId: string;
   clientName: string;
   tiles: GridTile[];
   profile: ProfilePreview;
   assets?: GridAsset[];
+  connectedPlatforms?: string[];
 }) {
   const base = `/clients/${clientId}`;
   const [tiles, setTiles] = useState<GridTile[]>(initialTiles);
@@ -126,6 +128,30 @@ export function GridWorkspace({
   const [qrOpen, setQrOpen] = useState(false);
   const [reels, setReels] = useState(false);
   const [showDates, setShowDates] = useState(false);
+
+  // Persist the display toggles per client so they survive a reload.
+  useEffect(() => {
+    try {
+      setReels(localStorage.getItem(`ro_grid_reels_${clientId}`) === "1");
+      setShowDates(localStorage.getItem(`ro_grid_dates_${clientId}`) === "1");
+    } catch {
+      /* localStorage unavailable — keep defaults */
+    }
+  }, [clientId]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(`ro_grid_reels_${clientId}`, reels ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [reels, clientId]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(`ro_grid_dates_${clientId}`, showDates ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [showDates, clientId]);
   const [platform, setPlatform] = useState<Platform>("instagram");
   const isTikTok = platform === "tiktok";
   const [, startTransition] = useTransition();
@@ -314,22 +340,33 @@ export function GridWorkspace({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Account
             </p>
-            <Link
-              href={`${base}/integrations`}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 transition-colors hover:border-oxblood hover:text-oxblood"
-            >
-              {platform === "instagram" ? (
-                <Instagram className="h-3.5 w-3.5" />
-              ) : platform === "facebook" ? (
-                <Facebook className="h-3.5 w-3.5" />
-              ) : (
-                <Music2 className="h-3.5 w-3.5" />
-              )}{" "}
-              Connect {PLATFORM_LABEL[platform]}
-            </Link>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/75">
-              Paid feature
-            </p>
+            {connectedPlatforms.includes(platform) ? (
+              <Link
+                href={`${base}/integrations`}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-800 transition-colors hover:border-emerald-400"
+              >
+                <Check className="h-3.5 w-3.5" /> {PLATFORM_LABEL[platform]} connected
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={`${base}/integrations`}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 transition-colors hover:border-oxblood hover:text-oxblood"
+                >
+                  {platform === "instagram" ? (
+                    <Instagram className="h-3.5 w-3.5" />
+                  ) : platform === "facebook" ? (
+                    <Facebook className="h-3.5 w-3.5" />
+                  ) : (
+                    <Music2 className="h-3.5 w-3.5" />
+                  )}{" "}
+                  Connect {PLATFORM_LABEL[platform]}
+                </Link>
+                <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/75">
+                  Paid feature
+                </p>
+              </>
+            )}
           </div>
 
           {!isTikTok && (

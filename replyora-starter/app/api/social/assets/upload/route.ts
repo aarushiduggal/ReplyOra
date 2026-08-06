@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   const clientId = (form?.get("clientId") as string) || undefined;
+  const folder = ((form?.get("folder") as string) || "").trim() || null;
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ error: "no_file" }, { status: 400 });
   }
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     clientId: clientId ?? null,
     url: presigned.publicUrl,
     kind,
+    folder,
   });
   return NextResponse.json({ ok: true, asset });
 }

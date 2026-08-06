@@ -27,8 +27,27 @@ export function AssetsWorkspace({
   const [yourOpen, setYourOpen] = useState(true);
   const [clientOpen, setClientOpen] = useState(true);
 
-  const yours = assets.filter((a) => a.uploadedBy === "agency");
-  const clientUploads = assets.filter((a) => a.uploadedBy === "client");
+  // Folders: null = Library (all). `extraFolders` holds just-created empty ones.
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+  const [extraFolders, setExtraFolders] = useState<string[]>([]);
+  const folders = Array.from(
+    new Set([
+      ...assets.map((a) => a.folder).filter((f): f is string => Boolean(f)),
+      ...extraFolders,
+    ]),
+  ).sort();
+
+  function newFolder() {
+    const name = window.prompt("New folder name")?.trim();
+    if (!name) return;
+    setExtraFolders((f) => (f.includes(name) ? f : [...f, name]));
+    setActiveFolder(name);
+  }
+
+  const inFolder = (a: Asset) =>
+    activeFolder === null ? true : a.folder === activeFolder;
+  const yours = assets.filter((a) => a.uploadedBy === "agency" && inFolder(a));
+  const clientUploads = assets.filter((a) => a.uploadedBy === "client" && inFolder(a));
 
   async function uploadFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -44,6 +63,7 @@ export function AssetsWorkspace({
         const form = new FormData();
         form.append("file", file);
         form.append("clientId", clientId);
+        if (activeFolder) form.append("folder", activeFolder);
         const res = await fetch("/api/social/assets/upload", {
           method: "POST",
           body: form,
@@ -90,15 +110,43 @@ export function AssetsWorkspace({
             Folders
           </p>
           <div className="mt-3 space-y-2">
-            <div className="rounded-lg bg-oxblood/10 px-3 py-2 text-[12px] font-semibold text-oxblood">
-              Library
-            </div>
             <button
               type="button"
+              onClick={() => setActiveFolder(null)}
+              className={`block w-full rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${
+                activeFolder === null
+                  ? "bg-oxblood/10 text-oxblood"
+                  : "text-ink/70 hover:bg-oxblood/5"
+              }`}
+            >
+              Library
+            </button>
+            {folders.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActiveFolder(f)}
+                className={`block w-full truncate rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${
+                  activeFolder === f
+                    ? "bg-oxblood/10 text-oxblood"
+                    : "text-ink/70 hover:bg-oxblood/5"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={newFolder}
               className="flex w-full items-center gap-2 rounded-lg border border-dashed border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/85 hover:border-oxblood hover:text-oxblood"
             >
               <FolderPlus className="h-3.5 w-3.5" /> New folder
             </button>
+            {activeFolder && (
+              <p className="px-1 text-[10px] text-ink/60">
+                Uploads go into <strong>{activeFolder}</strong>.
+              </p>
+            )}
           </div>
         </aside>
 
