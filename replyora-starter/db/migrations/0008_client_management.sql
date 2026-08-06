@@ -17,6 +17,9 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS brief_notes     TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS features        JSONB NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS billing         JSONB NOT NULL DEFAULT '{}'::jsonb;
 
+-- ── Brand-brief strategy PDFs (knowledge_sources gets a public URL) ───────
+ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS url TEXT;
+
 -- ── Client portal invites (Access tab) ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS client_invites (
   id           TEXT PRIMARY KEY,

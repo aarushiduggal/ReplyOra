@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   const file = form?.get("file");
   const clientId = (form?.get("clientId") as string) || undefined;
   const folder = ((form?.get("folder") as string) || "").trim() || null;
+  const target = (form?.get("target") as string) || "";
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ error: "no_file" }, { status: 400 });
   }
@@ -62,11 +63,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // Brand-brief / logo uploads just need the URL back — not an asset-library row.
+  if (target === "brief" || target === "logo") {
+    return NextResponse.json({ ok: true, url: presigned.publicUrl });
+  }
+
   const asset = await createAsset({
     clientId: clientId ?? null,
     url: presigned.publicUrl,
     kind,
     folder,
   });
-  return NextResponse.json({ ok: true, asset });
+  return NextResponse.json({ ok: true, asset, url: presigned.publicUrl });
 }

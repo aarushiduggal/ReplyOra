@@ -6,6 +6,7 @@ import {
   updateClientDetail,
   savePillars,
   createInvite,
+  addBriefPdf,
   type ClientDetailPatch,
 } from "@/lib/social/client-detail";
 
@@ -37,4 +38,12 @@ export async function createInviteAction(
   const res = await createInvite(clientId, input);
   revalidate(clientId);
   return res;
+}
+
+export async function addBriefPdfAction(
+  clientId: string,
+  input: { title: string; url: string },
+): Promise<void> {
+  await addBriefPdf(clientId, input);
+  revalidate(clientId);
 }

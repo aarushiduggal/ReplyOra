@@ -10,11 +10,13 @@ import type {
   ClientBilling,
   BrandColor,
   Pillar,
+  BriefPdf,
 } from "@/lib/social/client-detail";
 import {
   updateClientDetailAction,
   savePillarsAction,
   createInviteAction,
+  addBriefPdfAction,
 } from "@/app/(social)/clients/[id]/actions";
 import { deleteClientAction } from "@/app/(social)/clients/actions";
 import { toast } from "@/lib/toast";
@@ -208,22 +210,14 @@ export function ClientEditModal({
           )}
 
           {tab === "Brand Brief" && (
-            <div className="space-y-5">
-              <p className="text-[12px] text-ink/70">
-                Strategy notes the AI reads when drafting captions, planner concepts and reports.
-              </p>
-              <div>
-                <label className={labelC}>Additional notes</label>
-                <textarea
-                  className={field}
-                  rows={8}
-                  placeholder="Audience, offers, dos & don'ts, seasonal campaigns — anything the AI should know."
-                  value={d.briefNotes}
-                  onChange={(e) => patch("briefNotes", e.target.value)}
-                />
-              </div>
-              <SaveBar pending={pending} onSave={() => save({ briefNotes: d.briefNotes }, "Brief saved")} label="Save notes" />
-            </div>
+            <BriefTab
+              clientId={d.id}
+              notes={d.briefNotes}
+              onNotes={(v) => patch("briefNotes", v)}
+              pdfs={d.briefPdfs}
+              pending={pending}
+              onSaveNotes={() => save({ briefNotes: d.briefNotes }, "Brief saved")}
+            />
           )}
 
           {tab === "Pillars" && <PillarsTab clientId={d.id} initial={d.pillars} pending={pending} startTransition={startTransition} />}
@@ -292,10 +286,11 @@ function BrandKitTab({
       const form = new FormData();
       form.append("file", file);
       form.append("clientId", clientId);
+      form.append("target", "logo");
       const res = await fetch("/api/social/assets/upload", { method: "POST", body: form });
-      const data = (await res.json().catch(() => ({}))) as { asset?: { url: string } };
-      if (res.ok && data.asset?.url) {
-        setD((p) => ({ ...p, logoUrl: data.asset!.url }));
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (res.ok && data.url) {
+        setD((p) => ({ ...p, logoUrl: data.url! }));
       } else {
         toast({ title: "Logo upload failed — is storage connected?", type: "error" });
       }
@@ -421,6 +416,92 @@ function PillarsTab({
   );
 }
 
+function BriefTab({
+  clientId,
+  notes,
+  onNotes,
+  pdfs,
+  pending,
+  onSaveNotes,
+}: {
+  clientId: string;
+  notes: string;
+  onNotes: (v: string) => void;
+  pdfs: BriefPdf[];
+  pending: boolean;
+  onSaveNotes: () => void;
+}) {
+  const router = useRouter();
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadPdf(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("clientId", clientId);
+      form.append("target", "brief");
+      const res = await fetch("/api/social/assets/upload", { method: "POST", body: form });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (res.ok && data.url) {
+        await addBriefPdfAction(clientId, { title: file.name, url: data.url });
+        router.refresh();
+        toast({ title: "PDF added", type: "success" });
+      } else {
+        toast({ title: "Upload failed — is storage connected?", type: "error" });
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <p className="text-[12px] text-ink/70">
+        Strategy notes &amp; PDFs the AI reads when drafting captions, planner concepts and reports.
+      </p>
+      <div>
+        <label className={labelC}>Additional notes</label>
+        <textarea
+          className={field}
+          rows={7}
+          placeholder="Audience, offers, dos & don'ts, seasonal campaigns — anything the AI should know."
+          value={notes}
+          onChange={(e) => onNotes(e.target.value)}
+        />
+        <SaveBar pending={pending} onSave={onSaveNotes} label="Save notes" />
+      </div>
+
+      <div className="border-t border-ink/10 pt-5">
+        <label className={labelC}>Brand strategy PDFs</label>
+        <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood hover:bg-oxblood/5">
+          {uploading ? "Uploading…" : "Upload PDF"}
+          <input type="file" accept="application/pdf" className="hidden" onChange={(e) => uploadPdf(e.target.files?.[0] ?? null)} />
+        </label>
+        <div className="mt-3 space-y-1.5">
+          {pdfs.length === 0 ? (
+            <p className="text-[12px] italic text-ink/50">No documents yet.</p>
+          ) : (
+            pdfs.map((p) => (
+              <a
+                key={p.id}
+                href={p.url ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg border border-ink/10 bg-white px-3 py-2 text-[12px] text-ink/80 hover:border-oxblood/30"
+              >
+                <span className="truncate">{p.title}</span>
+                <span className="text-oxblood">Open →</span>
+              </a>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const FEATURE_ROWS: { key: keyof ClientFeatures; label: string; desc: string }[] = [
   { key: "planner", label: "Planner", desc: "Pre-production concept notes on a month grid." },
   { key: "month", label: "Month", desc: "Visual month calendar — dates, media, scheduling." },
@@ -540,7 +621,7 @@ function AccessTab({
       });
       router.refresh();
       if (res?.token) {
-        const url = `${window.location.origin}/portal/invite/${res.token}`;
+        const url = `${window.location.origin}/portal/${res.token}`;
         setLink(url);
         try {
           await navigator.clipboard.writeText(url);

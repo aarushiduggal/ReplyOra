@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import { makeShareToken } from "@/lib/social/portal";
 
 /**
  * Extended client-management data (brand kit, brief, features, billing, pillars,
@@ -49,6 +50,12 @@ export interface ClientInvite {
   expiresAt: string | null;
   createdAt: string;
 }
+export interface BriefPdf {
+  id: string;
+  title: string;
+  url: string | null;
+  createdAt: string;
+}
 
 export interface ClientDetail {
   id: string;
@@ -68,6 +75,7 @@ export interface ClientDetail {
   billing: ClientBilling;
   pillars: Pillar[];
   invites: ClientInvite[];
+  briefPdfs: BriefPdf[];
 }
 
 const DEFAULT_FEATURES: ClientFeatures = {
@@ -128,6 +136,7 @@ function base(id: string, name: string): ClientDetail {
     billing: { ...EMPTY_BILLING },
     pillars: [],
     invites: [],
+    briefPdfs: [],
   };
 }
 
@@ -225,7 +234,44 @@ export async function getClientDetail(id: string): Promise<ClientDetail | null> 
     /* 0008 not applied yet */
   }
 
+  // Brand-brief PDFs (knowledge_sources, type = 'pdf').
+  try {
+    const pdfs = (await sql()`
+      SELECT id, title, url, created_at FROM knowledge_sources
+      WHERE client_id = ${id} AND type = 'pdf' ORDER BY created_at DESC
+    `) as { id: string; title: string | null; url: string | null; created_at: string | Date }[];
+    detail.briefPdfs = pdfs.map((p) => ({
+      id: p.id,
+      title: p.title ?? "Document",
+      url: p.url,
+      createdAt: new Date(p.created_at).toISOString(),
+    }));
+  } catch {
+    /* url column / table not present yet */
+  }
+
   return detail;
+}
+
+/** Record an uploaded brand-brief PDF (stored in R2, referenced here). */
+export async function addBriefPdf(
+  clientId: string,
+  input: { title: string; url: string },
+): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return;
+  const owns = (await sql()`
+    SELECT 1 FROM clients WHERE id = ${clientId} AND workspace_id = ${workspaceId} LIMIT 1
+  `) as unknown[];
+  if (owns.length === 0) return;
+  try {
+    await sql()`
+      INSERT INTO knowledge_sources (id, client_id, type, title, url, status)
+      VALUES (${genId("kn")}, ${clientId}, 'pdf', ${input.title}, ${input.url}, 'ready')
+    `;
+  } catch {
+    /* url column missing (0008 not applied) */
+  }
 }
 
 export type ClientDetailPatch = Partial<
@@ -337,7 +383,9 @@ export async function createInvite(
   input: { recipient?: string; email?: string; role?: string; expiresDays?: number },
 ): Promise<{ token: string } | null> {
   const workspaceId = await getCurrentWorkspaceId();
-  const token = genId("inv") + Math.random().toString(36).slice(2, 8);
+  // The link IS the working portal share token (HMAC of the client id), so the
+  // invite opens the real /portal/[token] page with no extra landing page.
+  const token = makeShareToken(clientId);
   const expiresAt = input.expiresDays
     ? new Date(Date.now() + input.expiresDays * 86_400_000).toISOString()
     : null;
