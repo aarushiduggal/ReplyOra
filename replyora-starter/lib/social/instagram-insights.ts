@@ -17,6 +17,16 @@ const GRAPH = HAS_INSTAGRAM_LOGIN
   ? "https://graph.instagram.com/v21.0"
   : "https://graph.facebook.com/v21.0";
 
+export interface TopPost {
+  id: string;
+  caption: string | null;
+  permalink: string | null;
+  mediaUrl: string | null;
+  format: string;
+  reach: number;
+  engagements: number;
+}
+
 export interface InsightsSummary {
   posts: number;
   reach: number;
@@ -27,6 +37,7 @@ export interface InsightsSummary {
   shares: number;
   avgEngagementRate: number; // engagements / reach, %
   perFormat: { format: string; posts: number; engagements: number; reach: number }[];
+  topPosts: TopPost[];
 }
 
 interface MediaNode {
@@ -34,6 +45,10 @@ interface MediaNode {
   media_type?: string;
   like_count?: number;
   comments_count?: number;
+  caption?: string;
+  permalink?: string;
+  media_url?: string;
+  thumbnail_url?: string;
 }
 
 // Media-level metrics that Instagram exposes for organic posts.
@@ -60,9 +75,10 @@ export async function fetchInstagramInsights(
     const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
     const mediaUrl = (fields: string) =>
       `${GRAPH}/${target}/media?fields=${fields}&limit=${limit}&access_token=${token}`;
-    let mediaRes = await fetch(mediaUrl("id,media_type,like_count,comments_count"), {
-      next: { revalidate: 900 },
-    });
+    let mediaRes = await fetch(
+      mediaUrl("id,media_type,like_count,comments_count,caption,permalink,media_url,thumbnail_url"),
+      { next: { revalidate: 900 } },
+    );
     if (!mediaRes.ok) {
       mediaRes = await fetch(mediaUrl("id,media_type"), { next: { revalidate: 900 } });
     }
@@ -71,7 +87,7 @@ export async function fetchInstagramInsights(
     if (media.length === 0) {
       return {
         posts: 0, reach: 0, engagements: 0, likes: 0, comments: 0,
-        saves: 0, shares: 0, avgEngagementRate: 0, perFormat: [],
+        saves: 0, shares: 0, avgEngagementRate: 0, perFormat: [], topPosts: [],
       };
     }
 
@@ -101,6 +117,10 @@ export async function fetchInstagramInsights(
         const likes = m.like_count ?? 0;
         const comments = m.comments_count ?? 0;
         return {
+          id: m.id,
+          caption: m.caption ?? null,
+          permalink: m.permalink ?? null,
+          mediaUrl: (m.media_type === "VIDEO" ? m.thumbnail_url : m.media_url) ?? m.media_url ?? null,
           format: normFormat(m.media_type),
           reach,
           likes,
@@ -111,6 +131,19 @@ export async function fetchInstagramInsights(
         };
       }),
     );
+
+    const topPosts: TopPost[] = [...perMedia]
+      .sort((a, b) => b.engagements - a.engagements)
+      .slice(0, 5)
+      .map((x) => ({
+        id: x.id,
+        caption: x.caption,
+        permalink: x.permalink,
+        mediaUrl: x.mediaUrl,
+        format: x.format,
+        reach: x.reach,
+        engagements: x.engagements,
+      }));
 
     const sum = (f: (x: (typeof perMedia)[number]) => number) =>
       perMedia.reduce((a, x) => a + f(x), 0);
@@ -138,6 +171,7 @@ export async function fetchInstagramInsights(
       shares: sum((x) => x.shares),
       avgEngagementRate: reach > 0 ? (engagements / reach) * 100 : 0,
       perFormat: [...byFormat.entries()].map(([format, v]) => ({ format, ...v })),
+      topPosts,
     };
   } catch {
     return null;
