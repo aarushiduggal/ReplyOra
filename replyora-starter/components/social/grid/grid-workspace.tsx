@@ -336,7 +336,7 @@ export function GridWorkspace({
                 label="Reels"
                 on={reels}
                 onChange={setReels}
-                help="Includes live posts fetched from Instagram."
+                help="Show a Reels play icon on video tiles in the preview."
               />
               <Toggle
                 label="Scheduled dates"
