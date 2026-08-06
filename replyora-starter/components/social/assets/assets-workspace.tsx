@@ -51,25 +51,40 @@ export function AssetsWorkspace({
           }),
         });
         if (!res.ok) {
-          setError("Storage isn't connected yet — add R2 keys in Netlify.");
+          setError("Storage isn't connected yet — add R2 keys in Netlify, then redeploy.");
           break;
         }
         const { uploadUrl, publicUrl } = (await res.json()) as {
           uploadUrl: string;
           publicUrl: string;
         };
-        const put = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type || "application/octet-stream" },
-          body: file,
-        });
+        // Direct browser → R2 PUT. A CORS block throws here (TypeError), so we
+        // catch it and surface a clear message instead of failing silently.
+        let put: Response;
+        try {
+          put = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type || "application/octet-stream" },
+            body: file,
+          });
+        } catch (e) {
+          setError(
+            `Upload blocked (likely CORS): ${(e as Error).message}. Add a CORS policy to the R2 bucket allowing your site.`,
+          );
+          break;
+        }
         if (!put.ok) {
-          setError("Upload failed — check your R2 bucket settings.");
+          const detail = await put.text().catch(() => "");
+          setError(
+            `Upload rejected by R2 (${put.status}). ${detail.slice(0, 160) || "Check the bucket name and API token keys."}`,
+          );
           break;
         }
         await recordAssetAction(clientId, { url: publicUrl, kind });
       }
       router.refresh();
+    } catch (e) {
+      setError(`Upload error: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
