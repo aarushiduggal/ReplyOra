@@ -1,15 +1,24 @@
+import { AssetsWorkspace } from "@/components/social/assets/assets-workspace";
 import { PageShell } from "@/components/social/page-shell";
-import { SectionScaffold } from "@/components/social/section-scaffold";
+import { listWorkspaceAssets } from "@/lib/social/assets";
+import { hasStorage } from "@/lib/social/storage";
 
-export default function AssetsPage() {
+export const dynamic = "force-dynamic";
+
+/**
+ * Workspace-wide media library — every client's assets in one place. Uploads
+ * here land in the shared library (no client id) and can be dropped into any
+ * client's grid.
+ */
+export default async function AssetsPage() {
+  const assets = await listWorkspaceAssets().catch(() => []);
   return (
     <PageShell>
-      <SectionScaffold
-        num="03"
-        label="Assets"
-        headline="One shared library for every client's media."
-        blurb="Upload photos, videos and graphics once — drop them into any client's grid."
-        blocks={6}
+      <AssetsWorkspace
+        clientId=""
+        clientName="the shared library"
+        assets={assets}
+        storageReady={hasStorage()}
       />
     </PageShell>
   );

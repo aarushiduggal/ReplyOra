@@ -87,6 +87,24 @@ export async function listClientInvoices(clientId: string): Promise<Invoice[]> {
   return rows.map(toInvoice);
 }
 
+/** Every invoice in the workspace, across all clients (for the top-level view). */
+export async function listAllInvoices(): Promise<Invoice[]> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    return MEM.filter((i) => i.workspaceId === workspaceId).sort((a, b) =>
+      (b.issuedAt ?? "").localeCompare(a.issuedAt ?? ""),
+    );
+  }
+  const rows = (await sql()`
+    SELECT id, client_id, number, issued_at, due_at, status, currency,
+           line_items, bill_to, total_cents
+    FROM invoices
+    WHERE workspace_id = ${workspaceId}
+    ORDER BY issued_at DESC NULLS LAST
+  `) as Row[];
+  return rows.map(toInvoice);
+}
+
 export async function getInvoice(id: string): Promise<Invoice | null> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) {
