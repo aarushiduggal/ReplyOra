@@ -530,6 +530,33 @@ export function GridWorkspace({
 
             {live ? (
               <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
+                {/* Planned posts sit ABOVE the live feed — Instagram stacks new
+                    posts at the top, so this previews the future grid. */}
+                {visible
+                  .filter((t) => t.status !== "published")
+                  .map((t) => (
+                    <div
+                      key={`planned-${t.id}`}
+                      className="relative aspect-square bg-cover bg-center ring-1 ring-inset ring-oxblood/40"
+                      style={
+                        t.mediaUrl
+                          ? { backgroundImage: `url(${t.mediaUrl})` }
+                          : { backgroundColor: tileColor(t) }
+                      }
+                      title={firstWords(t.caption, 12)}
+                    >
+                      <span className="absolute left-1 top-1 rounded-sm bg-oxblood px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
+                        Planned
+                      </span>
+                      {!t.mediaUrl && (
+                        <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
+                          {firstWords(t.caption, 6)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
+                {/* The client's real, published Instagram feed. */}
                 {liveFeed!.media.map((m) => (
                   <a
                     key={m.id}
@@ -540,6 +567,9 @@ export function GridWorkspace({
                     style={{ backgroundImage: `url(${m.mediaUrl})` }}
                     title={m.caption ?? ""}
                   >
+                    <span className="absolute left-1 top-1 rounded-sm bg-black/55 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white">
+                      Live
+                    </span>
                     {m.mediaType === "VIDEO" && (
                       <Play className="absolute right-1 top-1 h-3 w-3 fill-white text-white [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.5))]" />
                     )}
