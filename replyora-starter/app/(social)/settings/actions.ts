@@ -10,6 +10,7 @@ import {
   type SocialAddons,
   type WorkspaceBilling,
 } from "@/lib/social/billing";
+import { setNewsletterOptIn, requestDeletion } from "@/lib/social/preferences";
 
 export async function saveWorkspaceBillingAction(
   patch: Partial<WorkspaceBilling>,
@@ -28,5 +29,15 @@ export async function saveAddonsAction(addons: SocialAddons): Promise<void> {
 export async function saveProfileNameAction(fullName: string): Promise<void> {
   const user = await getCurrentUser();
   await updateUserName(user.id, fullName.trim());
+  revalidatePath("/settings");
+}
+
+export async function saveNewsletterOptInAction(optIn: boolean): Promise<void> {
+  await setNewsletterOptIn(optIn);
+  revalidatePath("/settings");
+}
+
+export async function requestDeletionAction(reason: string): Promise<void> {
+  await requestDeletion(reason.trim());
   revalidatePath("/settings");
 }

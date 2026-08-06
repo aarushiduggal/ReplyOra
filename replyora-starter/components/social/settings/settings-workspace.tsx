@@ -14,8 +14,11 @@ import {
   saveAddonsAction,
   saveProfileNameAction,
   saveWorkspaceBillingAction,
+  saveNewsletterOptInAction,
+  requestDeletionAction,
 } from "@/app/(social)/settings/actions";
 import { GuideTrigger } from "@/components/social/guide";
+import { toast } from "@/lib/toast";
 
 const TABS = ["Profile", "Preferences", "Integrations", "Billing", "Workspace", "Data"] as const;
 type Tab = (typeof TABS)[number];
@@ -26,6 +29,7 @@ const inp =
 export function SettingsWorkspace({
   fullName,
   email,
+  newsletterOptIn,
   billing,
   currentPlan,
   planStatus,
@@ -34,6 +38,7 @@ export function SettingsWorkspace({
 }: {
   fullName: string;
   email: string;
+  newsletterOptIn: boolean;
   billing: WorkspaceBilling;
   currentPlan: SocialPlan;
   planStatus: string;
@@ -74,15 +79,11 @@ export function SettingsWorkspace({
         {tab === "Billing" && (
           <BillingTab currentPlan={currentPlan} planStatus={planStatus} stripeReady={stripeReady} addons={billing.addons} />
         )}
-        {tab === "Preferences" && (
-          <Placeholder text="Email notifications, timezone and default posting times live here." />
-        )}
+        {tab === "Preferences" && <PreferencesTab optIn={newsletterOptIn} email={email} />}
         {tab === "Integrations" && (
           <Placeholder text="Connect Instagram & TikTok per client under each client's Integrations tab." />
         )}
-        {tab === "Data" && (
-          <Placeholder text="Export your workspace data or request deletion. Contact support to action a full export." />
-        )}
+        {tab === "Data" && <DataTab />}
       </div>
     </div>
   );
@@ -372,6 +373,114 @@ function Placeholder({ text }: { text: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-ink/20 px-5 py-10 text-center text-[12px] font-medium text-ink/80">
       {text}
+    </div>
+  );
+}
+
+const SUPPORT_EMAIL = "hello.replyora@gmail.com";
+
+function PreferencesTab({ optIn, email }: { optIn: boolean; email: string }) {
+  const router = useRouter();
+  const [on, setOn] = useState(optIn);
+  const [, startTransition] = useTransition();
+
+  function toggle() {
+    const next = !on;
+    setOn(next);
+    startTransition(async () => {
+      await saveNewsletterOptInAction(next);
+      router.refresh();
+      toast({ title: next ? "Subscribed to the newsletter" : "Unsubscribed", type: "success" });
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card title="Monthly newsletter">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-ink">Product news &amp; social tips, once a month.</p>
+            <p className="mt-0.5 text-[12px] text-ink/70">Sent to {email}. Unsubscribe anytime.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            onClick={toggle}
+            className={`relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-oxblood" : "bg-ink/20"}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function DataTab() {
+  const [reason, setReason] = useState("");
+  const [requested, setRequested] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function submitDeletion() {
+    startTransition(async () => {
+      await requestDeletionAction(reason);
+      setRequested(true);
+      toast({ title: "Deletion request received", type: "success" });
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card title="Export your data">
+        <p className="text-sm text-ink/85">
+          Download everything in your workspace — clients, posts, invoices and tasks — as a JSON file.
+        </p>
+        <a
+          href="/api/social/export"
+          className="inline-flex rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood/5"
+        >
+          Export workspace data
+        </a>
+      </Card>
+
+      <Card title="Delete your account">
+        <p className="text-sm text-ink/85">
+          Request permanent deletion of your workspace and all its data. We action requests manually within 30 days.
+        </p>
+        {requested ? (
+          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-[12px] font-medium text-emerald-800">
+            Request received. We&rsquo;ll be in touch at your account email. Questions? {SUPPORT_EMAIL}
+          </p>
+        ) : (
+          <>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              placeholder="Optional — tell us why you're leaving so we can improve."
+              className={inp}
+            />
+            <button
+              type="button"
+              onClick={submitDeletion}
+              className="inline-flex rounded-full border border-red-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-red-600 transition-colors hover:bg-red-50"
+            >
+              Request account deletion
+            </button>
+          </>
+        )}
+      </Card>
+
+      <Card title="Contact">
+        <p className="text-sm text-ink/85">
+          Need a hand with an export or anything else? Email us at{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-oxblood hover:underline">
+            {SUPPORT_EMAIL}
+          </a>
+          .
+        </p>
+      </Card>
     </div>
   );
 }

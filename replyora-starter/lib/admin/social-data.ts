@@ -27,6 +27,7 @@ export interface WorkspaceRow {
   accountType: string | null;
   planStatus: string;
   clientCount: number;
+  newsletterOptIn: boolean;
 }
 
 interface Row {
@@ -38,6 +39,7 @@ interface Row {
   account_type: string | null;
   plan_status: string | null;
   client_count: number;
+  newsletter_opt_in: boolean | null;
 }
 
 function toRow(r: Row): WorkspaceRow {
@@ -50,22 +52,41 @@ function toRow(r: Row): WorkspaceRow {
     accountType: r.account_type,
     planStatus: r.plan_status ?? "trialing",
     clientCount: Number(r.client_count ?? 0),
+    newsletterOptIn: Boolean(r.newsletter_opt_in),
   };
 }
 
 export async function listWorkspaces(): Promise<WorkspaceRow[]> {
   if (!hasDb()) return [];
-  const rows = (await sql()`
-    SELECT w.id, w.name, w.created_at,
-           u.email AS owner_email, u.name AS owner_name,
-           wb.address ->> 'accountType' AS account_type,
-           wb.address ->> 'planStatus' AS plan_status,
-           (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count
-    FROM workspaces w
-    JOIN users u ON u.id = w.owner_id
-    LEFT JOIN workspace_billing wb ON wb.workspace_id = w.id
-    ORDER BY w.created_at DESC
-  `) as Row[];
+  // newsletter_opt_in is guarded — the column may not exist until 0009 runs.
+  let rows: Row[];
+  try {
+    rows = (await sql()`
+      SELECT w.id, w.name, w.created_at,
+             u.email AS owner_email, u.name AS owner_name,
+             u.newsletter_opt_in AS newsletter_opt_in,
+             wb.address ->> 'accountType' AS account_type,
+             wb.address ->> 'planStatus' AS plan_status,
+             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count
+      FROM workspaces w
+      JOIN users u ON u.id = w.owner_id
+      LEFT JOIN workspace_billing wb ON wb.workspace_id = w.id
+      ORDER BY w.created_at DESC
+    `) as Row[];
+  } catch {
+    rows = (await sql()`
+      SELECT w.id, w.name, w.created_at,
+             u.email AS owner_email, u.name AS owner_name,
+             NULL AS newsletter_opt_in,
+             wb.address ->> 'accountType' AS account_type,
+             wb.address ->> 'planStatus' AS plan_status,
+             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count
+      FROM workspaces w
+      JOIN users u ON u.id = w.owner_id
+      LEFT JOIN workspace_billing wb ON wb.workspace_id = w.id
+      ORDER BY w.created_at DESC
+    `) as Row[];
+  }
   return rows.map(toRow);
 }
 
