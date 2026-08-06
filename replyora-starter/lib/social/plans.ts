@@ -59,7 +59,7 @@ export interface Entitlements {
 /** Base client limits per account type. Agency is the multi-client tier. */
 export const CLIENT_LIMIT: Record<SocialPlan, number> = {
   personal: 1,
-  agency: 10,
+  agency: 100,
 };
 
 /**
@@ -70,7 +70,9 @@ export function entitlementsFor(
   accountType: SocialPlan | null,
   addons: SocialAddons | undefined,
 ): Entitlements {
-  const type: SocialPlan = accountType ?? "personal";
+  // No plan set yet (pre-Stripe / owner) → treat as full-access Agency. Once
+  // Stripe assigns a real plan, that explicit value takes over.
+  const type: SocialPlan = accountType ?? "agency";
   const a = addons ?? EMPTY_ADDONS;
   return {
     maxClients: CLIENT_LIMIT[type],

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Facebook, Instagram, Music2, RefreshCw, Zap } from "lucide-react";
 
 import {
@@ -11,6 +11,8 @@ import {
 import { GuideTrigger } from "@/components/social/guide";
 
 type ConnPlatform = "instagram" | "tiktok" | "facebook";
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function IntegrationsWorkspace({
   clientId,
@@ -32,7 +34,21 @@ export function IntegrationsWorkspace({
   linkedHandles: Record<string, string>;
 }) {
   const router = useRouter();
+  const params = useSearchParams();
   const [refreshing, startTransition] = useTransition();
+
+  // Surface the OAuth callback result so a connect attempt never silently no-ops.
+  const connectedParam = params.get("connected");
+  const errorParam = params.get("integration");
+  const banner = connectedParam
+    ? { kind: "ok" as const, text: `${cap(connectedParam)} connected 🎉` }
+    : errorParam === "no_ig"
+      ? { kind: "err" as const, text: "Connected, but no Instagram Business account was found on that login. Make sure the account is a Professional (Business/Creator) account, then try again." }
+      : errorParam === "not_configured"
+        ? { kind: "err" as const, text: "Instagram isn't configured yet — check the Netlify keys." }
+        : errorParam === "error"
+          ? { kind: "err" as const, text: "Couldn't connect. The login was cancelled or the redirect URL doesn't match — try again." }
+          : null;
 
   function stubConnect(platform: "instagram" | "tiktok") {
     startTransition(async () => {
@@ -64,6 +80,18 @@ export function IntegrationsWorkspace({
         Connect social accounts for <strong>{clientName}</strong> only. Published posts
         flow back onto the Grid and power Reports.
       </p>
+
+      {banner && (
+        <div
+          className={`mb-6 rounded-xl border px-4 py-3 text-[12px] font-medium ${
+            banner.kind === "ok"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-rose/40 bg-rose/5 text-oxblood"
+          }`}
+        >
+          {banner.text}
+        </div>
+      )}
 
       {postpeerReady ? (
         <>
