@@ -50,12 +50,12 @@ export async function GET(
     // Preferred: Instagram API with Instagram Login (client logs in with IG,
     // no linked Facebook Page needed).
     if (HAS_INSTAGRAM_LOGIN) {
-      // Must match the permissions added to the app's Instagram use case.
-      // Minimal core: basic (read media for the live grid) + content_publish (post).
-      // manage_comments / manage_insights can be added later for comments + Reports.
+      // Must match the permissions ADDED to the app's Instagram use case.
+      // basic (grid) + content_publish (post) + manage_insights (Reports).
       const scope = [
         "instagram_business_basic",
         "instagram_business_content_publish",
+        "instagram_business_manage_insights",
       ].join(",");
       const url =
         `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1` +

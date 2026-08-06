@@ -336,15 +336,21 @@ export function ReportsWorkspace({
       <div className="mt-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Top posts</p>
         <div className="mt-3 space-y-2">
-          {inRange.slice(0, 5).map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 px-4 py-2.5">
-              <span className="text-[13px] text-ink">{p.caption ? p.caption.slice(0, 60) : "(untitled)"}</span>
-              <span className="text-[11px] uppercase tracking-[0.12em] text-ink/75">
-                {p.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[p.platform]}
-              </span>
-            </div>
-          ))}
-          {inRange.length === 0 && <p className="text-[12px] text-ink/80">No posts to rank yet.</p>}
+          {(() => {
+            const ranked = inRange.filter((p) => p.caption?.trim()).slice(0, 5);
+            return ranked.length > 0 ? (
+              ranked.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 px-4 py-2.5">
+                  <span className="text-[13px] text-ink">{p.caption.slice(0, 60)}</span>
+                  <span className="text-[11px] uppercase tracking-[0.12em] text-ink/75">
+                    {p.scheduledFor?.slice(0, 10)} · {PLATFORM_LABEL[p.platform]}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-[12px] text-ink/80">No posts to rank yet.</p>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -54,13 +54,18 @@ export async function fetchInstagramInsights(
   const token = ig.accessToken;
 
   try {
-    // 1) recent media with the counts that come for free on the node
+    // 1) recent media with the counts that come for free on the node. Some
+    // accounts reject like_count/comments_count — fall back to minimal fields
+    // so we still return post counts instead of nothing.
     const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
-    const mediaRes = await fetch(
-      `${GRAPH}/${target}/media` +
-        `?fields=id,media_type,like_count,comments_count&limit=${limit}&access_token=${token}`,
-      { next: { revalidate: 900 } }, // cache 15 min
-    );
+    const mediaUrl = (fields: string) =>
+      `${GRAPH}/${target}/media?fields=${fields}&limit=${limit}&access_token=${token}`;
+    let mediaRes = await fetch(mediaUrl("id,media_type,like_count,comments_count"), {
+      next: { revalidate: 900 },
+    });
+    if (!mediaRes.ok) {
+      mediaRes = await fetch(mediaUrl("id,media_type"), { next: { revalidate: 900 } });
+    }
     if (!mediaRes.ok) return null;
     const media = ((await mediaRes.json()) as { data?: MediaNode[] }).data ?? [];
     if (media.length === 0) {
