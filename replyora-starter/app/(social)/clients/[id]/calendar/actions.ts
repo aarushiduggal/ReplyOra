@@ -29,6 +29,8 @@ export async function publishNowAction(
   return { ok: res.ok, error: res.error };
 }
 
+export type CreateMode = "schedule" | "approval" | "publish";
+
 export async function createCalendarPostAction(
   clientId: string,
   input: {
@@ -37,8 +39,9 @@ export async function createCalendarPostAction(
     platform: Platform;
     scheduledFor: string | null;
   },
-): Promise<void> {
-  await createClientPost({
+  mode: CreateMode = "schedule",
+): Promise<{ ok: boolean; error?: string }> {
+  const post = await createClientPost({
     clientId,
     caption: input.caption,
     pillar: input.pillar,
@@ -47,7 +50,18 @@ export async function createCalendarPostAction(
     scheduledFor: input.scheduledFor,
     status: input.scheduledFor ? "scheduled" : "draft",
   });
+
+  if (mode === "approval") {
+    await sendForApproval(post.id);
+  } else if (mode === "publish") {
+    const workspaceId = await getCurrentWorkspaceId();
+    const res = await publishPost(workspaceId, post.id);
+    revalidate(clientId);
+    return { ok: res.ok, error: res.error };
+  }
+
   revalidate(clientId);
+  return { ok: true };
 }
 
 export async function updateCalendarPostAction(

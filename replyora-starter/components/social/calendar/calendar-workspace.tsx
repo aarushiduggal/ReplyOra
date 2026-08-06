@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Plus, Send, X } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Plus, Send, X } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import type { ApprovalStatus } from "@/lib/social/approvals";
@@ -492,11 +492,24 @@ function CreatePostModal({
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [time, setTime] = useState("09:00");
 
-  function save() {
+  function submit(mode: "schedule" | "approval" | "publish") {
     const scheduledFor = new Date(`${date}T${time}:00`).toISOString();
-    startTransition(() =>
-      createCalendarPostAction(clientId, { caption, pillar, platform, scheduledFor }),
-    );
+    startTransition(async () => {
+      const res = await createCalendarPostAction(
+        clientId,
+        { caption, pillar, platform, scheduledFor },
+        mode,
+      );
+      if (mode === "publish") {
+        if (res.ok) {
+          toast({ title: `Posted to ${PLATFORM_LABEL[platform]} 🎉`, type: "success" });
+        } else {
+          toast({ title: "Couldn’t publish", body: prettyPublishError(res.error), type: "error" });
+        }
+      } else if (mode === "approval") {
+        toast({ title: "Sent to client for approval", type: "success" });
+      }
+    });
     onClose();
   }
 
@@ -542,12 +555,32 @@ function CreatePostModal({
             <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Time</label>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:text-oxblood">
-              Cancel
+          <div className="space-y-2 pt-2">
+            <button
+              type="button"
+              onClick={() => submit("schedule")}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
+            >
+              <CalendarClock className="h-3.5 w-3.5" /> Schedule for {date}, {time}
             </button>
-            <button type="button" onClick={save} className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90">
-              <Plus className="h-3.5 w-3.5" /> Add post
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => submit("approval")}
+                className="flex items-center justify-center gap-1.5 rounded-full border border-oxblood/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood transition-colors hover:bg-oxblood/5"
+              >
+                <Send className="h-3.5 w-3.5" /> Send to approval
+              </button>
+              <button
+                type="button"
+                onClick={() => submit("publish")}
+                className="flex items-center justify-center gap-1.5 rounded-full border border-emerald-300 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700 transition-colors hover:bg-emerald-50"
+              >
+                <Send className="h-3.5 w-3.5" /> Post now
+              </button>
+            </div>
+            <button type="button" onClick={onClose} className="w-full rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-oxblood">
+              Cancel
             </button>
           </div>
         </div>
