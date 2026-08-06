@@ -27,9 +27,19 @@ export interface LiveMedia {
   timestamp: string | null;
 }
 
+export interface LiveProfile {
+  name: string | null;
+  bio: string | null;
+  followers: number;
+  following: number;
+  postsCount: number;
+  avatarUrl: string | null;
+}
+
 export interface LiveFeed {
   connected: boolean;
   username: string | null;
+  profile: LiveProfile | null;
   media: LiveMedia[];
 }
 
@@ -47,7 +57,7 @@ export async function fetchLiveInstagramFeed(
   clientId: string,
   limit = 12,
 ): Promise<LiveFeed> {
-  const empty: LiveFeed = { connected: false, username: null, media: [] };
+  const empty: LiveFeed = { connected: false, username: null, profile: null, media: [] };
 
   let conns;
   try {
@@ -58,16 +68,39 @@ export async function fetchLiveInstagramFeed(
   const ig = conns.find((c) => c.platform === "instagram");
   if (!ig?.accessToken || !ig.externalAccountId) return empty;
 
+  // Real profile stats (followers / following / posts / avatar) for the mock.
+  const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
+  let profile: LiveProfile | null = null;
   try {
-    // Instagram-Login tokens resolve their own account via `me`; Facebook-Login
-    // page tokens need the explicit IG business id.
-    const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
+    const pRes = await fetch(
+      `${GRAPH}/${target}?fields=username,name,biography,followers_count,follows_count,media_count,profile_picture_url&access_token=${ig.accessToken}`,
+      { next: { revalidate: 300 } },
+    );
+    if (pRes.ok) {
+      const p = (await pRes.json()) as {
+        name?: string; biography?: string; followers_count?: number;
+        follows_count?: number; media_count?: number; profile_picture_url?: string;
+      };
+      profile = {
+        name: p.name ?? null,
+        bio: p.biography ?? null,
+        followers: p.followers_count ?? 0,
+        following: p.follows_count ?? 0,
+        postsCount: p.media_count ?? 0,
+        avatarUrl: p.profile_picture_url ?? null,
+      };
+    }
+  } catch {
+    /* profile is optional */
+  }
+
+  try {
     const url =
       `${GRAPH}/${target}/media` +
       `?fields=id,media_url,thumbnail_url,permalink,caption,media_type,timestamp` +
       `&limit=${limit}&access_token=${ig.accessToken}`;
     const res = await fetch(url, { next: { revalidate: 300 } }); // cache 5 min
-    if (!res.ok) return { connected: true, username: ig.externalUsername, media: [] };
+    if (!res.ok) return { connected: true, username: ig.externalUsername, profile, media: [] };
     const data = (await res.json()) as { data?: GraphMedia[] };
 
     const media: LiveMedia[] = (data.data ?? [])
@@ -86,8 +119,8 @@ export async function fetchLiveInstagramFeed(
       })
       .filter((m): m is LiveMedia => m !== null);
 
-    return { connected: true, username: ig.externalUsername, media };
+    return { connected: true, username: ig.externalUsername, profile, media };
   } catch {
-    return { connected: true, username: ig.externalUsername, media: [] };
+    return { connected: true, username: ig.externalUsername, profile, media: [] };
   }
 }

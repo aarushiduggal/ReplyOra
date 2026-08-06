@@ -167,6 +167,7 @@ export function GridWorkspace({
     platform === "instagram" && Boolean(liveFeed?.connected) && (liveFeed?.media.length ?? 0) > 0;
   // When connected we always show the real feed (planned tiles sit on top of it).
   const live = liveAvailable;
+  const liveP = live ? liveFeed?.profile ?? null : null;
 
   // "+" on the mock → create an empty planned tile at the top, ready for a photo.
   function addEmptyTile() {
@@ -508,13 +509,22 @@ export function GridWorkspace({
                   </span>
                 </div>
                 <div className="flex items-center gap-4 px-4 py-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
-                    {clientName.charAt(0).toUpperCase()}
-                  </div>
+                  {liveP?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={liveP.avatarUrl}
+                      alt=""
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-oxblood font-wordmark text-lg text-cream">
+                      {clientName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex flex-1 justify-around text-center">
-                    <Stat n={String(visible.length)} label="Posts" />
-                    <Stat n={profile.followers || "0"} label="Followers" />
-                    <Stat n={profile.following || "0"} label="Following" />
+                    <Stat n={liveP ? fmtCount(liveP.postsCount) : String(visible.length)} label="Posts" live={Boolean(liveP)} />
+                    <Stat n={liveP ? fmtCount(liveP.followers) : profile.followers || "0"} label="Followers" live={Boolean(liveP)} />
+                    <Stat n={liveP ? fmtCount(liveP.following) : profile.following || "0"} label="Following" live={Boolean(liveP)} />
                   </div>
                 </div>
               </>
@@ -1112,10 +1122,19 @@ function PhoneUploadModal({
   );
 }
 
-function Stat({ n, label }: { n: string; label: string }) {
+/** Compact follower/post counts: 12800 → "12.8k". */
+function fmtCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+
+function Stat({ n, label, live }: { n: string; label: string; live?: boolean }) {
+  // Live (real) numbers render bolder + oxblood so they stand out from the
+  // static mock chrome (which isn't interactive).
   return (
     <div>
-      <p className="font-semibold text-ink">{n}</p>
+      <p className={live ? "text-base font-bold text-oxblood" : "font-semibold text-ink"}>{n}</p>
       <p className="text-[10px] text-ink/85">{label}</p>
     </div>
   );

@@ -21,7 +21,7 @@ export default async function ClientGridPage({
     getProfilePreview(id),
     listClientAssets(id).catch(() => []),
     listClientConnections(id).catch(() => []),
-    fetchLiveInstagramFeed(id).catch(() => ({ connected: false, username: null, media: [] })),
+    fetchLiveInstagramFeed(id).catch(() => ({ connected: false, username: null, profile: null, media: [] })),
   ]);
   const name = client?.name ?? sampleName(id);
 
