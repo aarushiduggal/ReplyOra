@@ -52,7 +52,9 @@ export function IntegrationsWorkspace({
           ? { kind: "err" as const, text: "Couldn't connect. The login was cancelled or the redirect URL doesn't match — try again." }
           : null;
 
-  function stubConnect(platform: "instagram" | "tiktok") {
+  function stubConnect(platform: ConnPlatform) {
+    // Facebook always uses real OAuth (oauthReady), never the stub.
+    if (platform === "facebook") return;
     startTransition(async () => {
       await toggleIntegrationAction(clientId, platform, true);
       router.refresh();
@@ -161,12 +163,20 @@ export function IntegrationsWorkspace({
             <Card
               icon={<Instagram className="h-5 w-5" />}
               name="Instagram"
-              note="Paid feature"
               connected={platforms.includes("instagram")}
               oauthReady={metaReady}
               connectHref={`/api/social/connect/instagram?client=${clientId}`}
               onStubConnect={() => stubConnect("instagram")}
               onDisconnect={() => disconnect("instagram")}
+            />
+            <Card
+              icon={<Facebook className="h-5 w-5" />}
+              name="Facebook"
+              connected={platforms.includes("facebook")}
+              oauthReady={metaReady}
+              connectHref={`/api/social/connect/facebook?client=${clientId}`}
+              onStubConnect={() => stubConnect("facebook")}
+              onDisconnect={() => disconnect("facebook")}
             />
             <Card
               icon={<Music2 className="h-5 w-5" />}
