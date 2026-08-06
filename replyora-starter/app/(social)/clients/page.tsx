@@ -9,6 +9,7 @@ import { entitlementsFor } from "@/lib/social/plans";
 import { PageShell } from "@/components/social/page-shell";
 import { SectionHeader } from "@/components/social/section-header";
 import { AddClient } from "@/components/social/add-client";
+import { DeleteClientButton } from "@/components/social/delete-client-button";
 import { GuideTrigger } from "@/components/social/guide";
 import { Cockpit, ActivityFeed } from "@/components/social/dashboard/home-widgets";
 
@@ -71,12 +72,11 @@ export default async function ClientsPage() {
                 ? `${c.pillarCount} pillar${c.pillarCount === 1 ? "" : "s"}`
                 : "No pillars yet";
             return (
-              <Link
+              <div
                 key={c.id}
-                href={`/clients/${c.id}`}
                 className="group flex items-center justify-between border-b border-ink/10 py-6"
               >
-                <div className="flex items-center gap-5">
+                <Link href={`/clients/${c.id}`} className="flex flex-1 items-center gap-5">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-oxblood/10 font-display text-xl text-oxblood">
                     {initial}
                   </span>
@@ -88,9 +88,14 @@ export default async function ClientsPage() {
                       {pillars}
                     </p>
                   </div>
+                </Link>
+                <div className="flex items-center gap-2">
+                  <DeleteClientButton clientId={c.id} clientName={c.name} />
+                  <Link href={`/clients/${c.id}`} aria-label={`Open ${c.name}`}>
+                    <ArrowRight className="h-4 w-4 text-ink/60 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
+                  </Link>
                 </div>
-                <ArrowRight className="h-4 w-4 text-ink/60 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
-              </Link>
+              </div>
             );
           })}
           </div>

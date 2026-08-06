@@ -229,3 +229,18 @@ export async function addClient(name: string): Promise<Client> {
     createdAt,
   };
 }
+
+/** Delete a client and everything it owns (all child rows cascade-delete). */
+export async function deleteClient(id: string): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const idx = CLIENTS.findIndex(
+      (c) => c.id === id && c.workspaceId === workspaceId,
+    );
+    if (idx !== -1) CLIENTS.splice(idx, 1);
+    return;
+  }
+  await sql()`
+    DELETE FROM clients WHERE id = ${id} AND workspace_id = ${workspaceId}
+  `;
+}
