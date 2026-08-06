@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ExternalLink, Instagram, Music2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Facebook, Instagram, Music2, X } from "lucide-react";
 
 import type { Platform } from "@/lib/social/types";
 
@@ -9,10 +9,12 @@ import type { Platform } from "@/lib/social/types";
 const OPEN_URL: Record<Platform, string> = {
   instagram: "https://www.instagram.com/",
   tiktok: "https://www.tiktok.com/upload",
+  facebook: "https://www.facebook.com/",
 };
 const LABEL: Record<Platform, string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
+  facebook: "Facebook",
 };
 
 /**
@@ -40,7 +42,8 @@ export function PublishAssist({
 }) {
   const [copied, setCopied] = useState(false);
   const fullCaption = [caption, hashtags.join(" ")].filter(Boolean).join("\n\n");
-  const Icon = platform === "tiktok" ? Music2 : Instagram;
+  const Icon =
+    platform === "tiktok" ? Music2 : platform === "facebook" ? Facebook : Instagram;
 
   async function copy() {
     try {

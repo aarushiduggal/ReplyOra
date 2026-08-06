@@ -109,6 +109,11 @@ const CTAS: Record<Platform, string[]> = {
     "Link in bio to book. Don't overthink it 😌",
     "Comment your question below and we'll make a video answering it.",
   ],
+  facebook: [
+    "Send us a message to book — we usually reply within the hour. 💛",
+    "Tap “Book Now” or comment below and we'll take care of the rest.",
+    "Share this with a friend who needs it, and message us to get started.",
+  ],
 };
 
 function pick<T>(arr: T[], i: number): T {

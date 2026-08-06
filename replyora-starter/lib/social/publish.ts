@@ -153,7 +153,9 @@ export async function publishPost(
     const outcome =
       post.platform === "instagram"
         ? await publishInstagram(conn, post)
-        : await publishTikTok(conn, post);
+        : post.platform === "facebook"
+          ? await publishFacebook(conn, post)
+          : await publishTikTok(conn, post);
     if (!outcome.ok) return await fail(workspaceId, postId, outcome.error ?? "publish_failed");
 
     await sql()`
@@ -189,7 +191,7 @@ async function fail(
  * instead set POSTPEER_IG_ACCOUNT_ID / POSTPEER_TIKTOK_ACCOUNT_ID as a default.
  */
 async function publishViaPostPeer(post: PostRow): Promise<PublishOutcome> {
-  const platform = post.platform === "instagram" ? "instagram" : "tiktok";
+  const platform = post.platform; // "instagram" | "tiktok" | "facebook"
 
   // Per-client account id (preferred), else an env default for single-account use.
   let accountId: string | null = null;
@@ -199,10 +201,12 @@ async function publishViaPostPeer(post: PostRow): Promise<PublishOutcome> {
   `) as { external_account_id: string | null }[];
   accountId = conn[0]?.external_account_id ?? null;
   if (!accountId) {
-    accountId =
-      (platform === "instagram"
-        ? process.env.POSTPEER_IG_ACCOUNT_ID
-        : process.env.POSTPEER_TIKTOK_ACCOUNT_ID) ?? null;
+    const envDefault: Record<string, string | undefined> = {
+      instagram: process.env.POSTPEER_IG_ACCOUNT_ID,
+      tiktok: process.env.POSTPEER_TIKTOK_ACCOUNT_ID,
+      facebook: process.env.POSTPEER_FB_ACCOUNT_ID,
+    };
+    accountId = envDefault[platform] ?? null;
   }
   if (!accountId) return { ok: false, error: `${platform}_not_linked` };
 
@@ -248,7 +252,7 @@ async function publishViaPostPeer(post: PostRow): Promise<PublishOutcome> {
  * fall back to the default profile, so posting works before the migration is run.
  */
 async function publishViaAyrshare(post: PostRow): Promise<PublishOutcome> {
-  const platform = post.platform === "instagram" ? "instagram" : "tiktok";
+  const platform = post.platform; // "instagram" | "tiktok" | "facebook"
 
   let profileKey: string | null = null;
   try {
@@ -330,6 +334,43 @@ async function publishInstagram(
     return { ok: false, error: published.error?.message ?? "ig_publish_failed" };
   }
   return { ok: true, externalId: published.id };
+}
+
+/** Facebook Page Graph API: post a photo or video to the Page's feed. */
+async function publishFacebook(
+  conn: ConnRow,
+  post: PostRow,
+): Promise<PublishOutcome> {
+  const pageId = conn.external_account_id;
+  const token = conn.access_token!;
+  if (!pageId) return { ok: false, error: "no_fb_page" };
+
+  const caption = fullCaption(post);
+  const isVideo = post.media_kind === "video";
+  const endpoint = isVideo ? "videos" : "photos";
+  const params = new URLSearchParams({ access_token: token, published: "true" });
+  if (isVideo) {
+    params.set("file_url", post.media_url!);
+    params.set("description", caption);
+  } else {
+    params.set("url", post.media_url!);
+    params.set("caption", caption);
+  }
+
+  const res = await fetch(`${GRAPH}/${pageId}/${endpoint}`, {
+    method: "POST",
+    body: params,
+  });
+  const data = (await res.json()) as {
+    id?: string;
+    post_id?: string;
+    error?: { message?: string };
+  };
+  const id = data.post_id ?? data.id;
+  if (!res.ok || !id) {
+    return { ok: false, error: data.error?.message ?? "fb_publish_failed" };
+  }
+  return { ok: true, externalId: id };
 }
 
 /** TikTok Content Posting API: direct-post a video by pulling the media URL. */

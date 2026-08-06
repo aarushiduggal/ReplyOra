@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Instagram, Music2, Zap } from "lucide-react";
+import { Check, Facebook, Instagram, Music2, Zap } from "lucide-react";
 
 import {
   disconnectAction,
@@ -97,6 +97,13 @@ export function IntegrationsWorkspace({
               name="TikTok"
               current={linkedAccounts.tiktok ?? ""}
             />
+            <PublisherLink
+              clientId={clientId}
+              platform="facebook"
+              icon={<Facebook className="h-5 w-5" />}
+              name="Facebook"
+              current={linkedAccounts.facebook ?? ""}
+            />
           </div>
 
           <p className="mt-6 text-[11px] text-ink/75">
@@ -148,7 +155,7 @@ function PublisherLink({
   current,
 }: {
   clientId: string;
-  platform: "instagram" | "tiktok";
+  platform: "instagram" | "tiktok" | "facebook";
   icon: React.ReactNode;
   name: string;
   current: string;

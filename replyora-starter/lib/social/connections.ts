@@ -11,7 +11,7 @@ import { getCurrentWorkspaceId } from "@/lib/auth/session";
  * workspace_id so the secret-guarded cron can publish without a session.
  */
 
-export type ConnPlatform = "instagram" | "tiktok";
+export type ConnPlatform = "instagram" | "tiktok" | "facebook";
 
 export interface ClientConnection {
   clientId: string;

@@ -31,7 +31,7 @@ export async function toggleIntegrationAction(
  */
 export async function linkPublisherAccountAction(
   clientId: string,
-  platform: "instagram" | "tiktok",
+  platform: "instagram" | "tiktok" | "facebook",
   accountId: string,
 ): Promise<void> {
   const id = accountId.trim();

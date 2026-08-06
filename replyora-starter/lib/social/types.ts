@@ -5,7 +5,7 @@
  * (more networks later). Chat/reply assistant becomes an optional add-on.
  */
 
-export type Platform = "instagram" | "tiktok";
+export type Platform = "instagram" | "tiktok" | "facebook";
 
 export type PostStatus = "draft" | "scheduled" | "published";
 
@@ -28,9 +28,10 @@ export interface SocialPost {
 export const PLATFORM_LABEL: Record<Platform, string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
+  facebook: "Facebook",
 };
 
-export const PLATFORMS: Platform[] = ["instagram", "tiktok"];
+export const PLATFORMS: Platform[] = ["instagram", "tiktok", "facebook"];
 
 /** The content themes offered in the studio. */
 export const PILLARS = [

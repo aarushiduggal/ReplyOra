@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   CalendarClock,
   Check,
+  Facebook,
   Grid3x3,
   Heart,
   ImageIcon,
@@ -26,7 +27,7 @@ import {
 } from "lucide-react";
 
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
-import type { Platform } from "@/lib/social/types";
+import { PLATFORM_LABEL, type Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
 import {
@@ -237,7 +238,7 @@ export function GridWorkspace({
           <span className="text-oxblood">( 02 )</span> Grid
           <span className="text-ink/60">·</span>
           <span className="text-ink/80">
-            Studio · {isTikTok ? "TikTok" : "Instagram"}
+            Studio · {PLATFORM_LABEL[platform]}
           </span>
           <GuideTrigger pageKey="grid" clientId={clientId} />
         </div>
@@ -265,9 +266,10 @@ export function GridWorkspace({
               Platform
             </p>
             <div className="mt-2 flex gap-4 text-sm font-semibold">
-              {(["instagram", "tiktok"] as Platform[]).map((p) => {
+              {(["instagram", "tiktok", "facebook"] as Platform[]).map((p) => {
                 const active = platform === p;
-                const Icon = p === "instagram" ? Instagram : Music2;
+                const Icon =
+                  p === "instagram" ? Instagram : p === "tiktok" ? Music2 : Facebook;
                 return (
                   <button
                     key={p}
@@ -280,7 +282,7 @@ export function GridWorkspace({
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    {p === "instagram" ? "Instagram" : "TikTok"}
+                    {PLATFORM_LABEL[p]}
                   </button>
                 );
               })}
@@ -310,12 +312,19 @@ export function GridWorkspace({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Account
             </p>
-            <button
-              type="button"
+            <Link
+              href={`${base}/integrations`}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 transition-colors hover:border-oxblood hover:text-oxblood"
             >
-              <Instagram className="h-3.5 w-3.5" /> Connect Instagram
-            </button>
+              {platform === "instagram" ? (
+                <Instagram className="h-3.5 w-3.5" />
+              ) : platform === "facebook" ? (
+                <Facebook className="h-3.5 w-3.5" />
+              ) : (
+                <Music2 className="h-3.5 w-3.5" />
+              )}{" "}
+              Connect {PLATFORM_LABEL[platform]}
+            </Link>
             <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/75">
               Paid feature
             </p>
