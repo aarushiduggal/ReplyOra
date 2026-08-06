@@ -33,6 +33,7 @@ import { PLATFORM_LABEL, type Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
 import {
+  addEmptyTileAction,
   bulkDeleteAction,
   bulkStatusAction,
   placeAssetAction,
@@ -159,8 +160,21 @@ export function GridWorkspace({
   // client's IG is connected and we're viewing the Instagram mock.
   const liveAvailable =
     platform === "instagram" && Boolean(liveFeed?.connected) && (liveFeed?.media.length ?? 0) > 0;
-  const [showLive, setShowLive] = useState(false);
+  const [showLive, setShowLive] = useState(true); // default to the real feed when connected
   const live = showLive && liveAvailable;
+
+  // "+" on the mock → create an empty planned tile at the top, ready for a photo.
+  function addEmptyTile() {
+    startTransition(async () => {
+      const tile = await addEmptyTileAction(clientId, platform);
+      setTiles((ts) => [tile, ...ts]);
+      toast({ title: "Empty tile added — drag a photo onto it", type: "info" });
+    });
+  }
+  function removeTile(id: string) {
+    setTiles((ts) => ts.filter((t) => t.id !== id));
+    startTransition(() => bulkDeleteAction(clientId, [id]));
+  }
 
   // Separate feed per platform: only show this platform's posts.
   const visible = useMemo(
@@ -459,7 +473,14 @@ export function GridWorkspace({
                     {profile.username || "instagram"}
                   </span>
                   <span className="flex items-center gap-3 text-ink/85">
-                    <Plus className="h-4 w-4" />
+                    <button
+                      type="button"
+                      onClick={addEmptyTile}
+                      title="Add an empty tile — then drag a photo onto it"
+                      className="text-ink/85 transition-colors hover:text-oxblood"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
                     <Menu className="h-4 w-4" />
                   </span>
                 </div>
@@ -531,30 +552,42 @@ export function GridWorkspace({
             {live ? (
               <div className="grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
                 {/* Planned posts sit ABOVE the live feed — Instagram stacks new
-                    posts at the top, so this previews the future grid. */}
+                    posts at the top, so this previews the future grid. Each is a
+                    drop target: drag a photo from Assets onto it to fill it. */}
                 {visible
                   .filter((t) => t.status !== "published")
-                  .map((t) => (
-                    <div
-                      key={`planned-${t.id}`}
-                      className="relative aspect-square bg-cover bg-center ring-1 ring-inset ring-oxblood/40"
-                      style={
-                        t.mediaUrl
-                          ? { backgroundImage: `url(${t.mediaUrl})` }
-                          : { backgroundColor: tileColor(t) }
-                      }
-                      title={firstWords(t.caption, 12)}
-                    >
-                      <span className="absolute left-1 top-1 rounded-sm bg-oxblood px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
-                        Planned
-                      </span>
-                      {!t.mediaUrl && (
-                        <span className="absolute inset-x-1 bottom-1 line-clamp-2 text-[8.5px] leading-tight text-cream/90">
-                          {firstWords(t.caption, 6)}
+                  .map((t) => {
+                    const isTarget = dropTarget === t.id;
+                    return (
+                      <div
+                        key={`planned-${t.id}`}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (dragAssetUrl) setDropTarget(t.id);
+                        }}
+                        onDragLeave={() => setDropTarget((d) => (d === t.id ? null : d))}
+                        onDrop={() => onDrop(t.id)}
+                        className={`group relative aspect-square bg-cover bg-center ring-1 ring-inset ${
+                          isTarget ? "ring-2 ring-oxblood" : "ring-oxblood/40"
+                        } ${t.mediaUrl ? "" : "flex items-center justify-center border border-dashed border-oxblood/30 bg-oat/40"}`}
+                        style={t.mediaUrl ? { backgroundImage: `url(${t.mediaUrl})` } : undefined}
+                        title={t.mediaUrl ? firstWords(t.caption, 12) : "Drag a photo here"}
+                      >
+                        <span className="absolute left-1 top-1 z-10 rounded-sm bg-oxblood px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
+                          Planned
                         </span>
-                      )}
-                    </div>
-                  ))}
+                        {!t.mediaUrl && <ImageIcon className="h-5 w-5 text-oxblood/30" />}
+                        <button
+                          type="button"
+                          onClick={() => removeTile(t.id)}
+                          className="absolute right-1 top-1 z-10 rounded-full bg-ink/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          aria-label="Remove tile"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
 
                 {/* The client's real, published Instagram feed. */}
                 {liveFeed!.media.map((m) => (

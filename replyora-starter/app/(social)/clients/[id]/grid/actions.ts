@@ -10,9 +10,37 @@ import {
   scheduleTiles,
   setTileMedia,
   unscheduleTile,
+  type GridTile,
   type ProfilePreview,
   type TileStatus,
 } from "@/lib/social/grid";
+import { createClientPost } from "@/lib/social/posts";
+import type { Platform } from "@/lib/social/types";
+
+/** Create a new empty planned tile (the "+" on the grid) — fill it by dragging an asset. */
+export async function addEmptyTileAction(
+  clientId: string,
+  platform: Platform,
+): Promise<GridTile> {
+  const post = await createClientPost({
+    clientId,
+    platform,
+    status: "draft",
+    caption: "",
+    mediaUrl: null,
+  });
+  revalidatePath(`/clients/${clientId}/grid`);
+  return {
+    id: post.id,
+    caption: "",
+    status: "draft",
+    platform,
+    pillar: "",
+    orderIndex: 0,
+    mediaUrl: null,
+    scheduledFor: null,
+  };
+}
 
 /** Save the Instagram profile-preview shown on the iPhone mock. */
 export async function saveProfilePreviewAction(
