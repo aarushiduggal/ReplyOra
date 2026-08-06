@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, FolderPlus, Loader2, Trash2, UploadCloud } from "lucide-react";
 
 import type { Asset } from "@/lib/social/assets";
-import { deleteAssetAction, recordAssetAction } from "@/app/(social)/clients/[id]/assets/actions";
+import { deleteAssetAction } from "@/app/(social)/clients/[id]/assets/actions";
 import { GuideTrigger } from "@/components/social/guide";
 
 export function AssetsWorkspace({
@@ -40,47 +40,28 @@ export function AssetsWorkspace({
     setError(null);
     try {
       for (const file of Array.from(files)) {
-        const kind = file.type.startsWith("video") ? "video" : "image";
-        const res = await fetch("/api/social/assets/presign", {
+        // Upload through our own server (no CORS, works behind strict networks).
+        const form = new FormData();
+        form.append("file", file);
+        form.append("clientId", clientId);
+        const res = await fetch("/api/social/assets/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clientId,
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-          }),
+          body: form,
         });
         if (!res.ok) {
-          setError("Storage isn't connected yet — add R2 keys in Netlify, then redeploy.");
+          const data = (await res.json().catch(() => ({}))) as {
+            error?: string;
+            detail?: string;
+          };
+          if (res.status === 501) {
+            setError("Storage isn't connected — add the R2 keys in Netlify, then redeploy.");
+          } else if (res.status === 413) {
+            setError("That file is too large — try an image under ~4 MB.");
+          } else {
+            setError(`Upload failed: ${data.error ?? res.status}. ${data.detail ?? ""}`);
+          }
           break;
         }
-        const { uploadUrl, publicUrl } = (await res.json()) as {
-          uploadUrl: string;
-          publicUrl: string;
-        };
-        // Direct browser → R2 PUT. A CORS block throws here (TypeError), so we
-        // catch it and surface a clear message instead of failing silently.
-        let put: Response;
-        try {
-          put = await fetch(uploadUrl, {
-            method: "PUT",
-            headers: { "Content-Type": file.type || "application/octet-stream" },
-            body: file,
-          });
-        } catch (e) {
-          setError(
-            `Upload blocked (likely CORS): ${(e as Error).message}. Add a CORS policy to the R2 bucket allowing your site.`,
-          );
-          break;
-        }
-        if (!put.ok) {
-          const detail = await put.text().catch(() => "");
-          setError(
-            `Upload rejected by R2 (${put.status}). ${detail.slice(0, 160) || "Check the bucket name and API token keys."}`,
-          );
-          break;
-        }
-        await recordAssetAction(clientId, { url: publicUrl, kind });
       }
       router.refresh();
     } catch (e) {
