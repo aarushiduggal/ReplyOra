@@ -325,8 +325,11 @@ export function GridWorkspace({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
               Platform
             </p>
+            {/* Grid is a visual planner → Instagram + Facebook only. TikTok is a
+                video feed (no grid); it stays a direct-posting target in Studio
+                and the calendar composer. */}
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
-              {(["instagram", "tiktok", "facebook"] as Platform[]).map((p) => {
+              {(["instagram", "facebook"] as Platform[]).map((p) => {
                 const active = platform === p;
                 const Icon =
                   p === "instagram" ? Instagram : p === "tiktok" ? Music2 : Facebook;
