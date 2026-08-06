@@ -59,8 +59,11 @@ export async function fetchLiveInstagramFeed(
   if (!ig?.accessToken || !ig.externalAccountId) return empty;
 
   try {
+    // Instagram-Login tokens resolve their own account via `me`; Facebook-Login
+    // page tokens need the explicit IG business id.
+    const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
     const url =
-      `${GRAPH}/${ig.externalAccountId}/media` +
+      `${GRAPH}/${target}/media` +
       `?fields=id,media_url,thumbnail_url,permalink,caption,media_type,timestamp` +
       `&limit=${limit}&access_token=${ig.accessToken}`;
     const res = await fetch(url, { next: { revalidate: 300 } }); // cache 5 min

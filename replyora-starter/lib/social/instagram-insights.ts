@@ -55,8 +55,9 @@ export async function fetchInstagramInsights(
 
   try {
     // 1) recent media with the counts that come for free on the node
+    const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
     const mediaRes = await fetch(
-      `${GRAPH}/${ig.externalAccountId}/media` +
+      `${GRAPH}/${target}/media` +
         `?fields=id,media_type,like_count,comments_count&limit=${limit}&access_token=${token}`,
       { next: { revalidate: 900 } }, // cache 15 min
     );
