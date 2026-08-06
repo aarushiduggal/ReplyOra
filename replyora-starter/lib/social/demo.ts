@@ -65,10 +65,14 @@ export function demoTiles(): GridTile[] {
     ["Spring colour trends", "draft", null],
   ];
   const pillars = ["Education", "Behind the scenes", "Testimonial", "Promotion"];
+  // Demo mix: most on Instagram, a few on TikTok, one on Facebook — so the
+  // per-platform grids each show something.
+  const platforms: Platform[] = ["instagram", "instagram", "tiktok", "facebook"];
   return rows.map((r, i) => ({
     id: `${DEMO_CLIENT_ID}_tile_${i}`,
     caption: r[0],
     status: r[1],
+    platform: platforms[i % platforms.length] ?? "instagram",
     pillar: pillars[i % pillars.length] ?? "Education",
     orderIndex: i,
     mediaUrl: r[2] ? `/marketing/${r[2]}` : null,

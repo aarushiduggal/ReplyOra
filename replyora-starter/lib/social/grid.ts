@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import { DEMO_CLIENT_ID, DEMO_PROFILE, demoTiles } from "@/lib/social/demo";
+import type { Platform } from "@/lib/social/types";
 
 /**
  * ReplyOra Social — Grid data layer (client-scoped).
@@ -21,6 +22,7 @@ export interface GridTile {
   id: string;
   caption: string;
   status: TileStatus;
+  platform: Platform;
   pillar: string;
   orderIndex: number;
   /** Placed image (Instagram media). null until an asset is dropped on the tile. */
@@ -68,6 +70,7 @@ interface TileRow {
   id: string;
   caption: string | null;
   status: string;
+  platform: string | null;
   pillar: string | null;
   order_index: number | null;
   media_url: string | null;
@@ -78,7 +81,7 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
-    SELECT id, caption, status, pillar, order_index, media_url, scheduled_for
+    SELECT id, caption, status, platform, pillar, order_index, media_url, scheduled_for
     FROM social_posts
     WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
     ORDER BY order_index ASC NULLS LAST, created_at DESC
@@ -87,6 +90,7 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
     id: r.id,
     caption: r.caption ?? "",
     status: (r.status as TileStatus) ?? "draft",
+    platform: (r.platform as Platform) ?? "instagram",
     pillar: r.pillar ?? "",
     orderIndex: r.order_index ?? i,
     mediaUrl: r.media_url ?? null,

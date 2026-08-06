@@ -150,12 +150,17 @@ export function GridWorkspace({
   const isTikTok = platform === "tiktok";
   const [, startTransition] = useTransition();
 
-  const drafts = useMemo(() => tiles.filter((t) => t.status === "draft"), [tiles]);
-  const scheduled = useMemo(
-    () => tiles.filter((t) => t.status === "scheduled"),
-    [tiles],
+  // Separate feed per platform: only show this platform's posts.
+  const visible = useMemo(
+    () => tiles.filter((t) => t.platform === platform),
+    [tiles, platform],
   );
-  const feed = useMemo(() => analyzeFeed(tiles), [tiles]);
+  const drafts = useMemo(() => visible.filter((t) => t.status === "draft"), [visible]);
+  const scheduled = useMemo(
+    () => visible.filter((t) => t.status === "scheduled"),
+    [visible],
+  );
+  const feed = useMemo(() => analyzeFeed(visible), [visible]);
 
   function commitOrder(next: GridTile[]) {
     setPast((p) => [...p, tiles]);
@@ -310,7 +315,7 @@ export function GridWorkspace({
               })}
             </div>
             <p className="mt-2 text-xs font-medium text-ink/85">
-              {tiles.length} posts{isTikTok ? "" : " · 0 highlights"}
+              {visible.length} posts{isTikTok ? "" : " · 0 highlights"}
             </p>
           </div>
 
@@ -427,7 +432,7 @@ export function GridWorkspace({
                     {clientName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex flex-1 justify-around text-center">
-                    <Stat n={String(tiles.length)} label="Posts" />
+                    <Stat n={String(visible.length)} label="Posts" />
                     <Stat n={profile.followers || "0"} label="Followers" />
                     <Stat n={profile.following || "0"} label="Following" />
                   </div>
@@ -466,7 +471,7 @@ export function GridWorkspace({
               )}
             </div>
 
-            {tiles.length === 0 ? (
+            {visible.length === 0 ? (
               <div className="border-t border-oxblood/10">
                 <div className="grid grid-cols-3 gap-0.5 bg-oxblood/5">
                   {Array.from({ length: 9 }).map((_, i) => (
@@ -486,7 +491,7 @@ export function GridWorkspace({
               </div>
             ) : (
               <div className="relative grid grid-cols-3 gap-0.5 border-t border-oxblood/10 bg-oxblood/10">
-                {tiles.map((t, i) => {
+                {visible.map((t, i) => {
                   const isSel = selected.has(t.id);
                   const isTarget = dropTarget === t.id;
                   return (
@@ -553,7 +558,7 @@ export function GridWorkspace({
                         <span className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-oxblood" />
                       )}
                       {/* "first impression" line after the top 6 (above the fold) */}
-                      {i === 5 && tiles.length > 6 && (
+                      {i === 5 && visible.length > 6 && (
                         <span className="pointer-events-none absolute inset-x-0 -bottom-0.5 z-10 flex translate-y-1/2 items-center gap-1">
                           <span className="h-px flex-1 bg-oxblood/70" />
                           <span className="whitespace-nowrap rounded-full bg-oxblood px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
@@ -718,7 +723,7 @@ export function GridWorkspace({
             <Field label="Username" value={profile.username} onChange={(v) => setProfile((p) => ({ ...p, username: v }))} placeholder="e.g. yourbrand" />
             <Field label="Display name" value={profile.displayName} onChange={(v) => setProfile((p) => ({ ...p, displayName: v }))} placeholder="e.g. Your Brand" />
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Posts" value={String(tiles.length)} onChange={() => {}} placeholder="0" />
+              <Field label="Posts" value={String(visible.length)} onChange={() => {}} placeholder="0" />
               <Field label="Followers" value={profile.followers} onChange={(v) => setProfile((p) => ({ ...p, followers: v }))} placeholder="10.5K" />
               <Field label="Following" value={profile.following} onChange={(v) => setProfile((p) => ({ ...p, following: v }))} placeholder="850" />
             </div>
