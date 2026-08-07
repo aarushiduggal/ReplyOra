@@ -6,7 +6,17 @@ import { Check, ImagePlus, Sparkles, X } from "lucide-react";
 
 import type { Asset } from "@/lib/social/assets";
 import type { GeneratedPost } from "@/lib/social/generate";
-import { PILLARS, PLATFORMS, PLATFORM_LABEL, type Platform } from "@/lib/social/types";
+import {
+  PILLARS,
+  PLATFORMS,
+  PLATFORM_LABEL,
+  POST_FORMAT_LABEL,
+  type Platform,
+  type PostFormat,
+} from "@/lib/social/types";
+
+const FORMATS: PostFormat[] = ["post", "reel", "carousel", "story"];
+const STEPS = ["Brief", "Generate", "Review & attach", "Save to grid"];
 import {
   generateDraftsAction,
   saveDraftsAction,
@@ -18,6 +28,7 @@ interface Draft extends GeneratedPost {
   id: string;
   pillar: string;
   platform: Platform;
+  format: PostFormat;
   mediaUrl: string | null;
   selected: boolean;
 }
@@ -37,6 +48,7 @@ export function StudioWorkspace({
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [pillar, setPillar] = useState<string>(PILLARS[0]);
+  const [format, setFormat] = useState<PostFormat>("post");
   const [count, setCount] = useState(3);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [pickingFor, setPickingFor] = useState<string | null>(null); // draft id awaiting an image
@@ -61,6 +73,7 @@ export function StudioWorkspace({
           id: `d${i}-${Date.now()}-${p.caption.length}`,
           pillar,
           platform,
+          format,
           mediaUrl: assets[i]?.url ?? null,
           selected: true,
         })),
@@ -83,6 +96,7 @@ export function StudioWorkspace({
           hashtags: d.hashtags,
           pillar: d.pillar,
           platform: d.platform,
+          format: d.format,
           mediaUrl: d.mediaUrl,
         })),
       );
@@ -136,6 +150,11 @@ export function StudioWorkspace({
               </select>
             </L>
           </div>
+          <L label="Format">
+            <select value={format} onChange={(e) => setFormat(e.target.value as PostFormat)} className={inp}>
+              {FORMATS.map((f) => <option key={f} value={f}>{POST_FORMAT_LABEL[f]}</option>)}
+            </select>
+          </L>
           <L label="How many posts">
             <div className="flex flex-wrap gap-1.5">
               {[1, 3, 6, 9, 12].map((n) => (

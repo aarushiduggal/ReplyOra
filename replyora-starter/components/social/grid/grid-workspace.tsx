@@ -506,9 +506,9 @@ export function GridWorkspace({
                       type="button"
                       onClick={addEmptyTile}
                       title="Add an empty tile — then drag a photo onto it"
-                      className="text-ink/85 transition-colors hover:text-oxblood"
+                      className="rounded-full p-0.5 text-ink/70 transition-all hover:scale-125 hover:bg-oxblood/10 hover:text-oxblood active:scale-110"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4 transition-[stroke-width]" strokeWidth={2} />
                     </button>
                     <Menu className="h-4 w-4" />
                   </span>

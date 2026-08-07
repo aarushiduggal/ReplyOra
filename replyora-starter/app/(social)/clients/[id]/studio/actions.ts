@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClientPost } from "@/lib/social/posts";
 import { generatePostsSmart, type GeneratedPost } from "@/lib/social/generate";
-import type { Platform } from "@/lib/social/types";
+import type { Platform, PostFormat } from "@/lib/social/types";
 
 /**
  * Generate caption variations for a batch. Uses Gemini (free tier) when
@@ -29,6 +29,7 @@ export async function saveDraftsAction(
     hashtags: string[];
     pillar: string;
     platform: Platform;
+    format?: PostFormat;
     mediaUrl?: string | null;
   }[],
 ): Promise<void> {
@@ -37,6 +38,7 @@ export async function saveDraftsAction(
       clientId,
       platform: d.platform,
       pillar: d.pillar,
+      format: d.format,
       topic: d.caption.slice(0, 80),
       caption: d.caption,
       hashtags: d.hashtags,
