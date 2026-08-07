@@ -108,6 +108,17 @@ export async function listWorkspaceAssets(): Promise<Asset[]> {
 
 export async function createAsset(input: NewAsset): Promise<Asset> {
   const workspaceId = await getCurrentWorkspaceId();
+  return createAssetForWorkspace(workspaceId, input);
+}
+
+/**
+ * Create an asset for an EXPLICIT workspace (no session) — used by the phone
+ * upload flow, where the workspace comes from a signed token, not a login.
+ */
+export async function createAssetForWorkspace(
+  workspaceId: string,
+  input: NewAsset,
+): Promise<Asset> {
   const asset: Asset = {
     id: genId(),
     clientId: input.clientId ?? null,

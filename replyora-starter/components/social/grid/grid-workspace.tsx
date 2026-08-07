@@ -11,6 +11,7 @@ import {
   Heart,
   ImageIcon,
   Instagram,
+  Loader2,
   Menu,
   Music2,
   PencilLine,
@@ -916,7 +917,7 @@ export function GridWorkspace({
         </Modal>
       )}
 
-      {qrOpen && <PhoneUploadModal clientName={clientName} onClose={() => setQrOpen(false)} />}
+      {qrOpen && <PhoneUploadModal clientId={clientId} clientName={clientName} onClose={() => setQrOpen(false)} />}
 
       {scheduleOpen && (
         <ScheduleModal
@@ -1237,34 +1238,87 @@ function Toggle({
 }
 
 function PhoneUploadModal({
+  clientId,
   clientName,
   onClose,
 }: {
+  clientId: string;
   clientName: string;
   onClose: () => void;
 }) {
-  const [secs, setSecs] = useState(300);
+  const [qr, setQr] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+
+  async function makeLink() {
+    setState("loading");
+    try {
+      const res = await fetch("/api/social/assets/phone-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { qr: string; url: string };
+      setQr(data.qr);
+      setUrl(data.url);
+      setState("ready");
+    } catch {
+      setState("error");
+    }
+  }
+
   useEffect(() => {
-    const id = setInterval(() => setSecs((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
-  const ss = String(secs % 60).padStart(2, "0");
+    void makeLink();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
+
   return (
     <Modal title="Upload from phone" onClose={onClose}>
       <div className="flex flex-col items-center gap-3 py-2 text-center">
-        <div className="flex h-40 w-40 items-center justify-center rounded-xl border border-oxblood/15 bg-oat/20">
-          <QrCode className="h-24 w-24 text-oxblood/70" />
+        <div className="flex h-44 w-44 items-center justify-center overflow-hidden rounded-xl border border-oxblood/15 bg-white">
+          {state === "ready" && qr ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={qr} alt="Scan to upload from your phone" className="h-full w-full" />
+          ) : state === "error" ? (
+            <QrCode className="h-20 w-20 text-oxblood/30" />
+          ) : (
+            <Loader2 className="h-10 w-10 animate-spin text-oxblood/60" />
+          )}
         </div>
-        <p className="text-xs font-medium text-ink/90">
-          Files go to <span className="font-semibold text-ink">{clientName}</span> only.
-        </p>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
-          Expires {mm}:{ss}
-        </p>
-        <p className="text-[10px] uppercase tracking-[0.14em] text-ink/75">
-          Connect storage to enable · coming soon
-        </p>
+
+        {state === "error" ? (
+          <>
+            <p className="text-xs font-medium text-rose-700">Couldn&apos;t make a link.</p>
+            <button
+              type="button"
+              onClick={() => void makeLink()}
+              className="rounded-full bg-oxblood px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream"
+            >
+              Try again
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-medium text-ink/90">
+              Scan with your phone camera — files go to{" "}
+              <span className="font-semibold text-ink">{clientName}</span> only.
+            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
+              Link expires in 30 min
+            </p>
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="max-w-full truncate text-[11px] text-ink/50 underline"
+              >
+                or open the link
+              </a>
+            )}
+          </>
+        )}
       </div>
     </Modal>
   );
