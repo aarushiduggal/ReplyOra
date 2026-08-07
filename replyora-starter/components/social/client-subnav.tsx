@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Lock } from "lucide-react";
 
 import { CLIENT_NAV } from "@/components/social/portal-nav";
 import { cn } from "@/lib/utils";
@@ -17,12 +18,12 @@ export function ClientSubNav({
 }: {
   clientId: string;
   clientName: string;
-  /** Section slugs the plan hasn't unlocked — hidden from the nav. */
+  /** Section slugs the plan hasn't unlocked — shown with a lock (gated page). */
   lockedSlugs?: string[];
 }) {
   const pathname = usePathname();
   const base = `/clients/${clientId}`;
-  const nav = CLIENT_NAV.filter((n) => !lockedSlugs.includes(n.slug));
+  const nav = CLIENT_NAV;
   const currentSlug = pathname.startsWith(base + "/")
     ? pathname.slice(base.length + 1).split("/")[0]
     : "";
@@ -47,18 +48,22 @@ export function ClientSubNav({
           {nav.map((item) => {
             const href = item.slug ? `${base}/${item.slug}` : base;
             const active = item.slug === (current?.slug ?? "");
+            const locked = lockedSlugs.includes(item.slug);
             return (
               <Link
                 key={item.slug || "overview"}
                 href={href}
                 className={cn(
-                  "pb-1 transition-colors hover:font-bold",
+                  "inline-flex items-center gap-1 pb-1 transition-colors hover:font-bold",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
-                    : "text-ink/85 hover:text-oxblood",
+                    : locked
+                      ? "text-ink/40 hover:text-oxblood"
+                      : "text-ink/85 hover:text-oxblood",
                 )}
               >
                 {item.label}
+                {locked && <Lock className="h-3 w-3" />}
               </Link>
             );
           })}
