@@ -9,6 +9,16 @@ export type Platform = "instagram" | "tiktok" | "facebook";
 
 export type PostStatus = "draft" | "scheduled" | "published";
 
+/** Content format shown on the calendar (Post / Reel / Carousel / Story). */
+export type PostFormat = "post" | "reel" | "carousel" | "story";
+
+export const POST_FORMAT_LABEL: Record<PostFormat, string> = {
+  post: "Post",
+  reel: "Reel",
+  carousel: "Carousel",
+  story: "Story",
+};
+
 export interface SocialPost {
   id: string;
   workspaceId: string;

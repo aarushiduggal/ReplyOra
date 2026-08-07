@@ -105,6 +105,7 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
     caption: r.caption ?? "",
     hashtags: r.hashtags ?? [],
     status: (r.status as ClientPost["status"]) ?? "draft",
+    format: ((r as { format?: string }).format as ClientPost["format"]) ?? "post",
     scheduledFor: r.scheduled_for ? new Date(r.scheduled_for).toISOString() : null,
     orderIndex: r.order_index ?? 0,
     createdAt: new Date(r.created_at).toISOString(),

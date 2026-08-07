@@ -41,6 +41,7 @@ function samplefeed(todayMs: number): ClientPost[] {
       caption: r[4],
       hashtags: [],
       status: r[2],
+      format: "post",
       scheduledFor: `${d}T10:00:00.000Z`,
       orderIndex: i,
       createdAt: `${d}T10:00:00.000Z`,

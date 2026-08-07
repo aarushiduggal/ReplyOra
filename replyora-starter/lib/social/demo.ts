@@ -11,7 +11,7 @@
 import type { Client } from "./clients";
 import type { GridTile, ProfilePreview } from "./grid";
 import type { ClientPost } from "./posts";
-import type { Platform, PostStatus } from "./types";
+import type { Platform, PostStatus, PostFormat } from "./types";
 
 export const DEMO_WS_ID = "ws_demo";
 export const DEMO_CLIENT_ID = "cl_demo_bloom";
@@ -101,6 +101,7 @@ export function demoPosts(nowMs: number): ClientPost[] {
     [1, "Promotion", "scheduled", "tiktok", "Weekend openings just dropped"],
     [0, "Education", "draft", "instagram", "5 questions to ask your stylist"],
   ];
+  const formats: PostFormat[] = ["post", "reel", "carousel", "story"];
   return rows.map((r, i) => {
     const d = new Date(nowMs - r[0] * 86400000).toISOString();
     return {
@@ -112,6 +113,7 @@ export function demoPosts(nowMs: number): ClientPost[] {
       caption: r[4],
       hashtags: ["#hairstudio", "#sydneyhair"],
       status: r[2],
+      format: formats[i % formats.length] ?? "post",
       scheduledFor: d,
       orderIndex: i,
       createdAt: d,

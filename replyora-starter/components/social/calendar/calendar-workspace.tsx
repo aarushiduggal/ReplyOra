@@ -2,11 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, ChevronLeft, ChevronRight, Plus, Send, Trash2, X } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Circle, Film, Layers, Plus, Send, Square, Trash2, X } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import type { ApprovalStatus } from "@/lib/social/approvals";
-import { PILLARS, PLATFORMS, PLATFORM_LABEL, type Platform } from "@/lib/social/types";
+import { PILLARS, PLATFORMS, PLATFORM_LABEL, POST_FORMAT_LABEL, type Platform, type PostFormat } from "@/lib/social/types";
 import {
   createCalendarPostAction,
   updateCalendarPostAction,
@@ -24,6 +24,16 @@ const MONTHS = [
 ];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const TABS = ["Planner", "Month", "Spreadsheet", "Approval Queue"] as const;
+
+const FORMATS: PostFormat[] = ["post", "reel", "carousel", "story"];
+
+/** Small format marker (matches the legend): Post / Reel / Carousel / Story. */
+function FormatIcon({ format, className = "h-3 w-3" }: { format: PostFormat; className?: string }) {
+  if (format === "reel") return <Film className={className} />;
+  if (format === "carousel") return <Layers className={className} />;
+  if (format === "story") return <Circle className={className} />;
+  return <Square className={className} />;
+}
 type Tab = (typeof TABS)[number];
 
 const STATUS_STYLE: Record<ApprovalStatus, string> = {
@@ -242,6 +252,15 @@ export function CalendarWorkspace({
       {/* MONTH */}
       {tab === "Month" && (
         <div className="mt-6 overflow-hidden rounded-2xl border border-ink/10">
+          {/* Format legend */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/70">
+            {FORMATS.map((f) => (
+              <span key={f} className="inline-flex items-center gap-1">
+                <FormatIcon format={f} className="h-3 w-3 text-oxblood" />
+                {POST_FORMAT_LABEL[f]}
+              </span>
+            ))}
+          </div>
           <div className="grid grid-cols-7 border-b border-ink/10 bg-ink/[0.02] text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/85">
             {WEEKDAYS.map((w) => (
               <div key={w} className="px-2 py-2 text-center">{w}</div>
@@ -273,10 +292,13 @@ export function CalendarWorkspace({
                               e.stopPropagation();
                               setEditPost(p);
                             }}
-                            title="Edit or remove this post"
-                            className="truncate rounded bg-oxblood/10 px-1 py-0.5 text-left text-[9px] font-medium text-oxblood hover:bg-oxblood/20"
+                            title={`${POST_FORMAT_LABEL[p.format]} — edit or remove`}
+                            className="flex items-center gap-1 rounded bg-oxblood/10 px-1 py-0.5 text-left text-[9px] font-medium text-oxblood hover:bg-oxblood/20"
                           >
-                            {p.caption ? p.caption.slice(0, 22) : PLATFORM_LABEL[p.platform]}
+                            <FormatIcon format={p.format} className="h-2.5 w-2.5 shrink-0" />
+                            <span className="truncate">
+                              {p.caption ? p.caption.slice(0, 20) : PLATFORM_LABEL[p.platform]}
+                            </span>
                           </button>
                         ))}
                         {dayPosts.length > 3 && (
@@ -510,6 +532,7 @@ function CreatePostModal({
   const [caption, setCaption] = useState("");
   const [pillar, setPillar] = useState<string>(PILLARS[0]);
   const [platform, setPlatform] = useState<Platform>("instagram");
+  const [format, setFormat] = useState<PostFormat>("post");
   const [time, setTime] = useState("09:00");
 
   function submit(mode: "schedule" | "approval" | "publish") {
@@ -517,7 +540,7 @@ function CreatePostModal({
     startTransition(async () => {
       const res = await createCalendarPostAction(
         clientId,
-        { caption, pillar, platform, scheduledFor },
+        { caption, pillar, platform, format, scheduledFor },
         mode,
       );
       if (mode === "publish") {
@@ -571,9 +594,19 @@ function CreatePostModal({
               </select>
             </div>
           </div>
-          <div>
-            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Time</label>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Format</label>
+              <select value={format} onChange={(e) => setFormat(e.target.value as PostFormat)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
+                {FORMATS.map((f) => (
+                  <option key={f} value={f}>{POST_FORMAT_LABEL[f]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Time</label>
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-3 py-2 text-sm text-ink focus:border-oxblood" />
+            </div>
           </div>
           <div className="space-y-2 pt-2">
             <button
@@ -623,6 +656,7 @@ function EditPostModal({
   const [caption, setCaption] = useState(post.caption);
   const [pillar, setPillar] = useState<string>(post.pillar || PILLARS[0]);
   const [platform, setPlatform] = useState<Platform>(post.platform);
+  const [format, setFormat] = useState<PostFormat>(post.format);
   const initial = post.scheduledFor ? new Date(post.scheduledFor) : null;
   const [date, setDate] = useState(
     initial ? initial.toISOString().slice(0, 10) : "",
@@ -634,7 +668,7 @@ function EditPostModal({
   function save() {
     const scheduledFor = date ? new Date(`${date}T${time}:00`).toISOString() : post.scheduledFor;
     startTransition(async () => {
-      await updateCalendarPostAction(clientId, post.id, { caption, pillar, platform, scheduledFor });
+      await updateCalendarPostAction(clientId, post.id, { caption, pillar, platform, format, scheduledFor });
       toast({ title: "Post updated", type: "success" });
     });
     onClose();
@@ -684,6 +718,14 @@ function EditPostModal({
                 ))}
               </select>
             </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-ink/90">Format</label>
+            <select value={format} onChange={(e) => setFormat(e.target.value as PostFormat)} className="mt-1 w-full rounded-lg border border-oxblood/20 bg-white px-2 py-2 text-sm text-ink focus:border-oxblood">
+              {FORMATS.map((f) => (
+                <option key={f} value={f}>{POST_FORMAT_LABEL[f]}</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

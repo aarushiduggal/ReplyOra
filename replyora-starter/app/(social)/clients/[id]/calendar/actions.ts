@@ -10,7 +10,7 @@ import {
 import { sendForApproval } from "@/lib/social/approvals";
 import { publishPost } from "@/lib/social/publish";
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
-import type { Platform, PostStatus } from "@/lib/social/types";
+import type { Platform, PostStatus, PostFormat } from "@/lib/social/types";
 
 function revalidate(clientId: string) {
   revalidatePath(`/clients/${clientId}/calendar`);
@@ -37,6 +37,7 @@ export async function createCalendarPostAction(
     caption: string;
     pillar: string;
     platform: Platform;
+    format?: PostFormat;
     scheduledFor: string | null;
   },
   mode: CreateMode = "schedule",
@@ -46,6 +47,7 @@ export async function createCalendarPostAction(
     caption: input.caption,
     pillar: input.pillar,
     platform: input.platform,
+    format: input.format,
     topic: input.caption.slice(0, 80),
     scheduledFor: input.scheduledFor,
     status: input.scheduledFor ? "scheduled" : "draft",
@@ -72,6 +74,7 @@ export async function updateCalendarPostAction(
     pillar?: string;
     platform?: Platform;
     status?: PostStatus;
+    format?: PostFormat;
     scheduledFor?: string | null;
   },
 ): Promise<void> {

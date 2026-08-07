@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
-import type { Platform, PostStatus } from "@/lib/social/types";
+import type { Platform, PostStatus, PostFormat } from "@/lib/social/types";
 import { DEMO_CLIENT_ID, demoPosts } from "@/lib/social/demo";
 
 /**
@@ -22,6 +22,8 @@ export interface ClientPost {
   caption: string;
   hashtags: string[];
   status: PostStatus;
+  /** Content format shown on the calendar (Post / Reel / Carousel / Story). */
+  format: PostFormat;
   scheduledFor: string | null;
   orderIndex: number;
   createdAt: string;
@@ -35,6 +37,7 @@ export interface NewClientPost {
   caption?: string;
   hashtags?: string[];
   status?: PostStatus;
+  format?: PostFormat;
   scheduledFor?: string | null;
   mediaUrl?: string | null;
 }
@@ -70,6 +73,7 @@ interface Row {
   caption: string | null;
   hashtags: string[] | null;
   status: string;
+  format?: string | null;
   scheduled_for: string | Date | null;
   order_index: number | null;
   created_at: string | Date;
@@ -85,6 +89,7 @@ function toPost(r: Row): ClientPost {
     caption: r.caption ?? "",
     hashtags: r.hashtags ?? [],
     status: (r.status as PostStatus) ?? "draft",
+    format: (r.format as PostFormat) ?? "post",
     scheduledFor: r.scheduled_for
       ? new Date(r.scheduled_for).toISOString()
       : null,
@@ -108,13 +113,25 @@ export async function listClientPosts(clientId: string): Promise<ClientPost[]> {
       (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? ""),
     );
   }
-  const rows = (await sql()`
-    SELECT id, client_id, platform, pillar, topic, caption, hashtags,
-           status, scheduled_for, order_index, created_at
-    FROM social_posts
-    WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
-    ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
-  `) as Row[];
+  let rows: Row[];
+  try {
+    rows = (await sql()`
+      SELECT id, client_id, platform, pillar, topic, caption, hashtags,
+             status, format, scheduled_for, order_index, created_at
+      FROM social_posts
+      WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
+      ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
+    `) as Row[];
+  } catch {
+    // 0010 (format column) not applied yet — read without it.
+    rows = (await sql()`
+      SELECT id, client_id, platform, pillar, topic, caption, hashtags,
+             status, scheduled_for, order_index, created_at
+      FROM social_posts
+      WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
+      ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
+    `) as Row[];
+  }
   return rows.map(toPost);
 }
 
@@ -131,6 +148,7 @@ export async function createClientPost(
     caption: input.caption ?? "",
     hashtags: input.hashtags ?? [],
     status: input.status ?? (input.scheduledFor ? "scheduled" : "draft"),
+    format: input.format ?? "post",
     scheduledFor: input.scheduledFor ?? null,
     orderIndex: 0,
     createdAt: new Date().toISOString(),
@@ -139,16 +157,30 @@ export async function createClientPost(
     MEM.push({ ...post, workspaceId });
     return post;
   }
-  await sql()`
-    INSERT INTO social_posts
-      (id, workspace_id, client_id, platform, pillar, topic, caption,
-       hashtags, status, scheduled_for, order_index, created_at, media_url)
-    VALUES
-      (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
-       ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
-       ${post.status}, ${post.scheduledFor}, ${post.orderIndex}, ${post.createdAt},
-       ${input.mediaUrl ?? null})
-  `;
+  try {
+    await sql()`
+      INSERT INTO social_posts
+        (id, workspace_id, client_id, platform, pillar, topic, caption,
+         hashtags, status, format, scheduled_for, order_index, created_at, media_url)
+      VALUES
+        (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
+         ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
+         ${post.status}, ${post.format}, ${post.scheduledFor}, ${post.orderIndex},
+         ${post.createdAt}, ${input.mediaUrl ?? null})
+    `;
+  } catch {
+    // 0010 (format column) not applied yet — insert without it.
+    await sql()`
+      INSERT INTO social_posts
+        (id, workspace_id, client_id, platform, pillar, topic, caption,
+         hashtags, status, scheduled_for, order_index, created_at, media_url)
+      VALUES
+        (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
+         ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
+         ${post.status}, ${post.scheduledFor}, ${post.orderIndex}, ${post.createdAt},
+         ${input.mediaUrl ?? null})
+    `;
+  }
   return post;
 }
 
@@ -157,7 +189,7 @@ export async function updateClientPost(
   patch: Partial<
     Pick<
       ClientPost,
-      "caption" | "pillar" | "topic" | "status" | "scheduledFor" | "platform"
+      "caption" | "pillar" | "topic" | "status" | "scheduledFor" | "platform" | "format"
     >
   >,
 ): Promise<void> {
@@ -187,6 +219,17 @@ export async function updateClientPost(
       scheduled_for = ${next.scheduledFor}
     WHERE workspace_id = ${workspaceId} AND id = ${id}
   `;
+  // Format lives in the 0010 column — best-effort, ignored if not migrated.
+  if (patch.format !== undefined) {
+    try {
+      await sql()`
+        UPDATE social_posts SET format = ${next.format}
+        WHERE workspace_id = ${workspaceId} AND id = ${id}
+      `;
+    } catch {
+      /* 0010 not applied yet */
+    }
+  }
 }
 
 export async function deleteClientPost(id: string): Promise<void> {
