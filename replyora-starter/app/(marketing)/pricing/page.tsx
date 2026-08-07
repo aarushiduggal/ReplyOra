@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Reveal } from "@/components/marketing/motion";
-import { PricingBuilder } from "@/components/marketing/social/pricing-builder";
+import { SocialPricing } from "@/components/marketing/social/social-pricing";
 
 export const metadata: Metadata = {
   title: "Pricing · Replyora",
   description:
-    "Simple plans for Replyora — one brand or a whole client roster. Start with a free trial, no card required.",
+    "Three simple plans for Replyora — Personal, Studio and Agency. Start with a 7-day free trial.",
 };
 
 export default function PricingPage() {
@@ -20,17 +20,16 @@ export default function PricingPage() {
               Pricing
             </p>
             <h1 className="mt-3 font-display text-5xl text-oxblood sm:text-6xl">
-              Only pay for what you need.
+              Simple plans that grow with you.
             </h1>
             <p className="mt-4 text-ink/70">
-              Start at $50 for one brand and add what you need — the website
-              chatbox, a whole client roster, branded reports. Free to try, no
-              card.
+              Personal for one brand, Studio for a few, Agency for a full roster.
+              Every plan starts with a 7-day free trial. Prices in AUD.
             </p>
           </Reveal>
 
           <div className="mt-12">
-            <PricingBuilder />
+            <SocialPricing />
           </div>
 
           <Reveal className="mt-12 text-center text-sm text-ink/60">
