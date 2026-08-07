@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Minus, X } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SOCIAL_PLAN_PRICE, CHATBOX_ADDON_PRICE, CURRENCY } from "@/lib/social/plans";
@@ -85,7 +85,6 @@ const COMPARE: { label: string; vals: [Cell, Cell, Cell] }[] = [
 
 export function SocialPricing() {
   const [cycle, setCycle] = useState<Cycle>("monthly");
-  const [compare, setCompare] = useState(false);
 
   return (
     <div>
@@ -158,7 +157,7 @@ export function SocialPricing() {
                 className={`mt-7 rounded-full ${plan.featured ? "bg-cream text-oxblood hover:bg-cream/90" : ""}`}
                 variant={plan.featured ? "default" : "outline"}
               >
-                <Link href="/signup">Start 7-day free trial</Link>
+                <Link href={`/signup?plan=${plan.key}`}>Start 7-day free trial</Link>
               </Button>
               {plan.key === "agency" && (
                 <a
@@ -173,40 +172,19 @@ export function SocialPricing() {
         })}
       </div>
 
-      <div className="mt-8 flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setCompare(true)}
-          className="rounded-full border border-oxblood/25 px-5 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood hover:text-cream"
-        >
-          Compare all plans
-        </button>
-        <p className="text-center text-sm text-ink/50">
-          7-day free trial on every plan (card required, auto-converts) · cancel anytime.
-          Add the <strong>AI website chatbox</strong> for ${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site.
-        </p>
-      </div>
+      <p className="mt-6 text-center text-sm text-ink/50">
+        7-day free trial on every plan (card required, auto-converts) · cancel anytime.
+        Add the <strong>AI website chatbox</strong> for ${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site.
+      </p>
 
-      {compare && <ComparePlansModal cycle={cycle} onClose={() => setCompare(false)} />}
-    </div>
-  );
-}
-
-export function ComparePlansModal({ cycle, onClose }: { cycle: Cycle; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/50 p-4 py-10" onClick={onClose}>
-      <div
-        className="w-full max-w-3xl rounded-2xl border border-oxblood/15 bg-cream shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-oxblood/10 px-6 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-oxblood">( Compare plans )</p>
-          <button onClick={onClose} className="text-ink/60 hover:text-oxblood" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
+      {/* Full feature comparison — shown inline on the page */}
+      <div className="mx-auto mt-16 max-w-4xl">
+        <div className="mb-5 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose">( Compare plans )</p>
+          <h2 className="mt-2 font-display text-3xl text-oxblood">Every feature, side by side</h2>
         </div>
 
-        <div className="overflow-x-auto px-6 py-4">
+        <div className="overflow-x-auto rounded-2xl border border-oxblood/15 bg-white px-4 py-3 sm:px-6 sm:py-4">
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
               <tr>
@@ -215,8 +193,13 @@ export function ComparePlansModal({ cycle, onClose }: { cycle: Cycle; onClose: (
                   const price = SOCIAL_PLAN_PRICE[p.key];
                   const perMonth = cycle === "monthly" ? price.monthly : Math.round(price.yearly / 12);
                   return (
-                    <th key={p.key} className="px-2 pb-3 text-center align-bottom">
-                      <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">{p.name}</span>
+                    <th key={p.key} className="px-2 pb-3 pt-1 text-center align-bottom">
+                      <span
+                        className={`block text-[11px] font-semibold uppercase tracking-[0.14em] ${p.featured ? "text-rose" : "text-ink/70"}`}
+                      >
+                        {p.name}
+                        {p.featured ? " ★" : ""}
+                      </span>
                       <span className="block font-display text-xl text-oxblood">
                         ${perMonth}
                         <span className="text-[11px] font-sans text-ink/50">/mo {CURRENCY}</span>
@@ -243,6 +226,23 @@ export function ComparePlansModal({ cycle, onClose }: { cycle: Cycle; onClose: (
                   ))}
                 </tr>
               ))}
+              <tr className="border-t border-oxblood/10">
+                <td className="py-3 pr-3" />
+                {PLANS.map((p) => (
+                  <td key={p.key} className="px-2 py-3 text-center">
+                    <Link
+                      href={`/signup?plan=${p.key}`}
+                      className={`inline-flex rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                        p.featured
+                          ? "bg-oxblood text-cream hover:bg-oxblood/90"
+                          : "border border-oxblood/30 text-oxblood hover:bg-oxblood/5"
+                      }`}
+                    >
+                      Start trial
+                    </Link>
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
 

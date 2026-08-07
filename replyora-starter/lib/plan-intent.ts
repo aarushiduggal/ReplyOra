@@ -7,6 +7,20 @@ import type { Plan } from "@/lib/data/types";
  */
 export const PLAN_INTENT_COOKIE = "rly_plan";
 
+/**
+ * The social account type a visitor picked on /pricing ("Start trial" →
+ * /signup?plan=studio). Carried across signup so /onboarding can pre-select it.
+ */
+export const ACCOUNT_INTENT_COOKIE = "rly_acct";
+
+/** Normalize an arbitrary string to a social plan slug, else null. */
+export function normalizeAccountSlug(
+  v: string | null | undefined,
+): "personal" | "studio" | "agency" | null {
+  const s = (v ?? "").trim().toLowerCase();
+  return s === "personal" || s === "studio" || s === "agency" ? s : null;
+}
+
 /** Plans a new tenant can start a trial on. */
 export const TRIALABLE_PLANS: Plan[] = ["starter", "growth", "pro"];
 

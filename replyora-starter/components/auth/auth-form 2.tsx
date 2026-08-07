@@ -14,11 +14,7 @@ import {
   HAS_GOOGLE_CLIENT,
   APP_URL,
 } from "@/lib/data/mode";
-import {
-  PLAN_INTENT_COOKIE,
-  ACCOUNT_INTENT_COOKIE,
-  normalizeAccountSlug,
-} from "@/lib/plan-intent";
+import { PLAN_INTENT_COOKIE } from "@/lib/plan-intent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,9 +43,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [plan, setPlan] = useState<SignupPlan>("personal");
-  // The social account type picked on /pricing (personal|studio|agency), carried
-  // through signup so /onboarding pre-selects it.
-  const [acctIntent, setAcctIntent] = useState<string | null>(null);
   const isSignup = mode === "signup";
   const redirectTo = `${APP_URL.replace(/\/$/, "")}/auth/callback`;
 
@@ -66,17 +59,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (err) setError(err === "auth" ? "Sign-in failed. Please try again." : err);
     const chosen = params.get("plan");
     if (chosen === "personal" || chosen === "agency") setPlan(chosen);
-    // Social account-type intent (personal|studio|agency) from /pricing.
-    const acct = normalizeAccountSlug(params.get("plan"));
-    if (acct) setAcctIntent(acct);
   }, []);
-
-  /** Remember the social account type so /onboarding can pre-select it. */
-  function rememberAcctIntent() {
-    if (acctIntent) {
-      document.cookie = `${ACCOUNT_INTENT_COOKIE}=${acctIntent}; path=/; max-age=3600; samesite=lax`;
-    }
-  }
 
   /** Persist the chosen trial plan so it survives the OAuth round-trip. */
   function rememberPlan() {
@@ -92,7 +75,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     // Auth.js (Netlify/Neon): email + password.
     if (HAS_AUTHJS_CLIENT) {
       if (isSignup) {
-        rememberAcctIntent();
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -181,7 +163,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setLoading(true);
     // Auth.js (Netlify/Neon): hand off to the Google provider.
     if (HAS_AUTHJS_CLIENT) {
-      if (isSignup) rememberAcctIntent();
       await authjsSignIn("google", { redirectTo: "/clients" });
       return;
     }

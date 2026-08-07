@@ -2,11 +2,19 @@
 
 import { redirect } from "next/navigation";
 
-import { setAccountType } from "@/lib/social/billing";
+import { setAccountType, setAddons } from "@/lib/social/billing";
 import type { SocialPlan } from "@/lib/social/plans";
 
-/** New-user onboarding — pick Personal or Agency, then into the dashboard. */
-export async function chooseAccountTypeAction(type: SocialPlan): Promise<void> {
+/**
+ * New-user onboarding — pick a plan to trial (Personal / Studio / Agency) plus
+ * any add-ons ("the things"), then into the dashboard. Agency includes the
+ * chatbox, so we only persist the add-on for Personal/Studio.
+ */
+export async function chooseAccountTypeAction(
+  type: SocialPlan,
+  chatbox = false,
+): Promise<void> {
   await setAccountType(type);
+  await setAddons({ chatbox: type !== "agency" && chatbox, reports: false });
   redirect("/clients");
 }

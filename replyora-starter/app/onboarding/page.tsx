@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
@@ -6,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { USE_AUTHJS } from "@/lib/data/mode";
 import { isOwner } from "@/lib/auth/owner";
 import { getWorkspaceBilling } from "@/lib/social/billing";
+import { ACCOUNT_INTENT_COOKIE, normalizeAccountSlug } from "@/lib/plan-intent";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +31,12 @@ export default async function OnboardingPage() {
   if (billing.accountType) redirect("/clients"); // already chosen
 
   const first = user.fullName?.split(/\s+/)[0] ?? "";
+  const preselect =
+    normalizeAccountSlug((await cookies()).get(ACCOUNT_INTENT_COOKIE)?.value) ??
+    undefined;
   return (
     <div className="min-h-screen bg-white text-ink">
-      <AccountTypeChooser name={first} />
+      <AccountTypeChooser name={first} preselect={preselect} />
     </div>
   );
 }
