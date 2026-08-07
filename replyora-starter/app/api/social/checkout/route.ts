@@ -13,9 +13,9 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/social/checkout — Stripe Checkout for the social plans.
- * Body: { plan: "personal"|"agency", interval: "monthly"|"yearly" }
- * Trial: 7 days monthly, 14 days yearly. Dormant until STRIPE_SECRET_KEY +
- * the price ids are set.
+ * Body: { plan: "personal"|"studio"|"agency", interval: "monthly"|"yearly" }
+ * Every plan: a 7-day free trial that REQUIRES a card up front and auto-converts.
+ * Dormant until STRIPE_SECRET_KEY + the price ids are set.
  */
 export async function POST(request: Request) {
   if (!HAS_STRIPE) {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   } | null;
   const plan = body?.plan;
   const interval = body?.interval ?? "monthly";
-  if (plan !== "personal" && plan !== "agency") {
+  if (plan !== "personal" && plan !== "studio" && plan !== "agency") {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
@@ -48,8 +48,12 @@ export async function POST(request: Request) {
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
+    // 7-day trial on every plan, but the card is collected up front and the
+    // subscription auto-converts (cancels if no card was captured).
+    payment_method_collection: "always",
     subscription_data: {
-      trial_period_days: interval === "yearly" ? 14 : 7,
+      trial_period_days: 7,
+      trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
       metadata: { workspace_id: workspaceId, social_plan: plan, interval },
     },
     success_url: `${base}/settings?billing=success`,

@@ -195,15 +195,9 @@ const ADDON_META: {
 }[] = [
   {
     key: "chatbox",
-    label: "Website chatbox",
-    desc: "Lead-capture assistant on each client's site.",
-    price: "+$20/mo",
-  },
-  {
-    key: "reports",
-    label: "Performance reports",
-    desc: "Monthly client-facing results reports.",
-    price: "+$15/mo",
+    label: "AI website chatbox",
+    desc: "Lead-capture assistant on a client's site. Agency includes 1 free.",
+    price: "+$39/mo AUD",
   },
 ];
 
@@ -285,8 +279,8 @@ function BillingTab({
             </button>
           ))}
         </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {(["personal", "agency"] as SocialPlan[]).map((plan) => (
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {(["personal", "studio", "agency"] as SocialPlan[]).map((plan) => (
             <div key={plan} className="rounded-xl border border-ink/12 p-4">
               <p className="font-display text-xl capitalize text-oxblood">{plan}</p>
               <p className="mt-1 text-sm font-semibold text-ink">

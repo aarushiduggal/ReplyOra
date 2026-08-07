@@ -1,6 +1,7 @@
 import { listWorkspaces } from "@/lib/admin/social-data";
 import { DEMO_AGENCIES } from "@/lib/admin/demo";
 import type { SocialAddons, SocialPlan } from "@/lib/social/plans";
+import { CLIENT_LIMIT, SOCIAL_PLAN_PRICE, CHATBOX_ADDON_PRICE } from "@/lib/social/plans";
 
 const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
 
@@ -61,11 +62,11 @@ export interface AdminOverviewData {
 
 /** Monthly price for a plan + add-ons (mirrors the marketing pricing). */
 export function mrrFor(accountType: SocialPlan, addons: SocialAddons): number {
-  const base = accountType === "agency" ? 200 : 50;
-  return base + (addons.chatbox ? 20 : 0) + (addons.reports ? 15 : 0);
+  const base = SOCIAL_PLAN_PRICE[accountType]?.monthly ?? SOCIAL_PLAN_PRICE.personal.monthly;
+  // Chatbox add-on ($39/mo) unless Agency (includes 1 free).
+  const chatbox = addons.chatbox && accountType !== "agency" ? CHATBOX_ADDON_PRICE : 0;
+  return base + chatbox;
 }
-
-const CLIENT_LIMIT: Record<SocialPlan, number> = { personal: 1, agency: 10 };
 
 function buildAttention(agencies: AgencySummary[]): AttentionItem[] {
   const items: AttentionItem[] = [];
@@ -180,7 +181,8 @@ export async function getAgencyDetail(id: string): Promise<AgencyDetail | null> 
   const { getWorkspaceDetail } = await import("@/lib/admin/social-data");
   const d = await getWorkspaceDetail(id);
   if (!d) return null;
-  const accountType: SocialPlan = d.accountType === "agency" ? "agency" : "personal";
+  const accountType: SocialPlan =
+    d.accountType === "agency" ? "agency" : d.accountType === "studio" ? "studio" : "personal";
   const status: AgencyStatus =
     d.planStatus === "active"
       ? "active"

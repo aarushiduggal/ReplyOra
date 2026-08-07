@@ -2,62 +2,95 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SOCIAL_PLAN_PRICE, CHATBOX_ADDON_PRICE, CURRENCY } from "@/lib/social/plans";
 
 type Cycle = "monthly" | "yearly";
+type PlanKey = "personal" | "studio" | "agency";
 
-interface Plan {
+const PLANS: {
+  key: PlanKey;
   name: string;
   tagline: string;
-  monthly: number;
-  yearly: number;
-  features: string[];
   featured: boolean;
-}
-
-const PLANS: Plan[] = [
+  features: string[];
+}[] = [
   {
+    key: "personal",
     name: "Personal",
-    tagline: "For one business, fully handled.",
-    monthly: 50,
-    yearly: 500,
-    features: [
-      "1 brand",
-      "Instagram & TikTok",
-      "AI captions & post ideas",
-      "Grid planner",
-      "Content calendar",
-      "Unlimited scheduling",
-      "Brand kit",
-    ],
+    tagline: "For one brand, fully handled.",
     featured: false,
+    features: [
+      "1 client / brand account",
+      "1 seat",
+      "Instagram, Facebook & TikTok",
+      "Calendar, scheduling & grid preview",
+      "Asset library + phone uploads",
+      "Planner, approvals & client portal",
+      "Brand kits, pillars & to-dos",
+    ],
   },
   {
-    name: "Agency",
-    tagline: "For managing client brands.",
-    monthly: 200,
-    yearly: 2000,
+    key: "studio",
+    name: "Studio",
+    tagline: "For a small studio, a few brands.",
+    featured: true,
     features: [
+      "Up to 3 client / brand accounts",
+      "1 seat",
       "Everything in Personal",
-      "Up to 10 client brands",
-      "Client portal & approvals",
-      "Client invoicing (branded PDFs)",
-      "Performance reports",
+      "Studio — Dump & Pair drafts from shoots",
+      "Performance reports + PDF export",
+      "Shared workspace asset library",
+      "Cross-client task tracking",
+    ],
+  },
+  {
+    key: "agency",
+    name: "Agency",
+    tagline: "For agencies managing clients.",
+    featured: false,
+    features: [
+      "Up to 8 client / brand accounts",
+      "Team seats (Full / Limited)",
+      "Everything in Studio",
+      "Client invoicing + branded PDF exports",
+      "Revenue hub & per-client billing",
+      "1 AI website chatbox included",
       "Priority support",
     ],
-    featured: true,
   },
+];
+
+type Cell = string | boolean;
+const COMPARE: { label: string; vals: [Cell, Cell, Cell] }[] = [
+  { label: "Client / brand accounts", vals: ["1", "Up to 3", "Up to 8"] },
+  { label: "Social connections (IG, Facebook, TikTok)", vals: [true, true, true] },
+  { label: "Content calendar, scheduling & grid preview", vals: [true, true, true] },
+  { label: "Asset library + mobile / iPhone uploads", vals: [true, true, true] },
+  { label: "Planner, approval queue & client portal", vals: [true, true, true] },
+  { label: "To-Do / task tracking", vals: [true, true, true] },
+  { label: "Brand kits, pillars, notes & feature controls", vals: [true, true, true] },
+  { label: "Studio — Dump & Pair drafts from shoots", vals: [false, true, true] },
+  { label: "Performance reports + PDF export", vals: [false, true, true] },
+  { label: "Shared workspace asset library", vals: [false, true, true] },
+  { label: "Cross-client task tracking", vals: [false, true, true] },
+  { label: "Workspace team seats (Full / Limited)", vals: [false, false, true] },
+  { label: "Client invoicing + branded PDF exports", vals: [false, false, true] },
+  { label: "Revenue hub & per-client billing settings", vals: [false, false, true] },
+  { label: "AI website chatbox", vals: ["Add-on", "Add-on", "1 included"] },
 ];
 
 export function SocialPricing() {
   const [cycle, setCycle] = useState<Cycle>("monthly");
+  const [compare, setCompare] = useState(false);
 
   return (
     <div>
-      {/* toggle */}
-      <div className="flex justify-center">
+      {/* billing cycle toggle */}
+      <div className="flex flex-col items-center gap-2">
         <div className="inline-flex items-center gap-1 rounded-full border border-oxblood/15 bg-white p-1">
           {(["monthly", "yearly"] as Cycle[]).map((c) => (
             <button
@@ -67,19 +100,23 @@ export function SocialPricing() {
                 cycle === c ? "bg-oxblood text-cream" : "text-ink/60 hover:text-oxblood"
               }`}
             >
-              {c}
+              {c === "yearly" ? "Annual" : "Monthly"}
             </button>
           ))}
         </div>
+        {cycle === "yearly" && (
+          <p className="text-xs font-semibold uppercase tracking-widest text-rose">2 months free</p>
+        )}
       </div>
 
-      <div className="mx-auto mt-12 grid max-w-3xl gap-6 md:grid-cols-2">
+      <div className="mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-3">
         {PLANS.map((plan) => {
-          const price = cycle === "monthly" ? plan.monthly : Math.round(plan.yearly / 12);
+          const p = SOCIAL_PLAN_PRICE[plan.key];
+          const perMonth = cycle === "monthly" ? p.monthly : Math.round(p.yearly / 12);
           return (
             <div
-              key={plan.name}
-              className={`flex flex-col rounded-3xl border p-8 ${
+              key={plan.key}
+              className={`flex flex-col rounded-3xl border p-7 ${
                 plan.featured
                   ? "border-oxblood bg-oxblood text-cream shadow-lg"
                   : "border-oxblood/15 bg-white text-ink"
@@ -97,16 +134,16 @@ export function SocialPricing() {
                 {plan.tagline}
               </p>
               <p className="mt-5 font-display text-4xl">
-                ${price}
+                ${perMonth}
                 <span className={`font-sans text-base ${plan.featured ? "text-cream/70" : "text-ink/50"}`}>
                   {" "}
-                  /mo
+                  /mo {CURRENCY}
                 </span>
               </p>
               <p className={`mt-1 text-xs ${plan.featured ? "text-cream/60" : "text-ink/45"}`}>
                 {cycle === "yearly"
-                  ? `Billed $${plan.yearly.toLocaleString()} yearly (AUD)`
-                  : "Billed monthly (AUD)"}
+                  ? `Billed $${p.yearly.toLocaleString()}/yr ${CURRENCY} · 2 months free`
+                  : `Billed monthly ${CURRENCY}`}
               </p>
               <ul className="mt-6 flex-1 space-y-2.5">
                 {plan.features.map((f) => (
@@ -121,21 +158,102 @@ export function SocialPricing() {
                 className={`mt-7 rounded-full ${plan.featured ? "bg-cream text-oxblood hover:bg-cream/90" : ""}`}
                 variant={plan.featured ? "default" : "outline"}
               >
-                <Link href="/signup">
-                  {cycle === "yearly"
-                    ? "Start 2-week free trial"
-                    : "Start 7-day free trial"}
-                </Link>
+                <Link href="/signup">Start 7-day free trial</Link>
               </Button>
+              {plan.key === "agency" && (
+                <a
+                  href="mailto:hello.replyora@gmail.com?subject=More%20than%208%20clients"
+                  className={`mt-3 block text-center text-[11px] font-semibold uppercase tracking-[0.12em] ${plan.featured ? "text-cream/70" : "text-ink/50"} hover:text-rose`}
+                >
+                  Need more than 8 clients? Contact us
+                </a>
+              )}
             </div>
           );
         })}
       </div>
 
-      <p className="mt-8 text-center text-sm text-ink/50">
-        No card to start · cancel anytime. Optional add-on: an AI assistant that
-        answers enquiries on your website.
-      </p>
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setCompare(true)}
+          className="rounded-full border border-oxblood/25 px-5 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood hover:text-cream"
+        >
+          Compare all plans
+        </button>
+        <p className="text-center text-sm text-ink/50">
+          7-day free trial on every plan (card required, auto-converts) · cancel anytime.
+          Add the <strong>AI website chatbox</strong> for ${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site.
+        </p>
+      </div>
+
+      {compare && <ComparePlansModal cycle={cycle} onClose={() => setCompare(false)} />}
+    </div>
+  );
+}
+
+export function ComparePlansModal({ cycle, onClose }: { cycle: Cycle; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/50 p-4 py-10" onClick={onClose}>
+      <div
+        className="w-full max-w-3xl rounded-2xl border border-oxblood/15 bg-cream shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-oxblood/10 px-6 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-oxblood">( Compare plans )</p>
+          <button onClick={onClose} className="text-ink/60 hover:text-oxblood" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="overflow-x-auto px-6 py-4">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="w-2/5" />
+                {PLANS.map((p) => {
+                  const price = SOCIAL_PLAN_PRICE[p.key];
+                  const perMonth = cycle === "monthly" ? price.monthly : Math.round(price.yearly / 12);
+                  return (
+                    <th key={p.key} className="px-2 pb-3 text-center align-bottom">
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/70">{p.name}</span>
+                      <span className="block font-display text-xl text-oxblood">
+                        ${perMonth}
+                        <span className="text-[11px] font-sans text-ink/50">/mo {CURRENCY}</span>
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE.map((row) => (
+                <tr key={row.label} className="border-t border-oxblood/10">
+                  <td className="py-3 pr-3 text-[13px] text-ink/85">{row.label}</td>
+                  {row.vals.map((v, i) => (
+                    <td key={i} className="px-2 py-3 text-center">
+                      {v === true ? (
+                        <Check className="mx-auto h-4 w-4 text-oxblood" />
+                      ) : v === false ? (
+                        <Minus className="mx-auto h-4 w-4 text-ink/25" />
+                      ) : (
+                        <span className="text-[12px] font-medium text-ink/80">{v}</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <a
+            href="mailto:hello.replyora@gmail.com?subject=More%20than%208%20clients"
+            className="mt-4 block w-full rounded-xl border border-oxblood/20 py-3 text-center text-[12px] font-semibold uppercase tracking-[0.14em] text-oxblood hover:bg-oxblood/5"
+          >
+            Need more than 8 clients? Contact us
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
