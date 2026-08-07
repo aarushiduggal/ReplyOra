@@ -193,6 +193,15 @@ export function ReportsWorkspace({
     [clientName, inRange.length, prevWindow, days, pillars, published, firstHalf, secondHalf],
   );
 
+  const TABS = ["Overview", "Comparison", "Top posts", "Pillars", "Formats", "Planning", "All posts"] as const;
+  const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
+
+  // Upcoming planned/scheduled posts (Planning tab) + all posts in range (All posts).
+  const planned = useMemo(
+    () => posts.filter((p) => p.status !== "published").sort((a, b) => (a.scheduledFor ?? "").localeCompare(b.scheduledFor ?? "")),
+    [posts],
+  );
+
   const [summary, setSummary] = useState(autoInsight);
   const [edited, setEdited] = useState(false);
   // Keep the summary in sync with the data until the user edits it by hand.
@@ -260,6 +269,22 @@ export function ReportsWorkspace({
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-b border-oxblood/10 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] print:hidden">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`pb-1 transition-colors ${tab === t ? "border-b-2 border-oxblood text-oxblood" : "text-ink/50 hover:text-ink/80"}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === "Overview" && (
+      <>
       {/* stat cards */}
       <div className="mt-6 grid gap-3 sm:grid-cols-4">
         <Stat label="Posts this period" value={inRange.length} delta={delta} />
@@ -275,9 +300,12 @@ export function ReportsWorkspace({
         </p>
         <CadenceChart buckets={buckets} />
       </div>
+      </>
+      )}
 
-      {/* pillar breakdown */}
-      <div className="mt-8">
+      {tab === "Pillars" && (
+      /* pillar breakdown */
+      <div className="mt-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Pillar breakdown</p>
         {pillars.length === 0 ? (
           <p className="mt-3 text-[12px] text-ink/80">No posts in this period.</p>
@@ -298,8 +326,10 @@ export function ReportsWorkspace({
           </div>
         )}
       </div>
+      )}
 
-      {/* auto insight */}
+      {tab === "Overview" && (
+      /* auto insight */
       <div className="mt-8 rounded-2xl border border-oxblood/15 bg-white p-5">
         <div className="flex items-center justify-between">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood">
@@ -331,10 +361,11 @@ export function ReportsWorkspace({
           Auto-written from this period&apos;s data — edit any line before you send it.
         </p>
       </div>
+      )}
 
-      {/* Formats — real per-format performance (Video / Carousel / Post) */}
-      {insights && insights.perFormat.length > 0 && (
-        <div className="mt-8">
+      {tab === "Formats" && (
+        insights && insights.perFormat.length > 0 ? (
+        <div className="mt-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
             Formats · which drove engagement
           </p>
@@ -357,10 +388,14 @@ export function ReportsWorkspace({
               ))}
           </div>
         </div>
+        ) : (
+          <p className="mt-6 text-[12px] text-ink/80">Format data appears once Instagram is connected and has posts.</p>
+        )
       )}
 
-      {/* top posts — real (by engagement) when connected, else planned */}
-      <div className="mt-8">
+      {tab === "Top posts" && (
+      /* top posts — real (by engagement) when connected, else planned */
+      <div className="mt-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Top posts</p>
         <div className="mt-3 space-y-2">
           {insights && insights.topPosts.length > 0 ? (
@@ -401,11 +436,77 @@ export function ReportsWorkspace({
           })()}
         </div>
       </div>
+      )}
+
+      {tab === "Comparison" && (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <CompareCard label="Posts" now={inRange.length} prev={prevWindow} />
+          {insights ? (
+            <>
+              <CompareCard label="Reach" now={insights.reach} prev={0} compactNum />
+              <CompareCard label="Engagements" now={insights.engagements} prev={0} compactNum />
+              <CompareCard label="Saves" now={insights.saves} prev={0} compactNum />
+            </>
+          ) : (
+            <p className="text-[12px] text-ink/70">Connect Instagram for reach &amp; engagement comparison.</p>
+          )}
+        </div>
+      )}
+
+      {tab === "Planning" && (
+        <div className="mt-6 space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">Upcoming &amp; planned</p>
+          {planned.length === 0 ? (
+            <p className="text-[12px] text-ink/80">Nothing planned yet.</p>
+          ) : (
+            planned.map((p) => (
+              <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 px-4 py-2.5">
+                <span className="truncate text-[13px] text-ink">{p.caption?.slice(0, 60) || "(untitled)"}</span>
+                <span className="text-[11px] uppercase tracking-[0.12em] text-ink/75">{p.status} · {p.scheduledFor?.slice(0, 10) ?? "—"}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === "All posts" && (
+        <div className="mt-6 space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">All posts in range ({inRange.length})</p>
+          {inRange.length === 0 ? (
+            <p className="text-[12px] text-ink/80">No posts in this period.</p>
+          ) : (
+            inRange.map((p) => (
+              <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 px-4 py-2.5">
+                <span className="truncate text-[13px] text-ink">{p.caption?.slice(0, 60) || "(untitled)"}</span>
+                <span className="text-[11px] uppercase tracking-[0.12em] text-ink/75">{p.pillar || "—"} · {PLATFORM_LABEL[p.platform]} · {p.status}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ------------------------------ sub-parts -------------------------------- */
+
+function CompareCard({ label, now, prev, compactNum }: { label: string; now: number; prev: number; compactNum?: boolean }) {
+  const fmt = (n: number) => (compactNum ? compact(n) : String(n));
+  const delta = now - prev;
+  return (
+    <div className="rounded-2xl border border-ink/10 bg-white p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/55">{label}</p>
+      <p className="mt-1 font-display text-2xl text-oxblood">{fmt(now)}</p>
+      {prev > 0 ? (
+        <p className={`text-[11px] font-medium ${delta >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+          {delta >= 0 ? "▲" : "▼"} vs {fmt(prev)} prior period
+        </p>
+      ) : (
+        <p className="text-[11px] text-ink/55">this period</p>
+      )}
+    </div>
+  );
+}
 
 function CadenceChart({ buckets }: { buckets: number[] }) {
   const max = Math.max(1, ...buckets);
