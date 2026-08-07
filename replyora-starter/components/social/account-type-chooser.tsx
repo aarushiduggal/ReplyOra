@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, Loader2 } from "lucide-react";
 
 import { chooseAccountTypeAction } from "@/app/onboarding/actions";
-import type { SocialPlan } from "@/lib/social/plans";
+import type { SocialPlan, BillingInterval } from "@/lib/social/plans";
 import { SOCIAL_PLAN_PRICE, CLIENT_LIMIT } from "@/lib/social/plans";
 
 const PLANS: {
@@ -60,6 +60,7 @@ export function AccountTypeChooser({
   stripeReady?: boolean;
 }) {
   const [selected, setSelected] = useState<SocialPlan>(preselect ?? "studio");
+  const [cycle, setCycle] = useState<BillingInterval>("monthly");
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,14 +69,15 @@ export function AccountTypeChooser({
   async function start() {
     setError(null);
     // When Stripe is live, collect the card up front via Checkout (7-day trial).
-    // Dashboard access is only granted after /onboarding/complete verifies it.
+    // Dashboard access is only granted after /onboarding/complete verifies it —
+    // and a hiccup NEVER grants free access; the user just retries.
     if (stripeReady) {
       setBusy(true);
       try {
         const res = await fetch("/api/social/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan: selected, interval: "monthly", from: "onboarding" }),
+          body: JSON.stringify({ plan: selected, interval: cycle, from: "onboarding" }),
         });
         if (res.ok) {
           const data = (await res.json()) as { url?: string };
@@ -84,12 +86,14 @@ export function AccountTypeChooser({
             return;
           }
         }
-        // Not configured / error → fall through to the no-card path below.
+        setError("Couldn't start checkout. Please try again.");
       } catch {
-        /* fall through */
+        setError("Couldn't reach checkout — check your connection and try again.");
       }
       setBusy(false);
+      return;
     }
+    // Stripe not configured at all → legacy no-card provisioning.
     startTransition(() => chooseAccountTypeAction(selected));
   }
 
@@ -106,7 +110,31 @@ export function AccountTypeChooser({
         cancel anytime. You can switch plans later in Settings.
       </p>
 
-      <div className="mt-10 grid gap-5 sm:grid-cols-3">
+      {/* Monthly / Annual toggle (annual = 2 months free) */}
+      <div className="mt-6 flex items-center gap-3">
+        <div className="inline-flex items-center gap-1 rounded-full border border-oxblood/15 bg-white p-1">
+          {(["monthly", "yearly"] as BillingInterval[]).map((c) => (
+            <button
+              key={c}
+              type="button"
+              disabled={working}
+              onClick={() => setCycle(c)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                cycle === c ? "bg-oxblood text-cream" : "text-ink/60 hover:text-oxblood"
+              }`}
+            >
+              {c === "yearly" ? "Annual" : "Monthly"}
+            </button>
+          ))}
+        </div>
+        {cycle === "yearly" && (
+          <span className="text-xs font-semibold uppercase tracking-widest text-rose">
+            2 months free
+          </span>
+        )}
+      </div>
+
+      <div className="mt-8 grid gap-5 sm:grid-cols-3">
         {PLANS.map((p) => {
           const price = SOCIAL_PLAN_PRICE[p.type];
           const active = selected === p.type;
@@ -134,8 +162,11 @@ export function AccountTypeChooser({
               </div>
               <p className="mt-1 text-[12px] font-medium text-ink/75">{p.blurb}</p>
               <p className="mt-3 font-display text-2xl text-ink">
-                ${price.monthly}
-                <span className="font-sans text-xs text-ink/50"> /mo AUD</span>
+                ${cycle === "monthly" ? price.monthly : price.yearly}
+                <span className="font-sans text-xs text-ink/50">
+                  {" "}
+                  {cycle === "monthly" ? "/mo" : "/yr"} AUD
+                </span>
               </p>
               <ul className="mt-4 flex-1 space-y-2">
                 {p.features.map((f) => (
