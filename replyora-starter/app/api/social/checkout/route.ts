@@ -32,9 +32,11 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     plan?: SocialPlan;
     interval?: BillingInterval;
+    from?: string;
   } | null;
   const plan = body?.plan;
   const interval = body?.interval ?? "monthly";
+  const isOnboarding = body?.from === "onboarding";
   if (plan !== "personal" && plan !== "studio" && plan !== "agency") {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
@@ -45,19 +47,28 @@ export async function POST(request: Request) {
   }
 
   const base = APP_URL.replace(/\/$/, "");
+  // Onboarding sends the user to a page that verifies the finished Checkout
+  // session before granting dashboard access (so a card is genuinely required).
+  const successUrl = isOnboarding
+    ? `${base}/onboarding/complete?session_id={CHECKOUT_SESSION_ID}`
+    : `${base}/settings?billing=success`;
+  const cancelUrl = isOnboarding ? `${base}/onboarding` : `${base}/settings?billing=cancelled`;
+
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     // 7-day trial on every plan, but the card is collected up front and the
     // subscription auto-converts (cancels if no card was captured).
     payment_method_collection: "always",
+    // Session-level metadata so /onboarding/complete can verify + read the plan.
+    metadata: { workspace_id: workspaceId, social_plan: plan, interval },
     subscription_data: {
       trial_period_days: 7,
       trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
       metadata: { workspace_id: workspaceId, social_plan: plan, interval },
     },
-    success_url: `${base}/settings?billing=success`,
-    cancel_url: `${base}/settings?billing=cancelled`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     allow_promotion_codes: true,
   });
 

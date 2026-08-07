@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { USE_AUTHJS } from "@/lib/data/mode";
 import { isOwner } from "@/lib/auth/owner";
 import { getWorkspaceBilling } from "@/lib/social/billing";
+import { HAS_STRIPE } from "@/lib/stripe/server";
 import { ACCOUNT_INTENT_COOKIE, normalizeAccountSlug } from "@/lib/plan-intent";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function OnboardingPage() {
     undefined;
   return (
     <div className="min-h-screen bg-white text-ink">
-      <AccountTypeChooser name={first} preselect={preselect} />
+      <AccountTypeChooser name={first} preselect={preselect} stripeReady={HAS_STRIPE} />
     </div>
   );
 }

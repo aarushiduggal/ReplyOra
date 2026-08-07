@@ -5,12 +5,7 @@ import { Check, Loader2 } from "lucide-react";
 
 import { chooseAccountTypeAction } from "@/app/onboarding/actions";
 import type { SocialPlan } from "@/lib/social/plans";
-import {
-  SOCIAL_PLAN_PRICE,
-  CHATBOX_ADDON_PRICE,
-  CURRENCY,
-  CLIENT_LIMIT,
-} from "@/lib/social/plans";
+import { SOCIAL_PLAN_PRICE, CLIENT_LIMIT } from "@/lib/social/plans";
 
 const PLANS: {
   type: SocialPlan;
@@ -58,18 +53,44 @@ const PLANS: {
 export function AccountTypeChooser({
   name,
   preselect,
+  stripeReady,
 }: {
   name: string;
   preselect?: SocialPlan;
+  stripeReady?: boolean;
 }) {
   const [selected, setSelected] = useState<SocialPlan>(preselect ?? "studio");
-  const [chatbox, setChatbox] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const working = pending || busy;
 
-  const agency = selected === "agency";
-
-  function start() {
-    startTransition(() => chooseAccountTypeAction(selected, chatbox));
+  async function start() {
+    setError(null);
+    // When Stripe is live, collect the card up front via Checkout (7-day trial).
+    // Dashboard access is only granted after /onboarding/complete verifies it.
+    if (stripeReady) {
+      setBusy(true);
+      try {
+        const res = await fetch("/api/social/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: selected, interval: "monthly", from: "onboarding" }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { url?: string };
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        }
+        // Not configured / error → fall through to the no-card path below.
+      } catch {
+        /* fall through */
+      }
+      setBusy(false);
+    }
+    startTransition(() => chooseAccountTypeAction(selected));
   }
 
   return (
@@ -93,7 +114,7 @@ export function AccountTypeChooser({
             <button
               key={p.type}
               type="button"
-              disabled={pending}
+              disabled={working}
               onClick={() => setSelected(p.type)}
               aria-pressed={active}
               className={`flex flex-col rounded-2xl border p-6 text-left transition-colors ${
@@ -114,7 +135,7 @@ export function AccountTypeChooser({
               <p className="mt-1 text-[12px] font-medium text-ink/75">{p.blurb}</p>
               <p className="mt-3 font-display text-2xl text-ink">
                 ${price.monthly}
-                <span className="font-sans text-xs text-ink/50"> /mo {CURRENCY}</span>
+                <span className="font-sans text-xs text-ink/50"> /mo AUD</span>
               </p>
               <ul className="mt-4 flex-1 space-y-2">
                 {p.features.map((f) => (
@@ -129,44 +150,28 @@ export function AccountTypeChooser({
         })}
       </div>
 
-      {/* Add-ons — "the things" you can pick when starting the trial */}
-      <div className="mt-6 rounded-2xl border border-ink/15 p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/55">
-          Add-ons
-        </p>
-        <label
-          className={`mt-3 flex cursor-pointer items-start gap-3 ${agency ? "opacity-70" : ""}`}
-        >
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 accent-oxblood"
-            checked={agency ? true : chatbox}
-            disabled={agency || pending}
-            onChange={(e) => setChatbox(e.target.checked)}
-          />
-          <span className="text-sm text-ink/85">
-            <span className="font-semibold text-oxblood">AI website chatbox</span>{" "}
-            {agency ? (
-              <span className="text-ink/60">— included free with Agency</span>
-            ) : (
-              <span className="text-ink/60">
-                — +${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site. Answers visitors,
-                captures leads and books 24/7.
-              </span>
-            )}
-          </span>
-        </label>
-      </div>
+      {/* The AI website chatbox is switched on per client later (per-site), so
+          there's nothing to add here — the trial is just the plan. */}
+
+      {error && (
+        <p className="mt-6 text-sm text-rose-700">{error}</p>
+      )}
 
       <button
         type="button"
         onClick={start}
-        disabled={pending}
+        disabled={working}
         className="mt-8 inline-flex items-center gap-2 rounded-full bg-oxblood px-7 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-oxblood/90 disabled:opacity-70"
       >
-        {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Start 7-day free trial
+        {working && <Loader2 className="h-4 w-4 animate-spin" />}
+        {stripeReady ? "Start 7-day free trial — add card" : "Start 7-day free trial"}
       </button>
+      {stripeReady && (
+        <p className="mt-2 text-xs text-ink/55">
+          You&apos;ll add a card on the next screen. It&apos;s free for 7 days and
+          auto-converts — cancel anytime.
+        </p>
+      )}
     </div>
   );
 }
