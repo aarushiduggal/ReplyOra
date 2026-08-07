@@ -18,13 +18,16 @@ import {
 } from "@/app/admin/workspaces/[id]/actions";
 import type { AgencyDetail } from "@/lib/admin/overview";
 import type { SocialAddons, SocialPlan } from "@/lib/social/plans";
+import { SOCIAL_PLAN_PRICE, CHATBOX_ADDON_PRICE } from "@/lib/social/plans";
 
 const money = (n: number) => `$${n.toLocaleString("en-AU")}`;
 
 /** Monthly price for a plan + add-ons (mirrors lib/admin/overview.mrrFor). */
 function mrrFor(accountType: SocialPlan, addons: SocialAddons): number {
-  const base = accountType === "agency" ? 200 : 50;
-  return base + (addons.chatbox ? 20 : 0) + (addons.reports ? 15 : 0);
+  const base = SOCIAL_PLAN_PRICE[accountType]?.monthly ?? SOCIAL_PLAN_PRICE.personal.monthly;
+  // Chatbox add-on ($39/mo) unless Agency (includes 1 free).
+  const chatbox = addons.chatbox && accountType !== "agency" ? CHATBOX_ADDON_PRICE : 0;
+  return base + chatbox;
 }
 
 const STATUS = ["trialing", "active", "past_due", "canceled"] as const;

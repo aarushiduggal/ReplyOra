@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { cookies } from "next/headers";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import { makeShareToken } from "@/lib/social/portal";
@@ -22,6 +23,11 @@ export interface ClientFeatures {
   spreadsheet: boolean;
   approvals: boolean;
   gridSuggestion: boolean;
+  /**
+   * AI website chatbox live for THIS client's site. Billed at $39/mo AUD per
+   * enabled client (Agency includes the first one free). Off by default.
+   */
+  chatboxEnabled: boolean;
 }
 export interface ClientBilling {
   billToName: string;
@@ -85,6 +91,7 @@ const DEFAULT_FEATURES: ClientFeatures = {
   spreadsheet: true,
   approvals: true,
   gridSuggestion: false,
+  chatboxEnabled: false,
 };
 const EMPTY_BILLING: ClientBilling = {
   billToName: "",
@@ -356,6 +363,81 @@ export async function updateClientDetail(
     await set(() => sql()`UPDATE clients SET features = ${JSON.stringify(patch.features)} WHERE id = ${id} AND workspace_id = ${workspaceId}`);
   if (patch.billing !== undefined)
     await set(() => sql()`UPDATE clients SET billing = ${JSON.stringify(patch.billing)} WHERE id = ${id} AND workspace_id = ${workspaceId}`);
+}
+
+// Mock/demo mode has no durable store (module memory doesn't survive between
+// dev requests), so the set of chatbox-enabled clients lives in a cookie —
+// mirrors the add-ons cookie in lib/social/billing.ts.
+const CHATBOX_CLIENTS_COOKIE = "ro_chatbox_clients";
+
+async function readMockChatboxSet(): Promise<Set<string>> {
+  try {
+    const raw = (await cookies()).get(CHATBOX_CLIENTS_COOKIE)?.value;
+    const arr = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(arr) ? (arr as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+async function writeMockChatboxSet(set: Set<string>): Promise<void> {
+  try {
+    (await cookies()).set(CHATBOX_CLIENTS_COOKIE, JSON.stringify([...set]), {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  } catch {
+    /* not a writable (action/route) context — ignore */
+  }
+}
+
+/** Is THIS client's website chatbox switched on? */
+export async function isClientChatboxEnabled(clientId: string): Promise<boolean> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) return (await readMockChatboxSet()).has(clientId);
+  try {
+    const rows = (await sql()`
+      SELECT COALESCE((features->>'chatboxEnabled')::boolean, false) AS on
+      FROM clients WHERE id = ${clientId} AND workspace_id = ${workspaceId} LIMIT 1
+    `) as { on: boolean }[];
+    return rows[0]?.on ?? false;
+  } catch {
+    return false; // 0008 not applied yet
+  }
+}
+
+/** How many clients in the workspace have the chatbox switched on (billing). */
+export async function countChatboxEnabledClients(workspaceId: string): Promise<number> {
+  if (!hasDb()) return (await readMockChatboxSet()).size;
+  try {
+    const rows = (await sql()`
+      SELECT count(*)::int AS n FROM clients
+      WHERE workspace_id = ${workspaceId}
+        AND COALESCE((features->>'chatboxEnabled')::boolean, false) = true
+    `) as { n: number }[];
+    return rows[0]?.n ?? 0;
+  } catch {
+    return 0; // 0008 not applied yet
+  }
+}
+
+/** Turn THIS client's website chatbox on/off (per-site feature flag, JSONB merge). */
+export async function setClientChatbox(clientId: string, enabled: boolean): Promise<void> {
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!hasDb()) {
+    const set = await readMockChatboxSet();
+    if (enabled) set.add(clientId);
+    else set.delete(clientId);
+    await writeMockChatboxSet(set);
+    return;
+  }
+  // Merge into the existing features JSONB so other flags aren't clobbered.
+  await sql()`
+    UPDATE clients
+    SET features = COALESCE(features, '{}'::jsonb) || ${JSON.stringify({ chatboxEnabled: enabled })}::jsonb
+    WHERE id = ${clientId} AND workspace_id = ${workspaceId}
+  `;
 }
 
 /** Replace the client's content pillars. */

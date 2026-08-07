@@ -6,12 +6,10 @@ import { useRouter } from "next/navigation";
 import type {
   WorkspaceBilling,
   SocialPlan,
-  SocialAddons,
   BillingInterval,
 } from "@/lib/social/plans";
-import { SOCIAL_PLAN_PRICE } from "@/lib/social/plans";
+import { SOCIAL_PLAN_PRICE, CHATBOX_ADDON_PRICE, CURRENCY } from "@/lib/social/plans";
 import {
-  saveAddonsAction,
   saveProfileNameAction,
   saveWorkspaceBillingAction,
   saveNewsletterOptInAction,
@@ -77,7 +75,7 @@ export function SettingsWorkspace({
         {tab === "Profile" && <ProfileTab fullName={fullName} email={email} />}
         {tab === "Workspace" && <WorkspaceTab billing={billing} />}
         {tab === "Billing" && (
-          <BillingTab currentPlan={currentPlan} planStatus={planStatus} stripeReady={stripeReady} addons={billing.addons} />
+          <BillingTab currentPlan={currentPlan} planStatus={planStatus} stripeReady={stripeReady} />
         )}
         {tab === "Preferences" && <PreferencesTab optIn={newsletterOptIn} email={email} />}
         {tab === "Integrations" && (
@@ -187,47 +185,17 @@ function WorkspaceTab({ billing }: { billing: WorkspaceBilling }) {
   );
 }
 
-const ADDON_META: {
-  key: keyof SocialAddons;
-  label: string;
-  desc: string;
-  price: string;
-}[] = [
-  {
-    key: "chatbox",
-    label: "AI website chatbox",
-    desc: "Lead-capture assistant on a client's site. Agency includes 1 free.",
-    price: "+$39/mo AUD",
-  },
-];
-
 function BillingTab({
   currentPlan,
   planStatus,
   stripeReady,
-  addons,
 }: {
   currentPlan: SocialPlan;
   planStatus: string;
   stripeReady: boolean;
-  addons: SocialAddons;
 }) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [busy, setBusy] = useState(false);
-  const [addonState, setAddonState] = useState<SocialAddons>(addons);
-  const [, startAddon] = useTransition();
-  const addonRouter = useRouter();
-
-  function toggleAddon(key: keyof SocialAddons) {
-    const next = { ...addonState, [key]: !addonState[key] };
-    setAddonState(next);
-    startAddon(async () => {
-      await saveAddonsAction(next);
-      // Re-fetch server components (incl. the client sub-nav) so the section
-      // appears/disappears immediately across the app.
-      addonRouter.refresh();
-    });
-  }
 
   async function switchTo(plan: SocialPlan) {
     setBusy(true);
@@ -306,39 +274,20 @@ function BillingTab({
       </Card>
 
       <Card title="Add-ons">
-        <p className="text-[11px] text-ink/70">
-          Turn features on or off — the dashboard unlocks them instantly.
-        </p>
-        <div className="mt-2 space-y-2">
-          {ADDON_META.map((a) => {
-            const on = addonState[a.key];
-            return (
-              <div
-                key={a.key}
-                className="flex items-center justify-between rounded-xl border border-ink/12 p-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    {a.label}{" "}
-                    <span className="text-[11px] font-medium text-ink/60">
-                      {a.price}
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-ink/70">{a.desc}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleAddon(a.key)}
-                  aria-label={`${on ? "Disable" : "Enable"} ${a.label}`}
-                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-oxblood" : "bg-ink/20"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${on ? "left-[22px]" : "left-0.5"}`}
-                  />
-                </button>
-              </div>
-            );
-          })}
+        <div className="rounded-xl border border-ink/12 p-3">
+          <p className="text-sm font-semibold text-ink">
+            AI website chatbox{" "}
+            <span className="text-[11px] font-medium text-ink/60">
+              ${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site
+            </span>
+          </p>
+          <p className="mt-1 text-[11px] text-ink/70">
+            On Personal &amp; Studio the chatbox is billed per client site — turn it on
+            under <span className="font-semibold text-ink">that client → Chatbox</span>{" "}
+            and each enabled site adds ${CHATBOX_ADDON_PRICE}/mo {CURRENCY}. On{" "}
+            <span className="font-semibold text-ink">Agency it&apos;s included</span> for
+            every client, always on.
+          </p>
         </div>
       </Card>
     </div>

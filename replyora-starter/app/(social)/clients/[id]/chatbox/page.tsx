@@ -1,9 +1,13 @@
 import { ChatboxWorkspace } from "@/components/social/chatbox/chatbox-workspace";
-import { LockedSection } from "@/components/social/locked-section";
+import {
+  ChatboxEnableCard,
+  ChatboxLiveBar,
+} from "@/components/social/chatbox/chatbox-enable";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { getWorkspaceBilling } from "@/lib/social/billing";
-import { entitlementsFor } from "@/lib/social/plans";
+import { isClientChatboxEnabled } from "@/lib/social/client-detail";
+import { CHATBOX_ADDON_PRICE, CURRENCY } from "@/lib/social/plans";
 import {
   getOrCreateClientAssistant,
   listKnowledge,
@@ -23,16 +27,16 @@ export default async function ClientChatboxPage({
   ]);
   const name = client?.name ?? sampleName(id);
 
-  // Plan gate: the website chatbox is a paid add-on.
-  const ent = entitlementsFor(billing.accountType, billing.addons);
-  if (!ent.chatbox) {
+  // Agency: the chatbox is INCLUDED for every client — always on, no enable
+  // step, no charge. Personal & Studio: it's a $39/mo AUD add-on switched on
+  // per client (per site). (accountType null = owner / full-access = included.)
+  const isAgency = billing.accountType === "agency" || billing.accountType === null;
+  const priceNote = `$${CHATBOX_ADDON_PRICE}/mo ${CURRENCY} per site`;
+  const enabled = isAgency || (await isClientChatboxEnabled(id));
+
+  if (!enabled) {
     return (
-      <LockedSection
-        title="Website chatbox isn't on your plan"
-        description="Add the chatbox to capture leads from each client's website with an on-brand assistant."
-        addonLabel="Chatbox add-on"
-        priceLabel="+$39/mo AUD"
-      />
+      <ChatboxEnableCard clientId={id} clientName={name} priceNote={priceNote} />
     );
   }
 
@@ -45,12 +49,16 @@ export default async function ClientChatboxPage({
   const snippet = `<script src="${appUrl}/embed.js" data-key="${assistant.publicKey}"></script>`;
 
   return (
-    <ChatboxWorkspace
-      clientId={id}
-      clientName={name}
-      assistant={assistant}
-      knowledge={knowledge}
-      snippet={snippet}
-    />
+    <div className="space-y-4">
+      {/* Agency has it included, so no disable/billing bar — just the workspace. */}
+      {!isAgency && <ChatboxLiveBar clientId={id} priceNote={priceNote} />}
+      <ChatboxWorkspace
+        clientId={id}
+        clientName={name}
+        assistant={assistant}
+        knowledge={knowledge}
+        snippet={snippet}
+      />
+    </div>
   );
 }

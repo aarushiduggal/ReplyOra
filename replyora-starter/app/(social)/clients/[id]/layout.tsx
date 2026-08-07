@@ -23,10 +23,11 @@ export default async function ClientLayout({
   const name = client?.name ?? clientName(id);
   const ent = entitlementsFor(billing.accountType, billing.addons);
   // Sections the current plan hasn't unlocked — hidden from the sub-nav.
-  const lockedSlugs = [
-    ent.chatbox ? null : "chatbox",
-    ent.reports ? null : "reports",
-  ].filter((s): s is string => s !== null);
+  // Chatbox is always shown: it's enabled per-client (per-site billing), not a
+  // plan gate. Reports stays gated to Studio & Agency.
+  const lockedSlugs = [ent.reports ? null : "reports"].filter(
+    (s): s is string => s !== null,
+  );
   return (
     <>
       <SetClientName name={name} />

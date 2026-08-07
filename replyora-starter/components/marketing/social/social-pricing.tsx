@@ -58,7 +58,7 @@ const PLANS: {
       "Everything in Studio",
       "Client invoicing + branded PDF exports",
       "Revenue hub & per-client billing",
-      "1 AI website chatbox included",
+      "AI website chatbox included (all clients)",
       "Priority support",
     ],
   },
@@ -80,7 +80,7 @@ const COMPARE: { label: string; vals: [Cell, Cell, Cell] }[] = [
   { label: "Workspace team seats (Full / Limited)", vals: [false, false, true] },
   { label: "Client invoicing + branded PDF exports", vals: [false, false, true] },
   { label: "Revenue hub & per-client billing settings", vals: [false, false, true] },
-  { label: "AI website chatbox", vals: ["Add-on", "Add-on", "1 included"] },
+  { label: "AI website chatbox", vals: ["$39/site", "$39/site", "Included"] },
 ];
 
 export function SocialPricing() {

@@ -84,6 +84,10 @@ interface AddressJson extends Partial<Address> {
   planStatus?: string;
   accountType?: SocialPlan | null;
   addons?: SocialAddons;
+  /** Stripe subscription for this workspace (needed to attach add-on items). */
+  stripeSubscriptionId?: string | null;
+  /** Stripe subscription-item id for the per-site chatbox add-on (qty = sites). */
+  chatboxItemId?: string | null;
 }
 interface Row {
   business_name: string | null;
@@ -296,6 +300,7 @@ export async function setWorkspacePlan(
   workspaceId: string,
   plan: SocialPlan,
   planStatus: string,
+  stripeSubscriptionId?: string | null,
 ): Promise<void> {
   if (!hasDb()) {
     const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
@@ -306,6 +311,41 @@ export async function setWorkspacePlan(
     SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
   `) as { address: AddressJson | null }[];
   const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), plan, planStatus };
+  // Only overwrite the subscription id when the webhook actually gave us one.
+  if (stripeSubscriptionId !== undefined) addressJson.stripeSubscriptionId = stripeSubscriptionId;
+  await sql()`
+    INSERT INTO workspace_billing (workspace_id, address)
+    VALUES (${workspaceId}, ${JSON.stringify(addressJson)})
+    ON CONFLICT (workspace_id) DO UPDATE SET address = ${JSON.stringify(addressJson)}
+  `;
+}
+
+/** Read the Stripe billing pointers we stashed in the address JSONB. */
+export async function getWorkspaceStripeMeta(
+  workspaceId: string,
+): Promise<{ subscriptionId: string | null; chatboxItemId: string | null; accountType: SocialPlan | null }> {
+  if (!hasDb()) return { subscriptionId: null, chatboxItemId: null, accountType: null };
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const a = rows[0]?.address ?? {};
+  return {
+    subscriptionId: a.stripeSubscriptionId ?? null,
+    chatboxItemId: a.chatboxItemId ?? null,
+    accountType: a.accountType ?? null,
+  };
+}
+
+/** Persist (or clear) the Stripe subscription-item id for the chatbox add-on. */
+export async function setWorkspaceChatboxItem(
+  workspaceId: string,
+  chatboxItemId: string | null,
+): Promise<void> {
+  if (!hasDb()) return;
+  const rows = (await sql()`
+    SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+  `) as { address: AddressJson | null }[];
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), chatboxItemId };
   await sql()`
     INSERT INTO workspace_billing (workspace_id, address)
     VALUES (${workspaceId}, ${JSON.stringify(addressJson)})

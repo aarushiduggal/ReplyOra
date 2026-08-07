@@ -50,7 +50,7 @@ const PLANS: {
       `Up to ${CLIENT_LIMIT.agency} client / brand accounts`,
       "Everything in Studio",
       "Team seats + client invoicing",
-      "1 AI website chatbox included",
+      "AI website chatbox included (all clients)",
     ],
   },
 ];

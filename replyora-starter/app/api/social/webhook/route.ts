@@ -49,7 +49,11 @@ export async function POST(req: Request) {
       if (workspaceId) {
         const status =
           event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
-        await setWorkspacePlan(workspaceId, mapped?.plan ?? "personal", status);
+        // Persist the subscription id so per-site add-ons (chatbox) can attach
+        // items to it; clear it when the subscription is deleted.
+        const subId =
+          event.type === "customer.subscription.deleted" ? null : sub.id;
+        await setWorkspacePlan(workspaceId, mapped?.plan ?? "personal", status, subId);
       }
     }
   } catch {
