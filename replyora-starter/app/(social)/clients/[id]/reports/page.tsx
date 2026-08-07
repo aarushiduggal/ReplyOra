@@ -3,8 +3,7 @@ import { LockedSection } from "@/components/social/locked-section";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
-import { getWorkspaceBilling } from "@/lib/social/billing";
-import { entitlementsFor } from "@/lib/social/plans";
+import { getWorkspaceBilling, currentEntitlements } from "@/lib/social/billing";
 import { fetchInstagramInsights } from "@/lib/social/instagram-insights";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +24,8 @@ export default async function ClientReportsPage({
   ]);
   const name = client?.name ?? sampleName(id);
 
-  // Plan gate: client-facing reports are a paid add-on.
-  const ent = entitlementsFor(billing.accountType, billing.addons);
+  // Plan gate: reports are on Studio & Agency (owner + live Stripe plan aware).
+  const { ent } = await currentEntitlements();
   if (!ent.reports) {
     return (
       <LockedSection

@@ -5,7 +5,7 @@ import {
 } from "@/components/social/chatbox/chatbox-enable";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
-import { getWorkspaceBilling } from "@/lib/social/billing";
+import { currentEntitlements } from "@/lib/social/billing";
 import { isClientChatboxEnabled } from "@/lib/social/client-detail";
 import { CHATBOX_ADDON_PRICE, CURRENCY } from "@/lib/social/plans";
 import {
@@ -21,16 +21,16 @@ export default async function ClientChatboxPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, billing] = await Promise.all([
+  const [client, { type }] = await Promise.all([
     getClient(id),
-    getWorkspaceBilling(),
+    currentEntitlements(),
   ]);
   const name = client?.name ?? sampleName(id);
 
   // Agency: the chatbox is INCLUDED for every client — always on, no enable
   // step, no charge. Personal & Studio: it's a $39/mo AUD add-on switched on
-  // per client (per site). (accountType null = owner / full-access = included.)
-  const isAgency = billing.accountType === "agency" || billing.accountType === null;
+  // per client (per site).
+  const isAgency = type === "agency";
   const priceNote = `$${CHATBOX_ADDON_PRICE}/mo ${CURRENCY} per site`;
   const enabled = isAgency || (await isClientChatboxEnabled(id));
 

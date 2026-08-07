@@ -5,8 +5,7 @@ import { SectionHeader } from "@/components/social/section-header";
 import { LockedSection } from "@/components/social/locked-section";
 import { listAllInvoices } from "@/lib/social/invoices";
 import { listClients } from "@/lib/social/clients";
-import { getWorkspaceBilling } from "@/lib/social/billing";
-import { entitlementsFor } from "@/lib/social/plans";
+import { currentEntitlements } from "@/lib/social/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -24,15 +23,15 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function InvoicesPage() {
-  const billing = await getWorkspaceBilling();
-  if (!entitlementsFor(billing.accountType, billing.addons).invoicing) {
+  const { ent } = await currentEntitlements();
+  if (!ent.invoicing) {
     return (
       <PageShell>
         <LockedSection
-          title="Client invoicing is on Agency"
-          description="Bill your clients with branded, tax-ready invoices and PDF exports across your whole roster. It's included on the Agency plan — email us and we'll add it."
+          title="Client invoicing is on Studio & Agency"
+          description="Bill your clients with branded, tax-ready invoices and PDF exports across your whole roster. It's included on Studio & Agency — email us and we'll add it."
           addonLabel="Client invoicing"
-          priceLabel="Agency plan"
+          priceLabel="Studio plan · from $79/mo AUD"
         />
       </PageShell>
     );

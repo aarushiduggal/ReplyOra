@@ -1,13 +1,17 @@
 import { neon } from "@neondatabase/serverless";
 import { cookies } from "next/headers";
 
-import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import { getCurrentWorkspaceId, getCurrentUser } from "@/lib/auth/session";
+import { isOwner } from "@/lib/auth/owner";
 import {
   EMPTY_ADDONS,
   EMPTY_ADDRESS,
   SOCIAL_PRICE_ENV,
+  effectiveAccountType,
+  entitlementsFor,
   type Address,
   type BillingInterval,
+  type Entitlements,
   type SocialAddons,
   type SocialPlan,
   type WorkspaceBilling,
@@ -37,6 +41,7 @@ const DEFAULTS: WorkspaceBilling = {
   plan: "personal",
   planStatus: "trialing",
   accountType: null,
+  hasStripeSubscription: false,
   addons: EMPTY_ADDONS,
 };
 
@@ -138,8 +143,32 @@ export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
     plan: addr.plan ?? "personal",
     planStatus: addr.planStatus ?? "trialing",
     accountType: addr.accountType ?? null,
+    hasStripeSubscription: Boolean(addr.stripeSubscriptionId),
     addons: { ...EMPTY_ADDONS, ...(addr.addons ?? {}) },
   };
+}
+
+/**
+ * Entitlements for the CURRENT user — the single source of truth for gating.
+ * The owner always gets full access; otherwise a live Stripe subscription's plan
+ * wins over a stale onboarding accountType. Returns billing too so callers that
+ * already need it don't double-fetch.
+ */
+export async function currentEntitlements(): Promise<{
+  billing: WorkspaceBilling;
+  type: SocialPlan;
+  ent: Entitlements;
+}> {
+  const billing = await getWorkspaceBilling();
+  let type: SocialPlan | null = effectiveAccountType(billing);
+  try {
+    const user = await getCurrentUser();
+    if (isOwner(user.email)) type = "agency";
+  } catch {
+    /* not signed in — keep resolved type */
+  }
+  const resolved: SocialPlan = type ?? "agency";
+  return { billing, type: resolved, ent: entitlementsFor(resolved, billing.addons) };
 }
 
 export async function saveWorkspaceBilling(
@@ -304,13 +333,15 @@ export async function setWorkspacePlan(
 ): Promise<void> {
   if (!hasDb()) {
     const cur = MEM.get(workspaceId) ?? { ...DEFAULTS };
-    MEM.set(workspaceId, { ...cur, plan, planStatus });
+    MEM.set(workspaceId, { ...cur, plan, planStatus, accountType: plan });
     return;
   }
   const rows = (await sql()`
     SELECT address FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
   `) as { address: AddressJson | null }[];
-  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), plan, planStatus };
+  // Keep accountType in lock-step with the paid plan so entitlements (Reports,
+  // invoicing, etc.) reflect what the customer is actually paying for.
+  const addressJson: AddressJson = { ...(rows[0]?.address ?? {}), plan, planStatus, accountType: plan };
   // Only overwrite the subscription id when the webhook actually gave us one.
   if (stripeSubscriptionId !== undefined) addressJson.stripeSubscriptionId = stripeSubscriptionId;
   await sql()`

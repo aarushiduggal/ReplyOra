@@ -29,8 +29,20 @@ export interface WorkspaceBilling {
   planStatus: string;
   /** Chosen at onboarding. null = not onboarded yet → send to /onboarding. */
   accountType: SocialPlan | null;
+  /** Set once a live Stripe subscription exists — makes `plan` authoritative. */
+  hasStripeSubscription: boolean;
   /** Paid add-ons the workspace has enabled (build-your-plan). */
   addons: SocialAddons;
+}
+
+/**
+ * The plan whose entitlements actually apply. A live Stripe subscription is the
+ * source of truth (so a paying Agency customer never gets gated by a stale
+ * onboarding accountType); otherwise fall back to the chosen accountType.
+ */
+export function effectiveAccountType(billing: WorkspaceBilling): SocialPlan | null {
+  if (billing.hasStripeSubscription) return billing.plan;
+  return billing.accountType;
 }
 
 /** Optional paid features layered on top of the base plan. */
@@ -104,7 +116,8 @@ export function entitlementsFor(
     sharedLibrary: studioPlus,
     crossClientTasks: studioPlus,
     teamSeats: agency,
-    invoicing: agency,
+    // Reports & client invoicing are included on Studio & Agency; add-on on Personal.
+    invoicing: studioPlus,
     revenueHub: agency,
   };
 }

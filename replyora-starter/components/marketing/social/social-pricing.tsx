@@ -43,6 +43,7 @@ const PLANS: {
       "Everything in Personal",
       "Studio — Dump & Pair drafts from shoots",
       "Performance reports + PDF export",
+      "Client invoicing + PDF exports",
       "Shared workspace asset library",
       "Cross-client task tracking",
     ],
@@ -77,8 +78,8 @@ const COMPARE: { label: string; vals: [Cell, Cell, Cell] }[] = [
   { label: "Performance reports + PDF export", vals: [false, true, true] },
   { label: "Shared workspace asset library", vals: [false, true, true] },
   { label: "Cross-client task tracking", vals: [false, true, true] },
+  { label: "Client invoicing + branded PDF exports", vals: [false, true, true] },
   { label: "Workspace team seats (Full / Limited)", vals: [false, false, true] },
-  { label: "Client invoicing + branded PDF exports", vals: [false, false, true] },
   { label: "Revenue hub & per-client billing settings", vals: [false, false, true] },
   { label: "AI website chatbox", vals: ["$39/site", "$39/site", "Included"] },
 ];
