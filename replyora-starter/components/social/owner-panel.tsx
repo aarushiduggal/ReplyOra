@@ -27,8 +27,8 @@ export function OwnerPanel({ accountType }: { accountType: SocialPlan | null }) 
             <b className="capitalize text-ink">{accountType ?? "not set"}</b>
           </p>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {(["personal", "agency"] as SocialPlan[]).map((t) => (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {(["personal", "studio", "agency"] as SocialPlan[]).map((t) => (
               <button
                 key={t}
                 type="button"

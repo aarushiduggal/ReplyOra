@@ -217,7 +217,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             ? "Log in to your replyora workspace."
             : socialMode
               ? "Plan, create and schedule your social content in one place."
-              : "No card to start. Free for 7 days, then from $50/mo — cancel anytime."}
+              : "Free for 7 days, then from $49/mo AUD — cancel anytime."}
         </p>
       </div>
 

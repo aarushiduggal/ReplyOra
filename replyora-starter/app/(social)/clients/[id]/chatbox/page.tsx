@@ -31,7 +31,7 @@ export default async function ClientChatboxPage({
         title="Website chatbox isn't on your plan"
         description="Add the chatbox to capture leads from each client's website with an on-brand assistant."
         addonLabel="Chatbox add-on"
-        priceLabel="+$20/mo"
+        priceLabel="+$39/mo AUD"
       />
     );
   }

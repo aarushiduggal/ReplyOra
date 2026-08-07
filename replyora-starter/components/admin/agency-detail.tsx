@@ -124,8 +124,9 @@ export function AgencyDetail({ agency }: { agency: AgencyDetail }) {
                 onChange={(e) => setAccountType(e.target.value as SocialPlan)}
                 className="mt-1 block w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-sm outline-none focus:border-oxblood"
               >
-                <option value="personal">Personal ($50)</option>
-                <option value="agency">Agency ($200)</option>
+                <option value="personal">Personal ($49)</option>
+                <option value="studio">Studio ($79)</option>
+                <option value="agency">Agency ($249)</option>
               </select>
             </label>
             <label className="text-sm">
@@ -156,8 +157,7 @@ export function AgencyDetail({ agency }: { agency: AgencyDetail }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70">Add-ons</h2>
           <div className="mt-3 space-y-2">
             {([
-              { key: "chatbox" as const, label: "Website chatbox", price: "+$20/mo" },
-              { key: "reports" as const, label: "Performance reports", price: "+$15/mo" },
+              { key: "chatbox" as const, label: "Website chatbox", price: "+$39/mo AUD" },
             ]).map((a) => {
               const on = addons[a.key];
               return (

@@ -300,7 +300,7 @@ function BillingTab({
         </div>
         {!stripeReady && (
           <p className="mt-3 text-[11px] text-ink/80">
-            Add your Stripe keys + the four price IDs in Netlify to enable live switching.
+            Add your Stripe keys + the plan price IDs (Personal / Studio / Agency, monthly &amp; yearly) plus the chatbox add-on in Netlify to enable live switching.
           </p>
         )}
       </Card>

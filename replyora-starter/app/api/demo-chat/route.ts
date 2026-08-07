@@ -31,8 +31,8 @@ About replyora:
 - A social media management PLATFORM (a tool businesses use themselves) for small businesses and agencies. It is not a done-for-you agency.
 - One workspace to plan your content, manage your clients, and never miss a conversation.
 - Tools: grid planner, content calendar, AI captions & post ideas, studio batching, approvals + client portal, branded reports and invoicing.
-- Covers Instagram and TikTok.
-- Pricing: Personal $50/mo (one brand); Agency $200/mo (up to 10 client brands). Free 7-day trial, no card. Pricing page: /pricing.
+- Covers Instagram, Facebook and TikTok.
+- Pricing (AUD): Personal $49/mo (1 brand); Studio $79/mo (up to 3 brands); Agency $249/mo (up to 8 client brands). Every plan has a 7-day free trial (a card is collected up front and it auto-converts). Annual billing gets 2 months free. Pricing page: /pricing.
 - Start a free trial at /signup. Book a demo call at ${CALENDLY_URL}.
 - Also offers an AI WEBSITE CHATBOX (exactly like this one) that answers FAQs 24/7, captures leads and books enquiries, trained on the business.
 
@@ -53,7 +53,7 @@ function cannedReply(message: string): string {
   const m = message.toLowerCase().trim();
 
   if (/(price|pricing|cost|how much|\$|per month|monthly|expensive)/.test(m))
-    return "Plans are simple: Personal is $50/mo for one brand, and Agency is $200/mo for up to 10 client brands — both start with a free 7-day trial, no card. See them here: /pricing";
+    return "Plans (AUD): Personal $49/mo for 1 brand, Studio $79/mo for up to 3 brands, and Agency $249/mo for up to 8 client brands. Every plan starts with a 7-day free trial. See them here: /pricing";
 
   if (/(demo|book|call|meeting|talk to|speak)/.test(m))
     return `Happy to! You can grab a time that suits you here: ${CALENDLY_URL} 📅 Prefer to just dive in? Start a free trial (no card): /signup`;
@@ -65,10 +65,10 @@ function cannedReply(message: string): string {
     return "This chat is the replyora website chatbox — an AI assistant you add to your own site in minutes. It answers FAQs, captures leads and books enquiries 24/7, trained on your business.";
 
   if (/(instagram|tiktok|platform|channel|reels|posts)/.test(m))
-    return "replyora covers Instagram & TikTok — you plan, create and schedule posts, carousels and reels for both from one workspace, with AI captions and a visual grid planner.";
+    return "replyora covers Instagram, Facebook & TikTok — you plan, create and schedule posts, carousels and reels from one workspace, with AI captions and a visual grid planner.";
 
   if (/(agency|client|multiple|manage clients|portal|approval)/.test(m))
-    return `Yes — the Agency plan handles up to 10 client brands with a client portal, two-tap approvals, branded reports and invoicing. Want to see it? /signup or book a demo: ${CALENDLY_URL}`;
+    return `Yes — the Agency plan ($249/mo AUD) handles up to 8 client brands with a client portal, two-tap approvals, branded reports and invoicing. Want to see it? /signup or book a demo: ${CALENDLY_URL}`;
 
   if (/(what|who|do you do|about|how does|explain|tell me)/.test(m))
     return "replyora is one workspace to plan your content, manage your clients and never miss a conversation — a grid planner, content calendar, AI captions and scheduling for Instagram & TikTok, plus an AI website chatbox. Want a free trial or a quick demo?";

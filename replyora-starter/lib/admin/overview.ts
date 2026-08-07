@@ -135,14 +135,16 @@ function summarize(agencies: AgencySummary[]): AdminOverviewData {
   // Revenue split: base plans + each add-on line.
   const paying = agencies.filter((a) => a.status === "active" || a.status === "past_due");
   const personal = paying.filter((a) => a.accountType === "personal");
+  const studio = paying.filter((a) => a.accountType === "studio");
   const agency = paying.filter((a) => a.accountType === "agency");
-  const chatbox = paying.filter((a) => a.addons.chatbox);
-  const reports = paying.filter((a) => a.addons.reports);
+  // Chatbox add-on is only billed for non-Agency plans (Agency includes 1 free).
+  const chatbox = paying.filter((a) => a.addons.chatbox && a.accountType !== "agency");
+  const P = SOCIAL_PLAN_PRICE;
   const revenue: RevenueLine[] = [
-    { key: "personal", label: "Personal ($50)", count: personal.length, mrr: personal.length * 50 },
-    { key: "agency", label: "Agency ($200)", count: agency.length, mrr: agency.length * 200 },
-    { key: "chatbox", label: "Chatbox add-on ($20)", count: chatbox.length, mrr: chatbox.length * 20 },
-    { key: "reports", label: "Reports add-on ($15)", count: reports.length, mrr: reports.length * 15 },
+    { key: "personal", label: `Personal ($${P.personal.monthly})`, count: personal.length, mrr: personal.length * P.personal.monthly },
+    { key: "studio", label: `Studio ($${P.studio.monthly})`, count: studio.length, mrr: studio.length * P.studio.monthly },
+    { key: "agency", label: `Agency ($${P.agency.monthly})`, count: agency.length, mrr: agency.length * P.agency.monthly },
+    { key: "chatbox", label: `Chatbox add-on ($${CHATBOX_ADDON_PRICE})`, count: chatbox.length, mrr: chatbox.length * CHATBOX_ADDON_PRICE },
   ];
 
   return { agencies, kpis, attention: buildAttention(agencies), revenue };
@@ -216,7 +218,8 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
 
   const rows = await listWorkspaces();
   const agencies: AgencySummary[] = rows.map((w) => {
-    const accountType: SocialPlan = w.accountType === "agency" ? "agency" : "personal";
+    const accountType: SocialPlan =
+      w.accountType === "agency" ? "agency" : w.accountType === "studio" ? "studio" : "personal";
     const status: AgencyStatus =
       w.planStatus === "active"
         ? "active"

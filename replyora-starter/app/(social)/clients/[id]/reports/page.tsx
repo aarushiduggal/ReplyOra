@@ -30,10 +30,10 @@ export default async function ClientReportsPage({
   if (!ent.reports) {
     return (
       <LockedSection
-        title="Reports aren't on your plan"
-        description="Add reports to send clients a polished monthly performance summary of reach, engagement and growth."
-        addonLabel="Reports add-on"
-        priceLabel="+$15/mo"
+        title="Reports are on Studio & Agency"
+        description="Upgrade to Studio to send clients a polished monthly performance summary of reach, engagement and growth — with PDF export."
+        addonLabel="Studio plan"
+        priceLabel="from $79/mo AUD"
       />
     );
   }
