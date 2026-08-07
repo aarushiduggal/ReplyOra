@@ -44,7 +44,11 @@ import {
   scheduleTilesAction,
   unscheduleTileAction,
 } from "@/app/(social)/clients/[id]/grid/actions";
-import { publishNowAction } from "@/app/(social)/clients/[id]/calendar/actions";
+import {
+  publishNowAction,
+  updateCalendarPostAction,
+  sendForApprovalAction,
+} from "@/app/(social)/clients/[id]/calendar/actions";
 
 export interface GridAsset {
   id: string;
@@ -923,61 +927,205 @@ export function GridWorkspace({
       )}
 
       {actionTile && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4"
-          onClick={() => setActionTile(null)}
-        >
-          <div
-            className="w-full max-w-xs rounded-2xl border border-oxblood/15 bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center gap-3">
-              <span
-                className="h-12 w-12 shrink-0 rounded-lg bg-cover bg-center"
-                style={actionTile.mediaUrl ? { backgroundImage: `url(${actionTile.mediaUrl})` } : undefined}
-              />
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood">Planned post</p>
-                <p className="line-clamp-1 text-[12px] text-ink/80">{firstWords(actionTile.caption, 8) || "No caption yet"}</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <button
-                type="button"
-                disabled={postingId === actionTile.id}
-                onClick={() => postTileNow(actionTile)}
-                className="flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                <Send className="h-3.5 w-3.5" /> {postingId === actionTile.id ? "Posting…" : "Post now"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelected(new Set([actionTile.id]));
-                  setActionTile(null);
-                  setScheduleOpen(true);
-                }}
-                className="flex w-full items-center justify-center gap-1.5 rounded-full border border-oxblood/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood/5"
-              >
-                <CalendarClock className="h-3.5 w-3.5" /> Schedule
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  removeTile(actionTile.id);
-                  setActionTile(null);
-                }}
-                className="w-full rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60 hover:text-red-600"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>
+        <PostEditorModal
+          clientId={clientId}
+          tile={actionTile}
+          assets={assets}
+          posting={postingId === actionTile.id}
+          onClose={() => setActionTile(null)}
+          onPostNow={() => postTileNow(actionTile)}
+          onRemove={() => {
+            removeTile(actionTile.id);
+            setActionTile(null);
+          }}
+          onLocalChange={(patch) => {
+            setTiles((ts) => ts.map((t) => (t.id === actionTile.id ? { ...t, ...patch } : t)));
+            setActionTile((a) => (a ? { ...a, ...patch } : a));
+          }}
+          startTransition={startTransition}
+        />
       )}
     </div>
   );
 }
+
+/** Full post editor opened from a grid tile — media, caption, platform, pillar,
+ *  schedule, and the four publish paths (post now / schedule / approval / save). */
+function PostEditorModal({
+  clientId,
+  tile,
+  assets,
+  posting,
+  onClose,
+  onPostNow,
+  onRemove,
+  onLocalChange,
+  startTransition,
+}: {
+  clientId: string;
+  tile: GridTile;
+  assets: GridAsset[];
+  posting: boolean;
+  onClose: () => void;
+  onPostNow: () => void;
+  onRemove: () => void;
+  onLocalChange: (patch: Partial<GridTile>) => void;
+  startTransition: (cb: () => void) => void;
+}) {
+  const [caption, setCaption] = useState(tile.caption);
+  const [platform, setPlatform] = useState<Platform>(tile.platform);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(tile.mediaUrl);
+  const initial = tile.scheduledFor ? new Date(tile.scheduledFor) : null;
+  const [date, setDate] = useState(initial ? initial.toISOString().slice(0, 10) : "");
+  const [time, setTime] = useState(initial ? initial.toISOString().slice(11, 16) : "09:00");
+  const [swap, setSwap] = useState(false);
+
+  function persist(extra?: { status?: TileStatus; scheduledFor?: string | null }) {
+    onLocalChange({ caption, platform, mediaUrl, ...extra });
+    startTransition(async () => {
+      await updateCalendarPostAction(clientId, tile.id, { caption, platform });
+    });
+  }
+
+  function saveAndClose() {
+    persist();
+    toast({ title: "Saved", type: "success" });
+    onClose();
+  }
+  function schedule() {
+    if (!date) return;
+    const iso = new Date(`${date}T${time}:00`).toISOString();
+    onLocalChange({ caption, platform, mediaUrl, status: "scheduled", scheduledFor: iso });
+    startTransition(async () => {
+      await updateCalendarPostAction(clientId, tile.id, { caption, platform, scheduledFor: iso, status: "scheduled" });
+    });
+    toast({ title: `Scheduled for ${date}, ${time}`, type: "success" });
+    onClose();
+  }
+  function sendApproval() {
+    persist();
+    startTransition(async () => {
+      await sendForApprovalAction(clientId, tile.id);
+    });
+    toast({ title: "Sent to client for approval", type: "success" });
+    onClose();
+  }
+
+  const PLATFORMS: Platform[] = ["instagram", "facebook"];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4" onClick={onClose}>
+      <div
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-oxblood/15 bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Media preview */}
+        <div className="relative aspect-square w-full bg-oat/40 bg-cover bg-center" style={mediaUrl ? { backgroundImage: `url(${mediaUrl})` } : undefined}>
+          {!mediaUrl && (
+            <div className="flex h-full items-center justify-center text-oxblood/30">
+              <ImageIcon className="h-10 w-10" />
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setSwap((s) => !s)}
+            className="absolute bottom-2 right-2 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-oxblood shadow"
+          >
+            {mediaUrl ? "Replace" : "Add photo"}
+          </button>
+          <button onClick={onClose} className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-ink/70 shadow" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {swap && (
+          <div className="border-b border-ink/10 p-3">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/60">Pick a photo</p>
+            <div className="grid grid-cols-6 gap-1.5">
+              {assets.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => { setMediaUrl(a.url); setSwap(false); }}
+                  className="aspect-square overflow-hidden rounded-md border-2 border-transparent hover:border-oxblood/40"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.url} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4 p-5">
+          <div>
+            <label className={editLabel}>Publish to</label>
+            <div className="mt-1 flex gap-2">
+              {PLATFORMS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlatform(p)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] ${platform === p ? "bg-oxblood text-cream" : "border border-ink/20 text-ink/70"}`}
+                >
+                  {PLATFORM_LABEL[p]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className={editLabel}>Caption</label>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={4}
+              placeholder="Write your caption…"
+              className="mt-1 w-full rounded-lg border border-oxblood/20 px-3 py-2 text-sm text-ink outline-none focus:border-oxblood"
+            />
+          </div>
+
+          <div>
+            <label className={editLabel}>Schedule (optional)</label>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-lg border border-oxblood/20 px-3 py-2 text-sm text-ink outline-none focus:border-oxblood" />
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="rounded-lg border border-oxblood/20 px-3 py-2 text-sm text-ink outline-none focus:border-oxblood" />
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={onPostNow}
+              disabled={posting}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              <Send className="h-3.5 w-3.5" /> {posting ? "Posting…" : "Post now"}
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={schedule} disabled={!date} className="flex items-center justify-center gap-1.5 rounded-full border border-oxblood/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood transition-colors hover:bg-oxblood/5 disabled:opacity-40">
+                <CalendarClock className="h-3.5 w-3.5" /> Schedule
+              </button>
+              <button type="button" onClick={sendApproval} className="flex items-center justify-center gap-1.5 rounded-full border border-oxblood/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood transition-colors hover:bg-oxblood/5">
+                <Send className="h-3.5 w-3.5" /> To approval
+              </button>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <button type="button" onClick={onRemove} className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/50 hover:text-red-600">
+                Remove
+              </button>
+              <button type="button" onClick={saveAndClose} className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline">
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const editLabel = "text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/70";
 
 /** Pick a date + time for the selected tiles, then push them onto the calendar. */
 function ScheduleModal({
