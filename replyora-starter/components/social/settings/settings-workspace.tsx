@@ -213,6 +213,19 @@ function BillingTab({
     }
   }
 
+  // Open the Stripe customer portal to update card, view invoices, or cancel.
+  async function openPortal() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/social/portal", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (data.url) window.location.href = data.url;
+      else alert("No active subscription to manage yet.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card title="Current plan">
@@ -224,10 +237,20 @@ function BillingTab({
             </p>
           </div>
           <div className="flex gap-2">
-            <button type="button" className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 hover:border-oxblood hover:text-oxblood">
+            <button
+              type="button"
+              onClick={openPortal}
+              disabled={busy || !stripeReady}
+              className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 transition-colors hover:border-oxblood hover:text-oxblood disabled:opacity-40"
+            >
               Manage billing
             </button>
-            <button type="button" className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:border-rose hover:text-rose">
+            <button
+              type="button"
+              onClick={openPortal}
+              disabled={busy || !stripeReady}
+              className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 transition-colors hover:border-rose hover:text-rose disabled:opacity-40"
+            >
               Cancel
             </button>
           </div>
