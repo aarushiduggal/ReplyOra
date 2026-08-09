@@ -15,10 +15,20 @@ export default async function ClientGridPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const EMPTY_PROFILE = {
+    username: "",
+    displayName: "",
+    followers: "0",
+    following: "0",
+    bio: "",
+    website: "",
+  };
+  // Every fetch is fault-tolerant: a single failing call (a flaky Graph request,
+  // a missing row) must never crash the whole Grid page.
   const [client, tiles, profile, assets, connections, liveFeed] = await Promise.all([
-    getClient(id),
-    listClientTiles(id),
-    getProfilePreview(id),
+    getClient(id).catch(() => null),
+    listClientTiles(id).catch(() => []),
+    getProfilePreview(id).catch(() => ({ ...EMPTY_PROFILE })),
     listClientAssets(id).catch(() => []),
     listClientConnections(id).catch(() => []),
     fetchLiveInstagramFeed(id).catch(() => ({ connected: false, username: null, profile: null, media: [] })),
