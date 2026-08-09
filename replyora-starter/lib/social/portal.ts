@@ -88,12 +88,19 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
   const clientRow = clientRows[0];
   if (!clientRow) return null;
 
+  // Only surface posts actually shared with the client: scheduled/published, or
+  // sent for approval (has an approvals row). Never serialize unshared drafts to
+  // the client's browser (they'd be visible via view-source even if not rendered).
   const postRows = (await sql()`
-    SELECT id, client_id, platform, pillar, topic, caption, hashtags,
-           status, scheduled_for, order_index, created_at
-    FROM social_posts
-    WHERE client_id = ${clientId}
-    ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
+    SELECT p.id, p.client_id, p.platform, p.pillar, p.topic, p.caption, p.hashtags,
+           p.status, p.scheduled_for, p.order_index, p.created_at
+    FROM social_posts p
+    WHERE p.client_id = ${clientId}
+      AND (
+        p.status <> 'draft'
+        OR EXISTS (SELECT 1 FROM approvals a WHERE a.post_id = p.id)
+      )
+    ORDER BY p.scheduled_for ASC NULLS LAST, p.order_index ASC, p.created_at DESC
   `) as PostRow[];
 
   const posts: ClientPost[] = postRows.map((r) => ({

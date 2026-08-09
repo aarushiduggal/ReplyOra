@@ -307,13 +307,11 @@ function Card({
             Connect {name}
           </a>
         ) : (
-          <button
-            type="button"
-            onClick={onStubConnect}
-            className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90"
-          >
-            Connect {name}
-          </button>
+          // Not configured (e.g. TikTok credentials not set). Show a clear
+          // "coming soon" state — never a stub that fakes a Connected badge.
+          <span className="inline-block rounded-full border border-ink/15 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/40">
+            Coming soon
+          </span>
         )}
       </div>
     </div>

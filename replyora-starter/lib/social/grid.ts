@@ -218,10 +218,14 @@ export async function getProfilePreview(
     if (saved) return saved;
     return clientId === DEMO_CLIENT_ID ? { ...DEMO_PROFILE } : { ...EMPTY_PROFILE };
   }
+  // Scope to this workspace by joining clients — profile_preview has no
+  // workspace_id column, so an unscoped read would leak another tenant's
+  // profile (username/bio/followers) for a known client id.
   const rows = (await sql()`
-    SELECT username, display_name, followers, following, bio, website
-    FROM profile_preview
-    WHERE client_id = ${clientId}
+    SELECT pp.username, pp.display_name, pp.followers, pp.following, pp.bio, pp.website
+    FROM profile_preview pp
+    JOIN clients c ON c.id = pp.client_id AND c.workspace_id = ${workspaceId}
+    WHERE pp.client_id = ${clientId}
     LIMIT 1
   `) as ProfileRow[];
   const r = rows[0];

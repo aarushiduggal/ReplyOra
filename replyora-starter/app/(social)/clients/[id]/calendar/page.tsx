@@ -13,10 +13,12 @@ export default async function ClientCalendarPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Fault-tolerant like the Grid: a single flaky read (transient Neon error)
+  // must never crash the whole Calendar.
   const [client, posts, approvalMap] = await Promise.all([
-    getClient(id),
-    listClientPosts(id),
-    getClientApprovals(id),
+    getClient(id).catch(() => null),
+    listClientPosts(id).catch(() => []),
+    getClientApprovals(id).catch(() => new Map()),
   ]);
   const name = client?.name ?? sampleName(id);
 
