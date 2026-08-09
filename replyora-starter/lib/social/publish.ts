@@ -259,15 +259,25 @@ async function publishInstagram(
     return { ok: false, error: created.error?.message ?? "ig_container_failed" };
   }
 
-  const pubRes = await fetch(`${base}/${target}/media_publish`, {
-    method: "POST",
-    body: new URLSearchParams({ creation_id: created.id, access_token: token }),
-  });
-  const published = (await pubRes.json()) as { id?: string; error?: { message?: string } };
-  if (!pubRes.ok || !published.id) {
-    return { ok: false, error: published.error?.message ?? "ig_publish_failed" };
+  // Instagram ingests the image URL into the container asynchronously. Publishing
+  // too soon returns "Media ID is not available", so retry a few times while it
+  // finishes processing (images are usually ready within a second or two).
+  let lastErr = "ig_publish_failed";
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const pubRes = await fetch(`${base}/${target}/media_publish`, {
+      method: "POST",
+      body: new URLSearchParams({ creation_id: created.id, access_token: token }),
+    });
+    const published = (await pubRes.json()) as { id?: string; error?: { message?: string } };
+    if (pubRes.ok && published.id) {
+      return { ok: true, externalId: published.id };
+    }
+    lastErr = published.error?.message ?? "ig_publish_failed";
+    // Only worth retrying while the container is still processing.
+    if (!/not available|not ready|being processed|media id/i.test(lastErr)) break;
+    await new Promise((r) => setTimeout(r, 1500));
   }
-  return { ok: true, externalId: published.id };
+  return { ok: false, error: lastErr };
 }
 
 /** Facebook Page Graph API: post a photo or video to the Page's feed. */
