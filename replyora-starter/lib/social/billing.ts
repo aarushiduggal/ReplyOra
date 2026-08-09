@@ -117,10 +117,26 @@ export async function getWorkspaceBilling(): Promise<WorkspaceBilling> {
     const cookieAddons = await readMockAddons();
     return cookieAddons ? { ...base, addons: cookieAddons } : base;
   }
-  const rows = (await sql()`
-    SELECT business_name, logo_url, address, report_title, tax_rate, terms, currency
-    FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
-  `) as Row[];
+  // Read is resilient: getWorkspaceBilling is called uncaught in the (social)
+  // layout AND the Settings page, so a transient Neon error during an RSC
+  // soft-navigation would throw the whole render (the "error page on nav, fine
+  // on reload" bug). Retry once; only a persistent failure falls to DEFAULTS.
+  let rows: Row[];
+  try {
+    rows = (await sql()`
+      SELECT business_name, logo_url, address, report_title, tax_rate, terms, currency
+      FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+    `) as Row[];
+  } catch {
+    try {
+      rows = (await sql()`
+        SELECT business_name, logo_url, address, report_title, tax_rate, terms, currency
+        FROM workspace_billing WHERE workspace_id = ${workspaceId} LIMIT 1
+      `) as Row[];
+    } catch {
+      return { ...DEFAULTS };
+    }
+  }
   const r = rows[0];
   if (!r) return { ...DEFAULTS };
   const addr = r.address ?? {};
