@@ -36,17 +36,34 @@ export async function getPublicAssistant(
   publicKey: string,
 ): Promise<PublicAssistant | null> {
   if (!hasDb()) return null;
-  const rows = (await sql()`
-    SELECT client_id, name, tone, welcome_message
-    FROM assistants
-    WHERE public_key = ${publicKey} AND enabled = TRUE
-    LIMIT 1
-  `) as {
+  // Serve only if the assistant is enabled AND the client hasn't turned the
+  // chatbox OFF in the dashboard (features.chatboxEnabled). Default on when the
+  // flag was never set, so existing assistants keep working.
+  let rows: {
     client_id: string;
     name: string | null;
     tone: string | null;
     welcome_message: string | null;
   }[];
+  try {
+    rows = (await sql()`
+      SELECT a.client_id, a.name, a.tone, a.welcome_message
+      FROM assistants a
+      JOIN clients c ON c.id = a.client_id
+      WHERE a.public_key = ${publicKey}
+        AND a.enabled = TRUE
+        AND COALESCE((c.features ->> 'chatboxEnabled')::boolean, true) = true
+      LIMIT 1
+    `) as typeof rows;
+  } catch {
+    // clients.features may be absent/malformed — fall back to the enabled flag.
+    rows = (await sql()`
+      SELECT client_id, name, tone, welcome_message
+      FROM assistants
+      WHERE public_key = ${publicKey} AND enabled = TRUE
+      LIMIT 1
+    `) as typeof rows;
+  }
   const a = rows[0];
   if (!a) return null;
 

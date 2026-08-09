@@ -43,6 +43,21 @@ const STREAM_HEADERS = {
   "X-Accel-Buffering": "no",
 };
 
+const MAX_MESSAGE_CHARS = 2000;
+
+// Best-effort in-memory rate limit per (publicKey, IP). The rk_ key lives in the
+// client's page HTML, so anyone can extract it — this blunts abuse/cost. Serverless
+// instances are short-lived so it isn't a hard guarantee, but it stops a single
+// caller hammering the AI. ~20 messages / 30s.
+const RATE_HITS = new Map<string, number[]>();
+function rateLimited(key: string, max = 20, windowMs = 30_000): boolean {
+  const now = Date.now();
+  const hits = (RATE_HITS.get(key) ?? []).filter((t) => now - t < windowMs);
+  hits.push(now);
+  RATE_HITS.set(key, hits);
+  return hits.length > max;
+}
+
 export async function POST(request: Request) {
   let body: ChatRequestBody;
   try {
@@ -54,6 +69,16 @@ export async function POST(request: Request) {
   const { publicKey, message } = body;
   if (!publicKey || typeof message !== "string" || message.trim() === "") {
     return new Response("Missing publicKey or message", { status: 400 });
+  }
+  if (message.length > MAX_MESSAGE_CHARS) {
+    return new Response("Message too long", { status: 413 });
+  }
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-nf-client-connection-ip") ||
+    "anon";
+  if (rateLimited(`${publicKey}:${ip}`)) {
+    return new Response("Too many messages — please slow down.", { status: 429 });
   }
 
   // ReplyOra Social chatbox (Neon-backed rk_ keys) — try first, then fall

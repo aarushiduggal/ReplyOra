@@ -46,11 +46,13 @@ export default async function ClientPortalPage({
         </div>
       </main>
 
-      <footer className="border-t border-ink/10">
-        <div className="mx-auto max-w-3xl px-6 py-6 text-[11px] uppercase tracking-[0.16em] text-ink/75">
-          Powered by replyora°
-        </div>
-      </footer>
+      {!data.whiteLabel && (
+        <footer className="border-t border-ink/10">
+          <div className="mx-auto max-w-3xl px-6 py-6 text-[11px] uppercase tracking-[0.16em] text-ink/75">
+            Powered by replyora°
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

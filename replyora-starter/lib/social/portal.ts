@@ -54,6 +54,8 @@ export interface PortalData {
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
   agencyReplies: Record<string, string | null>;
+  /** Agency tier hides the "Powered by replyora°" badge (white-label). */
+  whiteLabel: boolean;
 }
 
 interface PostRow {
@@ -77,16 +79,22 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
       const posts = demoPosts(Date.now()).filter(
         (p) => p.status === "scheduled" || p.status === "published",
       );
-      return { clientName: DEMO_CLIENT.name, posts, approvals: {}, agencyReplies: {} };
+      return { clientName: DEMO_CLIENT.name, posts, approvals: {}, agencyReplies: {}, whiteLabel: true };
     }
-    return { clientName: "Client", posts: [], approvals: {}, agencyReplies: {} };
+    return { clientName: "Client", posts: [], approvals: {}, agencyReplies: {}, whiteLabel: false };
   }
 
+  // Also resolve the owning workspace's tier — Agency accounts white-label the
+  // client portal (no "Powered by replyora°").
   const clientRows = (await sql()`
-    SELECT name FROM clients WHERE id = ${clientId} LIMIT 1
-  `) as { name: string }[];
+    SELECT c.name, wb.address ->> 'accountType' AS account_type
+    FROM clients c
+    LEFT JOIN workspace_billing wb ON wb.workspace_id = c.workspace_id
+    WHERE c.id = ${clientId} LIMIT 1
+  `) as { name: string; account_type: string | null }[];
   const clientRow = clientRows[0];
   if (!clientRow) return null;
+  const whiteLabel = clientRow.account_type === "agency";
 
   // Only surface posts actually shared with the client: scheduled/published, or
   // sent for approval (has an approvals row). Never serialize unshared drafts to
@@ -142,7 +150,7 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
     agencyReplies[r.post_id] = r.agency_reply ?? null;
   }
 
-  return { clientName: clientRow.name, posts, approvals, agencyReplies };
+  return { clientName: clientRow.name, posts, approvals, agencyReplies, whiteLabel };
 }
 
 /** Client's Approve / Request-changes decision (public, token-authorised). */
