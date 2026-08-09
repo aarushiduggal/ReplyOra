@@ -349,7 +349,14 @@ async function publishTikTok(
   return { ok: true, externalId: data.data.publish_id };
 }
 
-/** Posts due to publish now: scheduled, past their time, approved, no prior error. */
+/**
+ * Posts due to publish now: scheduled, past their time, approved.
+ * A prior publish_error no longer permanently benches a post — we retry it for
+ * up to 2 hours after its scheduled time (transient Graph/rate-limit errors
+ * clear within minutes). `published_at IS NULL` prevents ever double-posting a
+ * post that actually went out; after the window an errored post is left for a
+ * manual "Publish now".
+ */
 export async function listDuePosts(): Promise<
   { postId: string; workspaceId: string }[]
 > {
@@ -361,7 +368,8 @@ export async function listDuePosts(): Promise<
     WHERE p.status = 'scheduled'
       AND p.scheduled_for IS NOT NULL
       AND p.scheduled_for <= now()
-      AND p.publish_error IS NULL
+      AND p.published_at IS NULL
+      AND (p.publish_error IS NULL OR p.scheduled_for >= now() - interval '2 hours')
       AND (a.status IS NULL OR a.status = 'approved')
     LIMIT 100
   `) as { post_id: string; workspace_id: string }[];

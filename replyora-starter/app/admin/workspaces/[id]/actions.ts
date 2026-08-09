@@ -15,7 +15,10 @@ import type { SocialAddons, SocialPlan } from "@/lib/social/plans";
 
 async function requireStaff() {
   const user = await getCurrentUser();
-  const mock = !USE_AUTHJS && !USE_SUPABASE;
+  // Fail CLOSED: only treat as mock in non-production. A misconfigured prod
+  // (missing AUTH_SECRET/DATABASE_URL) must never leave admin actions ungated.
+  const mock =
+    !USE_AUTHJS && !USE_SUPABASE && process.env.NODE_ENV !== "production";
   if (!mock && !isStaff(user.email)) throw new Error("forbidden");
 }
 

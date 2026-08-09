@@ -14,7 +14,9 @@ import {
 export async function enterAsAction(workspaceId: string): Promise<void> {
   const user = await getCurrentUser();
   // Auth.js/prod: email-based staff gate. Local mock: the demo user is staff.
-  const mock = !USE_AUTHJS && !USE_SUPABASE;
+  // Fail CLOSED — never mock-bypass in production (misconfigured env).
+  const mock =
+    !USE_AUTHJS && !USE_SUPABASE && process.env.NODE_ENV !== "production";
   if (!mock && !isStaff(user.email)) throw new Error("forbidden");
   await setImpersonationCookie({
     actorUserId: user.id,
