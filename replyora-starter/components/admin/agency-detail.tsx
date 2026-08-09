@@ -13,6 +13,7 @@ import {
 
 import { enterAsAction } from "@/app/admin/actions";
 import {
+  adminCancelSubscriptionAction,
   adminSetAgencyAddonsAction,
   adminSetAgencyPlanAction,
 } from "@/app/admin/workspaces/[id]/actions";
@@ -54,6 +55,19 @@ export function AgencyDetail({ agency }: { agency: AgencyDetail }) {
     const next = { ...addons, [key]: !addons[key] };
     setAddons(next);
     start(() => adminSetAgencyAddonsAction(agency.id, next));
+  }
+  function cancelSubscription() {
+    if (
+      !confirm(
+        `Cancel ${agency.name}'s subscription now? This voids any upcoming charge and cannot be undone.`,
+      )
+    )
+      return;
+    start(async () => {
+      const res = await adminCancelSubscriptionAction(agency.id);
+      if (res.ok) setStatus("canceled");
+      else alert(res.error ?? "Couldn't cancel — try again.");
+    });
   }
 
   const tiles = [
@@ -145,14 +159,29 @@ export function AgencyDetail({ agency }: { agency: AgencyDetail }) {
               </select>
             </label>
           </div>
-          <button
-            type="button"
-            disabled={!dirtyPlan}
-            onClick={savePlan}
-            className="mt-3 rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            Save plan
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={!dirtyPlan}
+              onClick={savePlan}
+              className="rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              Save plan
+            </button>
+            {status !== "canceled" && (
+              <button
+                type="button"
+                onClick={cancelSubscription}
+                className="rounded-full border border-rose/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose transition-colors hover:bg-rose/5"
+              >
+                Cancel subscription (void fee)
+              </button>
+            )}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink/45">
+            Cancels the client&rsquo;s Stripe subscription immediately so no
+            upcoming charge (including a converting trial) is billed.
+          </p>
         </div>
 
         {/* Add-ons control */}
