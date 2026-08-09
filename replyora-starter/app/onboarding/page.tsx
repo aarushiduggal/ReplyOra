@@ -29,7 +29,9 @@ export default async function OnboardingPage() {
   const user = await getCurrentUser(); // redirects to /login if signed out
   if (isOwner(user.email)) redirect("/clients"); // owners skip onboarding
   const billing = await getWorkspaceBilling();
-  if (billing.accountType) redirect("/clients"); // already chosen
+  // Already onboarded AND still paying → straight to the dashboard. A canceled
+  // subscription falls through so they can re-subscribe here (reactivate flow).
+  if (billing.accountType && billing.planStatus !== "canceled") redirect("/clients");
 
   const first = user.fullName?.split(/\s+/)[0] ?? "";
   const preselect =

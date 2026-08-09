@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 
 import { getStripe, HAS_STRIPE } from "@/lib/stripe/server";
 import { socialPlanForPriceId } from "@/lib/social/plans";
-import { setWorkspacePlan } from "@/lib/social/billing";
+import { setWorkspacePlan, getWorkspaceStripeMeta } from "@/lib/social/billing";
 
 export const runtime = "nodejs";
 
@@ -44,16 +44,31 @@ export async function POST(req: Request) {
     ) {
       const sub = event.data.object as Stripe.Subscription;
       const workspaceId = sub.metadata?.workspace_id;
-      const priceId = sub.items.data[0]?.price?.id;
-      const mapped = priceId ? socialPlanForPriceId(priceId) : null;
+      // Find the PLAN item explicitly. A subscription can also carry a chatbox
+      // add-on item, and item order is not guaranteed — trusting data[0] could
+      // map to the add-on price and silently downgrade the customer.
+      let mapped: ReturnType<typeof socialPlanForPriceId> = null;
+      for (const item of sub.items.data) {
+        const m = item.price?.id ? socialPlanForPriceId(item.price.id) : null;
+        if (m) {
+          mapped = m;
+          break;
+        }
+      }
       if (workspaceId) {
-        const status =
-          event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
+        const deleted = event.type === "customer.subscription.deleted";
+        const status = deleted ? "canceled" : sub.status;
         // Persist the subscription id so per-site add-ons (chatbox) can attach
         // items to it; clear it when the subscription is deleted.
-        const subId =
-          event.type === "customer.subscription.deleted" ? null : sub.id;
-        await setWorkspacePlan(workspaceId, mapped?.plan ?? "personal", status, subId);
+        const subId = deleted ? null : sub.id;
+        // If no known plan price matched (add-on-only update, or a price-id env
+        // mismatch), keep the customer's EXISTING tier — never silently
+        // downgrade a paying Agency/Studio customer to personal.
+        const plan =
+          mapped?.plan ??
+          (await getWorkspaceStripeMeta(workspaceId)).accountType ??
+          "personal";
+        await setWorkspacePlan(workspaceId, plan, status, subId);
       }
     }
   } catch {

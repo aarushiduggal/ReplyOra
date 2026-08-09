@@ -48,6 +48,12 @@ export default async function SocialPortalLayout({
       const billing = await getWorkspaceBilling(); // the user's OWN workspace
       // New users must pick an account type before the dashboard (owners skip).
       if (!owner && !billing.accountType) redirect("/onboarding");
+      // A canceled subscription (trial expired without payment, or cancelled)
+      // loses access — send them to re-subscribe. trialing/active/past_due keep
+      // access (Stripe handles dunning during past_due).
+      if (!owner && billing.planStatus === "canceled") {
+        redirect("/onboarding?reactivate=1");
+      }
       ownerAccountType = billing.accountType;
     }
   }
