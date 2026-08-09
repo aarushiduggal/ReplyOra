@@ -174,8 +174,8 @@ export function HeroStack() {
           className="mx-auto mt-6 max-w-xl text-center text-[15px] leading-relaxed text-ink/75"
         >
           Replyora plans, writes and schedules a month of on-brand content for
-          Instagram &amp; TikTok — so your socials look effortless, because to
-          you, they are.
+          Instagram, Facebook &amp; TikTok — so your socials look effortless,
+          because to you, they are.
         </motion.p>
 
         <motion.div

@@ -33,8 +33,9 @@ export function BookCallCta() {
           </h2>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-cream/80">
             Grab a time and we&apos;ll walk you through your feed and your website
-            chatbox — tailored to your business. Prefer to dive in? Start free, no
-            card required.
+            chatbox — tailored to your business. Prefer to dive in? Start your
+            7-day free trial — a card&apos;s required and it auto-converts after
+            the trial.
           </p>
 
           <ul className="mt-7 space-y-3">

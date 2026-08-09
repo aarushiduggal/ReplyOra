@@ -42,12 +42,12 @@ export const metadata: Metadata = {
     apple: [{ url: "/brand/replyora-badge.png" }],
   },
   keywords: [
-    "AI chatbot",
-    "lead capture",
-    "customer conversations",
-    "booking assistant",
-    "service business",
-    "Chatbase alternative",
+    "social media management",
+    "content planning",
+    "Instagram scheduler",
+    "social media agency tool",
+    "content calendar",
+    "AI captions",
   ],
   openGraph: {
     type: "website",

@@ -15,7 +15,7 @@ const STATS: { words: string[]; small: string }[] = [
   { words: ["A month", "A week", "A season"], small: "of posts, planned in one sitting" },
   { words: ["2 taps", "One glance", "10 seconds"], small: "to approve a week of content" },
   { words: ["Every time", "On brand", "In your voice"], small: "colours, tone and voice — nailed" },
-  { words: ["2 platforms", "Instagram", "TikTok"], small: "Instagram & TikTok, one workspace" },
+  { words: ["3 platforms", "Instagram", "Facebook", "TikTok"], small: "Instagram, Facebook & TikTok, one workspace" },
 ];
 
 function Roller({

@@ -18,4 +18,4 @@ export const FOUNDER = {
 
 export const ORG_NAME = "Replyora";
 export const ORG_DESCRIPTION =
-  "AI customer-conversation platform for small & medium service businesses — replies instantly, captures leads, qualifies enquiries and books customers 24/7.";
+  "Social media management for agencies and personal brands — plan, design, schedule and publish a month of on-brand content for Instagram, Facebook & TikTok, plus a website AI chatbox.";

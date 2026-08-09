@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Product · Replyora",
   description:
-    "Replyora is two systems in one login — a content engine that plans, writes and schedules your Instagram & TikTok, and a website chatbox that answers, captures leads and books 24/7. Try both live.",
+    "Replyora is two systems in one login — a content engine that plans, writes and schedules your Instagram, Facebook & TikTok, and a website chatbox that answers, captures leads and books 24/7. Try both live.",
 };
 
 export default function ProductPage() {

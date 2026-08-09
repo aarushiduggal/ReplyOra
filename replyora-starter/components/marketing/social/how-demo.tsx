@@ -24,7 +24,7 @@ const STEPS = [
   },
   {
     title: "Schedule & publish",
-    body: "Approve and it posts to Instagram & TikTok on time — while you get back to business.",
+    body: "Approve and it posts to Instagram & Facebook on time — while you get back to business.",
   },
 ];
 

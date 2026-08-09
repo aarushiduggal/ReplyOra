@@ -92,8 +92,8 @@ export function TwoProducts() {
                 Planned, designed, posted.
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-ink/70">
-                On-brand posts, carousels and reels for Instagram &amp; TikTok — a
-                month at a time, scheduled for you.
+                On-brand posts, carousels and reels for Instagram, Facebook &amp;
+                TikTok — a month at a time, scheduled for you.
               </p>
               <div className="flex flex-1 items-center justify-center py-8">
                 <div className="w-full max-w-[19rem]">

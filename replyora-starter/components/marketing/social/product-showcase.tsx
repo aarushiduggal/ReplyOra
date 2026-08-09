@@ -430,7 +430,7 @@ const SYSTEMS = [
   {
     label: "Content engine",
     blurb:
-      "Plan, create and schedule your Instagram & TikTok — a whole month in one calm workspace.",
+      "Plan, create and schedule your Instagram, Facebook & TikTok — a whole month in one calm workspace.",
   },
   {
     label: "Website chatbox",
