@@ -38,7 +38,9 @@
       "Bash(sed -i '' 's#pageUrl: \"whatsapp\",#pageUrl: \"https://coastalglow.com.au/booking\",#' lib/data/seed.ts)",
       "Bash(sed -i '' 's#/\\\\*\\\\* Horizontal bars for a labelled breakdown \\(e.g. by channel\\). \\\\*/#/** Horizontal bars for a labelled breakdown \\(e.g. by page\\). */#' components/dashboard/charts.tsx)",
       "Bash(sed -i '' 's#// TODO: scheduled job \\(cron/queue\\) + channel send.#// TODO: scheduled job \\(cron/queue\\) + email/SMS send.#' components/dashboard/settings/automation-tab.tsx)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)"
     ]
   }
 }

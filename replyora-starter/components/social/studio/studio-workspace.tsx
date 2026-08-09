@@ -111,6 +111,9 @@ export function StudioWorkspace({
   }
 
   const selectedCount = drafts.filter((d) => d.selected).length;
+  // Which numbered step is current: Brief(0) → Generate(1) → Review(2) → Save(3).
+  const stepIndex =
+    drafts.length === 0 ? (genPending ? 1 : 0) : selectedCount > 0 ? 3 : 2;
 
   return (
     <div>
@@ -120,10 +123,39 @@ export function StudioWorkspace({
           <GuideTrigger pageKey="studio" clientId={clientId} />
         </div>
       </div>
-      <p className="mb-6 text-[12px] font-medium text-ink/85">
-        Create a batch of posts for {clientName} — write a brief, generate captions, attach photos,
-        and save. They land on the Grid &amp; Calendar as drafts, ready to schedule.
+      <p className="mb-4 text-[12px] font-medium text-ink/85">
+        Create a batch of posts for {clientName} — follow the steps: write a brief, generate
+        captions, attach photos, then save. They land on the Grid &amp; Calendar as drafts.
       </p>
+
+      {/* Numbered step guide — highlights where you are */}
+      <ol className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+        {STEPS.map((label, i) => {
+          const done = i < stepIndex;
+          const active = i === stepIndex;
+          return (
+            <li key={label} className="flex items-center gap-2">
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                  active
+                    ? "bg-oxblood text-cream"
+                    : done
+                      ? "bg-oxblood/15 text-oxblood"
+                      : "border border-ink/25 text-ink/45"
+                }`}
+              >
+                {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+              </span>
+              <span
+                className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${active ? "text-oxblood" : "text-ink/55"}`}
+              >
+                {label}
+              </span>
+              {i < STEPS.length - 1 && <span className="mx-1 hidden h-px w-5 bg-ink/20 sm:block" />}
+            </li>
+          );
+        })}
+      </ol>
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         {/* Brief */}

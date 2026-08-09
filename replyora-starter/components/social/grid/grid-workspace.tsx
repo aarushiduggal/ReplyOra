@@ -138,12 +138,23 @@ export function GridWorkspace({
   const [qrOpen, setQrOpen] = useState(false);
   const [reels, setReels] = useState(false);
   const [showDates, setShowDates] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+
+  function dismissGuide() {
+    setShowGuide(false);
+    try {
+      localStorage.setItem(`ro_grid_guide_${clientId}`, "0");
+    } catch {
+      /* ignore */
+    }
+  }
 
   // Persist the display toggles per client so they survive a reload.
   useEffect(() => {
     try {
       setReels(localStorage.getItem(`ro_grid_reels_${clientId}`) === "1");
       setShowDates(localStorage.getItem(`ro_grid_dates_${clientId}`) === "1");
+      setShowGuide(localStorage.getItem(`ro_grid_guide_${clientId}`) !== "0");
     } catch {
       /* localStorage unavailable — keep defaults */
     }
@@ -360,6 +371,37 @@ export function GridWorkspace({
           </Link>
         </div>
       </div>
+
+      {/* How-it-works step guide (dismissible) */}
+      {showGuide && (
+        <div className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-2 rounded-2xl border border-oxblood/15 bg-oat/25 px-4 py-3">
+          <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood">
+            How it works
+          </span>
+          {[
+            "Connect the account",
+            "Press + to add a tile",
+            "Drag a photo from Assets",
+            "Schedule or post",
+          ].map((label, i, arr) => (
+            <span key={label} className="flex items-center gap-2">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-oxblood text-[10px] font-bold text-cream">
+                {i + 1}
+              </span>
+              <span className="text-[11px] font-medium text-ink/85">{label}</span>
+              {i < arr.length - 1 && <span className="mx-1 hidden h-px w-4 bg-ink/20 sm:block" />}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={dismissGuide}
+            className="ml-auto text-ink/50 hover:text-oxblood"
+            aria-label="Dismiss guide"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,320px)_1fr]">
         {/* Left — platform + profile controls */}
