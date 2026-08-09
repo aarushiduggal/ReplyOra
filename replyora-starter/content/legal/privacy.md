@@ -26,7 +26,7 @@ We collect information in the following categories:
 - **Account & profile:** name, email address, password (stored in hashed form), workspace name, role, and preferences (timezone, date format, landing page), and authentication session data.
 - **Workspace & client data:** brand names, package details, deliverables, voice notes, content pillars, posts, captions, schedules, tasks, invoices, billing notes, and invite records you or your team enter.
 - **Content you upload:** images, videos, filenames, and related metadata stored in our cloud storage.
-- **Connected social account data:** if you connect an Instagram, Facebook (Meta) or TikTok account, we access and store — via the platform's official API and only within the scope you authorise — access and refresh tokens, the connected account's ID and profile details, the Facebook Pages and Instagram Business/Creator accounts you grant access to, existing content on the account, and basic performance metrics (such as reach and engagement) made available by the platform. We access this only so you can plan, preview, and report inside ReplyOra. **We do not post or publish to your social accounts on your behalf** — you publish natively on each platform yourself. See Section 7 for how we handle platform data.
+- **Connected social account data:** if you connect an Instagram, Facebook (Meta) or TikTok account, we access and store — via the platform's official API and only within the scope you authorise — access and refresh tokens, the connected account's ID and profile details, the Facebook Pages and Instagram Business/Creator accounts you grant access to, existing content on the account, and basic performance metrics (such as reach and engagement) made available by the platform. We access this so you can plan, preview, and report inside ReplyOra, and — when you choose to publish or schedule a post you have created and approved — to publish that content to the account you connected. **Publishing happens only when you initiate it; ReplyOra never posts on its own or decides what to post.** See Section 7 for how we handle platform data.
 - **AI website chatbox data:** if you deploy an AI chatbox on a website, we process the conversations and messages that end-users send to that chatbox, along with basic technical data needed to deliver replies. You are responsible for telling your own website visitors that a chatbox is in use.
 - **Usage & device:** log data, IP address, browser type, pages viewed, actions taken in the app, and diagnostic information used to secure and improve the Service.
 - **Communications:** messages you send us (support requests, feedback).
@@ -51,7 +51,7 @@ We use personal information to:
 - Provide, maintain, and secure the Service.
 - Authenticate users and enforce role-based access (agency vs. client portal).
 - Store and display your content, calendars, assets, approvals, and billing records.
-- **Display your connected account's profile, content, and performance metrics** so you can plan, preview, and report. We do not post or publish to your social accounts on your behalf.
+- **Display your connected account's profile, content, and performance metrics** so you can plan, preview, and report, and **publish or schedule the posts you create and approve** to your connected account when you choose to publish them.
 - Operate optional AI-assisted features (for example, generating or suggesting captions, content pillars, or chatbox replies).
 - Deliver the AI website chatbox and respond to end-user messages on your behalf.
 - Process subscription payments, renewals, cancellations, and billing-related communications through Stripe.
@@ -75,7 +75,7 @@ Where we ask for consent (for example, certain optional communications), you may
 We do not sell your personal information. We share information only as described below:
 
 - **Within your workspace:** agency users, and client portal users invited to a brand, can see information according to role and visibility settings configured in the Service.
-- **Social media platforms:** if you connect an account, we exchange data with the platform (Meta, TikTok) via its API only to read the information you authorise (such as your profile, content, and metrics) for planning and reporting. We do not post to your accounts on your behalf.
+- **Social media platforms:** if you connect an account, we exchange data with the platform (Meta, TikTok) via its API to read the information you authorise (such as your profile, content, and metrics) for planning and reporting, and to publish the content you create and approve when you choose to publish or schedule it.
 - **Payment processing:** Stripe, Inc. receives payment card and billing information you provide at checkout to process subscriptions on our behalf. Stripe's privacy policy is available at https://stripe.com/privacy.
 - **Service providers (subprocessors):** hosting and database (Netlify, Neon), authentication, cloud storage, email delivery, analytics, and AI processing (Google, for Gemini) vendors who process data under contractual obligations. A current list is available on request.
 - **Legal & safety:** when required by law, court order, or to protect rights, safety, and security.
@@ -89,7 +89,7 @@ Our access to and use of information obtained through the Meta Platforms (Facebo
 
 Specifically:
 
-- We only request the permissions needed to provide the features you use (for example, reading your profile, content, and performance metrics so you can plan and report). We do not request or use permissions to publish on your behalf.
+- We only request the permissions needed to provide the features you use — for example, reading your profile, content, and performance metrics so you can plan and report, and publishing the content you create and approve to your connected accounts when you choose to publish or schedule it. We use these permissions only to carry out actions you initiate, and never to post autonomously.
 - We use platform data only to provide and improve the Service for you, and not for any independent purpose, advertising, or resale.
 - We do not sell platform data, and we do not share it except with the service providers described above who help us operate the Service.
 - We store platform access tokens securely and use them only to perform actions you have authorised.

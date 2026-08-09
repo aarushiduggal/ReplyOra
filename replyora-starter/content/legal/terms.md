@@ -23,7 +23,7 @@ We offer different account types (for example, agency, personal brand, and clien
 
 ReplyOra is a cloud-based platform for social media management, planning, and collaboration. Depending on your role and plan, the Service may include client and brand workspaces, content calendars, asset libraries, grid planning, approval workflows, tasks, billing records, client portals, AI-assisted content tools, and an AI website chatbox.
 
-ReplyOra is a planning, collaboration, and workflow tool: you plan, preview, organise, and get approvals in ReplyOra, and you (or your team) publish natively on the social platforms yourselves. **Unless we expressly state otherwise, we do not publish content to social networks on your behalf, and we are not responsible for your compliance with third-party platform rules (for example, Instagram, TikTok, or Facebook terms).**
+ReplyOra is a planning, collaboration, publishing, and workflow tool: you plan, preview, organise, and get approvals in ReplyOra, and — for accounts you connect — you can publish or schedule your approved content to those accounts directly from ReplyOra. **Publishing happens only when you initiate it: ReplyOra does not post autonomously or decide what to post, and we are not responsible for your compliance with third-party platform rules (for example, Instagram, TikTok, or Facebook terms).**
 
 We may update, improve, or discontinue features at any time. We will use reasonable efforts to avoid material disruption but do not guarantee uninterrupted or error-free operation.
 
@@ -31,7 +31,7 @@ We may update, improve, or discontinue features at any time. We will use reasona
 
 ## 3. Connected accounts & third-party platforms
 
-If you connect a social media account, you authorise us to access it only to read the information you permit (such as your profile, content, and performance metrics) so you can plan, preview, and report in ReplyOra. We do not publish or post to your accounts on your behalf.
+If you connect a social media account, you authorise us to access it to read the information you permit (such as your profile, content, and performance metrics) so you can plan, preview, and report in ReplyOra, and to publish or schedule the content you create and approve when you choose to publish it. We act only on publishing actions you initiate.
 
 You are responsible for complying with the terms and policies of each third-party platform (for example, Meta's and TikTok's terms and community guidelines). Access to third-party platforms is provided by those platforms, not by us — they may change, limit, suspend, or withdraw API access at any time, and we are not liable for any resulting disruption or loss of data on those platforms. You are responsible for the content you publish yourself.
 
