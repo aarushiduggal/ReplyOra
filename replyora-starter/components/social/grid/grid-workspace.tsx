@@ -715,7 +715,8 @@ export function GridWorkspace({
                         setDropTarget((d) => (d === t.id ? null : d))
                       }
                       onDrop={() => onDrop(t.id)}
-                      className={`group relative cursor-grab bg-cover bg-center active:cursor-grabbing ${
+                      onClick={() => setActionTile(t)}
+                      className={`group relative cursor-pointer bg-cover bg-center active:cursor-grabbing ${
                         isTikTok ? "aspect-[9/16]" : "aspect-square"
                       }`}
                       style={
@@ -723,7 +724,7 @@ export function GridWorkspace({
                           ? { backgroundImage: `url(${t.mediaUrl})` }
                           : { backgroundColor: tileColor(t) }
                       }
-                      title={firstWords(t.caption, 12)}
+                      title="Click to edit · drag to reorder"
                     >
                       {/* select toggle (click doesn't trigger drag) */}
                       <button
