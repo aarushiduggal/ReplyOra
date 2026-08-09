@@ -89,6 +89,9 @@ export async function listAuditLogs(
   const limit = filter.limit ?? 100;
 
   if (!USE_SUPABASE) {
+    // No Neon-backed audit store yet — return empty in prod (never the seed
+    // "Coastal Glow / Jordan Lee" entries); keep the mock for local dev.
+    if (process.env.NODE_ENV === "production") return [];
     return MOCK_AUDIT.filter(
       (e) =>
         (!filter.actorId || e.actorId === filter.actorId) &&

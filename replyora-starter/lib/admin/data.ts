@@ -44,7 +44,9 @@ export function daysUntil(iso: string | null): number | null {
 // ---------- Clients ----------
 
 export async function listClients(): Promise<AdminClient[]> {
-  if (!USE_SUPABASE) return [...ADMIN_CLIENTS];
+  // Legacy Supabase-era list. In prod the real client list is /admin/accounts
+  // (listWorkspaces, Neon); here return empty so no seed clients show.
+  if (!USE_SUPABASE) return process.env.NODE_ENV === "production" ? [] : [...ADMIN_CLIENTS];
 
   // Live: real workspaces via the service role (bypasses RLS — staff only).
   try {
@@ -285,27 +287,31 @@ export async function getRevenue(): Promise<RevenueView> {
 }
 
 // ---------- Service delivery (mock datasets) ----------
+// These legacy (chatbox-era) admin screens have no Neon-backed source yet.
+// In production we return EMPTY rather than seed data, so staff never see fake
+// clients ("Coastal Glow", "Jordan Lee", etc.). Dev keeps the seed for layout.
+const SEED_OK = process.env.NODE_ENV !== "production";
 
 export function getOnboarding() {
-  return ADMIN_ONBOARDING;
+  return SEED_OK ? ADMIN_ONBOARDING : [];
 }
 export function getTickets() {
-  return ADMIN_TICKETS;
+  return SEED_OK ? ADMIN_TICKETS : [];
 }
 export function getCalls() {
-  return ADMIN_CALLS;
+  return SEED_OK ? ADMIN_CALLS : [];
 }
 export function getInvoices() {
-  return ADMIN_INVOICES;
+  return SEED_OK ? ADMIN_INVOICES : [];
 }
 export function getKnowledgeGaps() {
-  return ADMIN_KNOWLEDGE_GAPS;
+  return SEED_OK ? ADMIN_KNOWLEDGE_GAPS : [];
 }
 export function getBroadcasts() {
-  return ADMIN_BROADCASTS;
+  return SEED_OK ? ADMIN_BROADCASTS : [];
 }
 export function getStaffList() {
-  return ADMIN_STAFF;
+  return SEED_OK ? ADMIN_STAFF : [];
 }
 
 // ---------- Leads (cross-client) ----------
@@ -331,6 +337,7 @@ export interface AdminLead {
  */
 export async function listAllLeads(): Promise<AdminLead[]> {
   if (!USE_SUPABASE) {
+    if (process.env.NODE_ENV === "production") return [];
     const nameById = new Map(ADMIN_CLIENTS.map((c) => [c.id, c.name]));
     return [...DEMO_LEADS]
       .map((l) => ({
