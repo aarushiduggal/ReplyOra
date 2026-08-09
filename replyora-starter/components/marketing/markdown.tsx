@@ -1,18 +1,56 @@
+import type { ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+/** Flatten a heading's React children down to its plain text, for slug ids. */
+function headingText(node: ReactNode): string {
+  if (node == null || node === false) return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(headingText).join("");
+  if (typeof node === "object" && "props" in node) {
+    return headingText((node as { props?: { children?: ReactNode } }).props?.children);
+  }
+  return "";
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
 
 /**
  * On-brand markdown renderer for the legal pages.
  * Playfair oxblood headings, Montserrat body, styled tables and blockquote
  * callouts (used for the "Pre-launch status" and "not legal advice" notes).
+ *
+ * Every H2 gets a stable `id` so it can be linked directly, with scroll-margin
+ * so an anchored heading isn't hidden under the sticky header. A heading may
+ * pin an explicit id with the Pandoc `{#custom-id}` suffix — e.g. the
+ * "Deleting your data {#data-deletion}" section, which Meta App Review links to
+ * as /privacy#data-deletion.
  */
 const components: Components = {
   h1: ({ children }) => (
     <h1 className="mt-10 font-display text-3xl text-oxblood">{children}</h1>
   ),
-  h2: ({ children }) => (
-    <h2 className="mt-10 font-display text-2xl text-oxblood">{children}</h2>
-  ),
+  h2: ({ children }) => {
+    const raw = headingText(children);
+    const explicit = raw.match(/\{#([\w-]+)\}\s*$/);
+    const label = raw.replace(/\s*\{#[\w-]+\}\s*$/, "").trim();
+    const id = explicit && explicit[1] ? explicit[1] : slugify(label);
+    return (
+      <h2
+        id={id}
+        className="mt-10 scroll-mt-28 font-display text-2xl text-oxblood"
+      >
+        {explicit ? label : children}
+      </h2>
+    );
+  },
   h3: ({ children }) => (
     <h3 className="mt-6 font-semibold text-ink">{children}</h3>
   ),
