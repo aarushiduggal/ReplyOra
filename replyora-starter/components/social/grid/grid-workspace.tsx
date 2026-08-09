@@ -201,15 +201,26 @@ export function GridWorkspace({
   // Click a planned tile → open its action sheet (post now / schedule / remove).
   const [actionTile, setActionTile] = useState<GridTile | null>(null);
   const [postingId, setPostingId] = useState<string | null>(null);
-  function postTileNow(t: GridTile) {
+  function postTileNow(t: GridTile, opts?: { platform: Platform; caption: string }) {
     setPostingId(t.id);
+    // Publish to the platform the user actually selected in the modal — persist
+    // it (and the caption) FIRST so publishPost reads the right target, then post.
+    const target = opts?.platform ?? t.platform;
     startTransition(async () => {
+      if (opts) {
+        await updateCalendarPostAction(clientId, t.id, {
+          platform: opts.platform,
+          caption: opts.caption,
+        });
+      }
       const res = await publishNowAction(clientId, t.id);
       setPostingId(null);
       setActionTile(null);
       if (res.ok) {
-        setTiles((ts) => ts.map((x) => (x.id === t.id ? { ...x, status: "published" } : x)));
-        toast({ title: "Posted to Instagram 🎉", type: "success" });
+        setTiles((ts) =>
+          ts.map((x) => (x.id === t.id ? { ...x, status: "published", platform: target } : x)),
+        );
+        toast({ title: `Posted to ${PLATFORM_LABEL[target]} 🎉`, type: "success" });
       } else {
         toast({ title: "Couldn’t publish", body: res.error ?? "Try again.", type: "error" });
       }
@@ -977,7 +988,7 @@ export function GridWorkspace({
           assets={assets}
           posting={postingId === actionTile.id}
           onClose={() => setActionTile(null)}
-          onPostNow={() => postTileNow(actionTile)}
+          onPostNow={(opts) => postTileNow(actionTile, opts)}
           onRemove={() => {
             removeTile(actionTile.id);
             setActionTile(null);
@@ -1011,7 +1022,7 @@ function PostEditorModal({
   assets: GridAsset[];
   posting: boolean;
   onClose: () => void;
-  onPostNow: () => void;
+  onPostNow: (opts: { platform: Platform; caption: string }) => void;
   onRemove: () => void;
   onLocalChange: (patch: Partial<GridTile>) => void;
   startTransition: (cb: () => void) => void;
@@ -1140,7 +1151,7 @@ function PostEditorModal({
           <div className="space-y-2 pt-1">
             <button
               type="button"
-              onClick={onPostNow}
+              onClick={() => onPostNow({ platform, caption })}
               disabled={posting}
               className="flex w-full items-center justify-center gap-1.5 rounded-full bg-oxblood px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
             >
