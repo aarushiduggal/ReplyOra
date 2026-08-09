@@ -11,6 +11,7 @@ import {
   setWorkspacePlanById,
 } from "@/lib/social/billing";
 import { getStripe, HAS_STRIPE } from "@/lib/stripe/server";
+import { logAdminAudit } from "@/lib/admin/social-data";
 import type { SocialAddons, SocialPlan } from "@/lib/social/plans";
 
 async function requireStaff() {
@@ -20,6 +21,7 @@ async function requireStaff() {
   const mock =
     !USE_AUTHJS && !USE_SUPABASE && process.env.NODE_ENV !== "production";
   if (!mock && !isStaff(user.email)) throw new Error("forbidden");
+  return user;
 }
 
 /** Staff toggles an agency's add-ons from the console. */
@@ -27,8 +29,14 @@ export async function adminSetAgencyAddonsAction(
   workspaceId: string,
   addons: SocialAddons,
 ): Promise<void> {
-  await requireStaff();
+  const user = await requireStaff();
   await setWorkspaceAddonsById(workspaceId, addons);
+  await logAdminAudit({
+    actorEmail: user.email,
+    action: "set add-ons",
+    workspaceId,
+    detail: `chatbox=${addons.chatbox} reports=${addons.reports}`,
+  });
   revalidatePath(`/admin/workspaces/${workspaceId}`);
   revalidatePath("/admin");
 }
@@ -39,8 +47,14 @@ export async function adminSetAgencyPlanAction(
   accountType: SocialPlan,
   planStatus: string,
 ): Promise<void> {
-  await requireStaff();
+  const user = await requireStaff();
   await setWorkspacePlanById(workspaceId, accountType, planStatus);
+  await logAdminAudit({
+    actorEmail: user.email,
+    action: "set plan",
+    workspaceId,
+    detail: `${accountType} · ${planStatus}`,
+  });
   revalidatePath(`/admin/workspaces/${workspaceId}`);
   revalidatePath("/admin");
 }
@@ -53,7 +67,7 @@ export async function adminSetAgencyPlanAction(
 export async function adminCancelSubscriptionAction(
   workspaceId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  await requireStaff();
+  const user = await requireStaff();
   const { subscriptionId, accountType } = await getWorkspaceStripeMeta(workspaceId);
 
   if (HAS_STRIPE && subscriptionId) {
@@ -71,6 +85,11 @@ export async function adminCancelSubscriptionAction(
   // Reflect the cancellation locally so the portal + plan gates update. Keep the
   // existing tier; only the status changes to canceled.
   await setWorkspacePlanById(workspaceId, accountType ?? "personal", "canceled");
+  await logAdminAudit({
+    actorEmail: user.email,
+    action: "cancel subscription (void fee)",
+    workspaceId,
+  });
   revalidatePath(`/admin/workspaces/${workspaceId}`);
   revalidatePath("/admin");
   return { ok: true };

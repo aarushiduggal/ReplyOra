@@ -161,3 +161,66 @@ export async function getWorkspaceDetail(
     invoiceTotalCents: Number(inv[0]?.total ?? 0),
   };
 }
+
+// ---------- Staff audit trail (Neon; see 0013_admin_audit.sql) ----------
+
+export interface AdminAuditRow {
+  id: string;
+  actorName: string;
+  workspaceName: string | null;
+  action: string;
+  target: string | null;
+  createdAt: string;
+}
+
+/** Record a staff action. Never throws — a missing audit table (0013 not yet
+ *  run) or a write error must not block the action itself. */
+export async function logAdminAudit(input: {
+  actorEmail: string;
+  action: string;
+  workspaceId?: string | null;
+  detail?: string | null;
+}): Promise<void> {
+  if (!hasDb()) return;
+  try {
+    await sql()`
+      INSERT INTO admin_audit (id, actor_email, action, workspace_id, detail)
+      VALUES (${crypto.randomUUID()}, ${input.actorEmail}, ${input.action},
+              ${input.workspaceId ?? null}, ${input.detail ?? null})
+    `;
+  } catch {
+    /* table not present yet, or transient error — auditing must never block. */
+  }
+}
+
+/** Read the staff audit log, newest first, with the acted-on workspace name. */
+export async function listAdminAudit(limit = 200): Promise<AdminAuditRow[]> {
+  if (!hasDb()) return [];
+  try {
+    const rows = (await sql()`
+      SELECT a.id, a.actor_email, a.action, a.detail, a.created_at,
+             w.name AS workspace_name
+      FROM admin_audit a
+      LEFT JOIN workspaces w ON w.id = a.workspace_id
+      ORDER BY a.created_at DESC
+      LIMIT ${limit}
+    `) as {
+      id: string;
+      actor_email: string;
+      action: string;
+      detail: string | null;
+      created_at: string | Date;
+      workspace_name: string | null;
+    }[];
+    return rows.map((r) => ({
+      id: r.id,
+      actorName: r.actor_email,
+      workspaceName: r.workspace_name,
+      action: r.action,
+      target: r.detail,
+      createdAt: new Date(r.created_at).toISOString(),
+    }));
+  } catch {
+    return [];
+  }
+}

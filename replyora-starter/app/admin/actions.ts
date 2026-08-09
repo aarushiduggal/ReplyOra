@@ -9,6 +9,7 @@ import {
   clearImpersonationCookie,
   setImpersonationCookie,
 } from "@/lib/admin/impersonate";
+import { logAdminAudit } from "@/lib/admin/social-data";
 
 /** "Enter as" — staff/owner starts impersonating a workspace. */
 export async function enterAsAction(workspaceId: string): Promise<void> {
@@ -21,6 +22,11 @@ export async function enterAsAction(workspaceId: string): Promise<void> {
   await setImpersonationCookie({
     actorUserId: user.id,
     actorEmail: user.email,
+    workspaceId,
+  });
+  await logAdminAudit({
+    actorEmail: user.email,
+    action: "enter as (impersonate)",
     workspaceId,
   });
   redirect("/clients");

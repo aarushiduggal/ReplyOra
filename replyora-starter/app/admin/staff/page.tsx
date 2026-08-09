@@ -1,14 +1,16 @@
 import { requirePlatformAdmin } from "@/lib/admin/access";
-import { listAuditLogs } from "@/lib/admin/audit";
+import { listAdminAudit } from "@/lib/admin/social-data";
 import { getStaffList } from "@/lib/admin/data";
 import { StaffManager } from "@/components/admin/staff-manager";
 import { AuditViewer } from "@/components/admin/audit-viewer";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminStaffPage() {
   const staff = await requirePlatformAdmin();
   const [members, audit] = await Promise.all([
     Promise.resolve(getStaffList()),
-    listAuditLogs({ limit: 200 }),
+    listAdminAudit(200),
   ]);
 
   return (
