@@ -43,6 +43,10 @@ const MOCK_STAFF: StaffIdentity = {
  */
 export async function getStaffIdentity(): Promise<StaffIdentity | null> {
   if (!USE_SUPABASE) {
+    // Local/demo convenience ONLY. Never grant mock staff in production —
+    // otherwise every visitor is treated as a superadmin and the (now-removed)
+    // admin_ctx impersonation path would grant cross-tenant access.
+    if (process.env.NODE_ENV === "production") return null;
     const jar = await cookies();
     if (jar.get("mock_not_admin")?.value === "1") return null;
     return MOCK_STAFF;

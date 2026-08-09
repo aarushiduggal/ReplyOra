@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_USER, DEMO_WORKSPACE } from "@/lib/data/seed";
 import { USE_SUPABASE, USE_AUTHJS } from "@/lib/data/mode";
-import { getImpersonation } from "@/lib/admin/access";
 import type { User } from "@/lib/data/types";
 
 /**
@@ -54,11 +53,6 @@ export async function getCurrentUser(): Promise<User> {
  * MOCK: the demo workspace.
  */
 export async function getCurrentWorkspaceId(): Promise<string> {
-  // Staff impersonation: a platform admin acting inside a client's workspace.
-  // Only honoured for real staff (checked inside getImpersonation).
-  const imp = await getImpersonation();
-  if (imp) return imp.workspaceId;
-
   if (USE_AUTHJS) {
     const { auth } = await import("@/auth");
     const session = await auth();
@@ -66,6 +60,8 @@ export async function getCurrentWorkspaceId(): Promise<string> {
 
     // Staff/owner "Enter as": a valid, signed impersonation cookie whose actor
     // matches the signed-in staff user resolves to the impersonated workspace.
+    // This is the ONLY impersonation path — the legacy unsigned admin_ctx cookie
+    // is no longer honoured (it was forgeable and granted cross-tenant access).
     const { readImpersonation } = await import("@/lib/admin/impersonate");
     const { isStaff } = await import("@/lib/auth/owner");
     const imp = await readImpersonation();
