@@ -28,6 +28,8 @@ export interface WorkspaceRow {
   planStatus: string;
   clientCount: number;
   newsletterOptIn: boolean;
+  addons: { chatbox: boolean; reports: boolean };
+  postsThisMonth: number;
 }
 
 interface Row {
@@ -40,6 +42,8 @@ interface Row {
   plan_status: string | null;
   client_count: number;
   newsletter_opt_in: boolean | null;
+  addons: { chatbox?: boolean; reports?: boolean } | null;
+  posts_this_month: number | null;
 }
 
 function toRow(r: Row): WorkspaceRow {
@@ -53,11 +57,18 @@ function toRow(r: Row): WorkspaceRow {
     planStatus: r.plan_status ?? "trialing",
     clientCount: Number(r.client_count ?? 0),
     newsletterOptIn: Boolean(r.newsletter_opt_in),
+    addons: {
+      chatbox: Boolean(r.addons?.chatbox),
+      reports: Boolean(r.addons?.reports),
+    },
+    postsThisMonth: Number(r.posts_this_month ?? 0),
   };
 }
 
 export async function listWorkspaces(): Promise<WorkspaceRow[]> {
   if (!hasDb()) return [];
+  // Real add-ons (from billing JSON) + this-month post volume, so the staff
+  // overview's MRR and activity reflect live data, not placeholders.
   // newsletter_opt_in is guarded — the column may not exist until 0009 runs.
   let rows: Row[];
   try {
@@ -67,7 +78,11 @@ export async function listWorkspaces(): Promise<WorkspaceRow[]> {
              u.newsletter_opt_in AS newsletter_opt_in,
              wb.address ->> 'accountType' AS account_type,
              wb.address ->> 'planStatus' AS plan_status,
-             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count
+             wb.address -> 'addons' AS addons,
+             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count,
+             (SELECT count(*)::int FROM social_posts p
+                WHERE p.workspace_id = w.id
+                  AND p.created_at >= date_trunc('month', now())) AS posts_this_month
       FROM workspaces w
       JOIN users u ON u.id = w.owner_id
       LEFT JOIN workspace_billing wb ON wb.workspace_id = w.id
@@ -80,7 +95,11 @@ export async function listWorkspaces(): Promise<WorkspaceRow[]> {
              NULL AS newsletter_opt_in,
              wb.address ->> 'accountType' AS account_type,
              wb.address ->> 'planStatus' AS plan_status,
-             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count
+             wb.address -> 'addons' AS addons,
+             (SELECT count(*)::int FROM clients c WHERE c.workspace_id = w.id) AS client_count,
+             (SELECT count(*)::int FROM social_posts p
+                WHERE p.workspace_id = w.id
+                  AND p.created_at >= date_trunc('month', now())) AS posts_this_month
       FROM workspaces w
       JOIN users u ON u.id = w.owner_id
       LEFT JOIN workspace_billing wb ON wb.workspace_id = w.id

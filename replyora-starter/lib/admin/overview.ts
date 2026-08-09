@@ -228,8 +228,12 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
           : w.planStatus === "canceled"
             ? "canceled"
             : "trialing";
-    // Real add-on/post detail isn't in the list query yet — safe defaults.
-    const addons: SocialAddons = { chatbox: false, reports: false };
+    const addons: SocialAddons = w.addons;
+    // The trial is 7 days from signup; compute days left from created_at.
+    const daysSinceSignup = Math.floor(
+      (Date.now() - new Date(w.createdAt).getTime()) / 86_400_000,
+    );
+    const trialEndsInDays = status === "trialing" ? Math.max(0, 7 - daysSinceSignup) : null;
     return {
       id: w.id,
       name: w.name,
@@ -239,11 +243,11 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       status,
       addons,
       brands: w.clientCount,
-      postsThisMonth: 0,
+      postsThisMonth: w.postsThisMonth,
       mrr: mrrFor(accountType, addons),
       createdAt: w.createdAt,
-      lastActiveDays: 0,
-      trialEndsInDays: status === "trialing" ? 5 : null,
+      lastActiveDays: daysSinceSignup,
+      trialEndsInDays,
     };
   });
   return summarize(agencies);
