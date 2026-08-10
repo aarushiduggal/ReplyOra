@@ -1,33 +1,48 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Playfair_Display, Montserrat, Fredoka } from "next/font/google";
+import { Playfair_Display, Fraunces, Archivo, Archivo_Black } from "next/font/google";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.com";
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
+// Editorial serif for the wordmark's italic "reply" + pull-quotes.
 const playfair = Playfair_Display({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
   variable: "--font-playfair",
   display: "swap",
 });
 
-const montserrat = Montserrat({
+// Engaging display serif for headlines across the app.
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-montserrat",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
-const fredoka = Fredoka({
+// Body / UI.
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-fredoka",
+  weight: ["400", "500", "600"],
+  variable: "--font-archivo",
   display: "swap",
 });
 
-const TITLE =
-  "Replyora — the done-for-you social media platform";
+// Heavy: the wordmark's "ora.", eyebrows, buttons and labels.
+const archivoBlack = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-archivo-black",
+  display: "swap",
+});
+
+const TITLE = "Replyora — Socials, simplified.";
 const DESCRIPTION =
-  "Replyora is the done-for-you social media management platform for local businesses. We create your content, write your captions, and schedule a full month of posts for Instagram & TikTok — on brand, every time.";
+  "Socials, simplified. Replyora plans, designs, schedules and publishes a month of on-brand content for Instagram, Facebook & TikTok — plus a website AI chatbox.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -70,7 +85,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${montserrat.variable} ${playfair.variable} ${fredoka.variable}`}
+        className={`${archivo.variable} ${fraunces.variable} ${playfair.variable} ${archivoBlack.variable}`}
       >
         {children}
         {PLAUSIBLE_DOMAIN && (

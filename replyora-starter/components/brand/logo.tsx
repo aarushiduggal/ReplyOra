@@ -1,48 +1,17 @@
-import Image from "next/image";
-import Link from "next/link";
-
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/brand/wordmark";
+import { Mark } from "@/components/brand/mark";
 
 type LogoVariant = "wordmark" | "lockup" | "badge" | "mark";
-/** default = dark logo for light backgrounds · inverted = cream logo for dark. */
+/** default = ink logo for light backgrounds · inverted = porcelain for dark. */
 type LogoTone = "default" | "inverted";
 
-const SRC: Record<LogoVariant, Record<LogoTone, string>> = {
-  wordmark: {
-    default: "/brand/replyora-wordmark.png",
-    inverted: "/brand/replyora-wordmark-cream.png",
-  },
-  lockup: {
-    default: "/brand/replyora-lockup.png",
-    inverted: "/brand/replyora-lockup-cream.png",
-  },
-  badge: {
-    default: "/brand/replyora-badge.png",
-    inverted: "/brand/replyora-badge.png",
-  },
-  // The current brand logo — white wordmark on an oxblood field, shown as a
-  // round badge.
-  mark: {
-    default: "/brand/replyora-circle.png",
-    inverted: "/brand/replyora-circle.png",
-  },
-};
-
-// Intrinsic aspect ratios of the source PNGs (width / height).
-const RATIO: Record<LogoVariant, number> = {
-  wordmark: 1299 / 313,
-  lockup: 1299 / 400,
-  badge: 1,
-  mark: 1,
-};
-
 /**
- * Replyora logo — the real brand image (replaces the old CSS wordmark).
- * Uses next/image, preserves aspect ratio, and adds alt text.
- *  - `variant="wordmark"` (default) for header/footer/sidebar
- *  - `variant="lockup"` for large hero/About spots (includes the tagline)
- *  - `variant="badge"` for the square app/avatar icon
- *  - `tone="inverted"` for the cream logo on dark/oxblood backgrounds
+ * Replyora logo — now renders the live CSS wordmark/mark (no more PNG badge).
+ *  - `variant="wordmark"|"lockup"` → the <Wordmark/> ("replyora.")
+ *  - `variant="badge"|"mark"` → the square companion <Mark/> (heavy "o")
+ *  - `tone="inverted"` on ink / dark backgrounds
+ * `height` is the rendered height in px.
  */
 export function Logo({
   variant = "wordmark",
@@ -50,13 +19,10 @@ export function Logo({
   height = 30,
   href = "/",
   asLink = true,
-  alt = "Replyora",
   className,
-  priority = false,
 }: {
   variant?: LogoVariant;
   tone?: LogoTone;
-  /** Rendered height in px; width follows the intrinsic aspect ratio. */
   height?: number;
   href?: string;
   asLink?: boolean;
@@ -64,28 +30,22 @@ export function Logo({
   className?: string;
   priority?: boolean;
 }) {
-  const width = Math.round(height * RATIO[variant]);
-  const img = (
-    <Image
-      src={SRC[variant][tone]}
-      alt={alt}
-      width={width}
-      height={height}
-      priority={priority}
-      sizes={`${width}px`}
-      className={cn(
-        "block object-contain",
-        variant === "mark" && "rounded-full",
-        className,
-      )}
-      style={{ height, width: "auto" }}
-    />
-  );
+  const inverted = tone === "inverted";
 
-  if (!asLink) return img;
+  if (variant === "mark" || variant === "badge") {
+    return <Mark invert={inverted} size={height} className={className} />;
+  }
+
+  // Cap height of the wordmark ≈ 0.72 × font-size, so scale font-size up to hit
+  // the requested pixel height.
   return (
-    <Link href={href} className="inline-flex items-center" aria-label={alt}>
-      {img}
-    </Link>
+    <span style={{ fontSize: `${Math.round(height * 1.35)}px` }} className="inline-flex">
+      <Wordmark
+        variant={inverted ? "inverted" : "default"}
+        href={href}
+        asLink={asLink}
+        className={className}
+      />
+    </span>
   );
 }

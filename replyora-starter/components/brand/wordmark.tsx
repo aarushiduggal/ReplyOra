@@ -4,16 +4,11 @@ import { cn } from "@/lib/utils";
 
 type WordmarkVariant = "default" | "inverted";
 
-const VARIANT: Record<WordmarkVariant, { text: string; dot: string }> = {
-  // On light (oat/cream/card) backgrounds.
-  default: { text: "text-oxblood", dot: "text-rose" },
-  // On dark (oxblood/wine/ink) backgrounds.
-  inverted: { text: "text-cream", dot: "text-blush" },
-};
-
 /**
- * Replyora wordmark — lowercase "replyora" with an open dot "°", Fredoka.
- * Brand spec in CLAUDE.md §Brand. Use `variant="inverted"` on dark backgrounds.
+ * Replyora wordmark — "replyora." as ONE word: italic-serif "reply" (Playfair
+ * Display) running tight into heavy "ora." (Archivo Black), finished with a bold
+ * full stop. Never split reply / ora. or space them.
+ * Use variant="inverted" (porcelain) on ink / dark backgrounds.
  */
 export function Wordmark({
   className,
@@ -26,18 +21,29 @@ export function Wordmark({
   asLink?: boolean;
   variant?: WordmarkVariant;
 }) {
-  const v = VARIANT[variant];
+  const color = variant === "inverted" ? "text-porcelain" : "text-ink";
   const content = (
     <span
-      className={cn("font-wordmark lowercase tracking-tight", v.text, className)}
+      className={cn(
+        "inline-flex items-baseline whitespace-nowrap leading-none",
+        color,
+        className,
+      )}
     >
-      replyora<span className={v.dot}>°</span>
+      <span className="font-serif font-semibold italic tracking-[-0.005em]">
+        reply
+      </span>
+      <span className="font-heavy -ml-[0.03em] tracking-[-0.01em]">ora.</span>
     </span>
   );
 
   if (!asLink) return content;
   return (
-    <Link href={href} className="inline-flex items-center">
+    <Link
+      href={href}
+      className="inline-flex items-center"
+      aria-label="Replyora home"
+    >
       {content}
     </Link>
   );

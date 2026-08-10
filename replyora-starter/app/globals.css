@@ -2,66 +2,79 @@
 @import "tw-animate-css";
 
 /* ============================================================
-   Replyora brand tokens — burgundy & oat.
-   Oxblood #5C1A1A · Deep Wine #3F1011 · Rose #B26B62 · Blush #D9AFA6
-   Oat #EAE3D2 · Cream #FBF7EF · Ink #2B1413
+   Replyora brand tokens — PORCELAIN + INK ("Socials, simplified.")
+   Ink #1A1A1A · Charcoal #3A3A38 · Stone #8C877E
+   Porcelain #F3F0EB · Soft Blush #F0E3E2 · Soft Sky #E3EBF0 · White #FFFFFF
+   The neutrals carry the brand; blush/sky are soft section washes, never text.
+   Old classes (oxblood/wine/rose/oat/cream) are remapped to the new neutrals
+   so the whole app re-skins without touching every className.
    Fonts wired as CSS vars by next/font in app/layout.tsx.
    ============================================================ */
 
 :root {
-  --brand-oxblood: #5c1a1a;
-  --brand-wine: #3f1011;
-  --brand-rose: #b26b62;
-  --brand-blush: #d9afa6;
-  --brand-oat: #eae3d2;
-  --brand-cream: #fbf7ef;
-  --brand-ink: #2b1413;
+  /* Canonical new palette */
+  --brand-ink: #1a1a1a;
+  --brand-charcoal: #3a3a38;
+  --brand-stone: #8c877e;
+  --brand-porcelain: #f3f0eb;
+  --brand-sky: #e3ebf0;
+  --brand-white: #ffffff;
+
+  /* Old tokens remapped to the new neutrals (wine/rose now read as neutrals) */
+  --brand-oxblood: #1a1a1a; /* → ink */
+  --brand-wine: #3a3a38;    /* → charcoal */
+  --brand-rose: #8c877e;    /* → stone */
+  --brand-blush: #f0e3e2;   /* → soft blush */
+  --brand-oat: #eae6de;     /* warm porcelain step */
+  --brand-cream: #f3f0eb;   /* → porcelain */
 
   --radius: 0.625rem;
 
-  /* shadcn/ui semantic tokens mapped onto the brand palette */
-  --background: var(--brand-cream);
+  /* shadcn/ui semantic tokens mapped onto the porcelain/ink palette */
+  --background: var(--brand-porcelain);
   --foreground: var(--brand-ink);
   --card: #ffffff;
   --card-foreground: var(--brand-ink);
   --popover: #ffffff;
   --popover-foreground: var(--brand-ink);
-  --primary: var(--brand-oxblood);
-  --primary-foreground: var(--brand-cream);
+  --primary: var(--brand-ink);
+  --primary-foreground: var(--brand-porcelain);
   --secondary: var(--brand-oat);
-  --secondary-foreground: var(--brand-wine);
+  --secondary-foreground: var(--brand-ink);
   --muted: var(--brand-oat);
-  /* Darkened for WCAG AA (>=4.5:1) on oat/cream backgrounds. */
-  --muted-foreground: #574840;
+  /* Charcoal on porcelain passes WCAG AA (>=4.5:1). Stone is hairline/detail only. */
+  --muted-foreground: #3a3a38;
   --accent: var(--brand-blush);
-  --accent-foreground: var(--brand-wine);
+  --accent-foreground: var(--brand-ink);
   --destructive: #b3261e;
-  --destructive-foreground: var(--brand-cream);
-  --border: #e3d8c6;
-  --input: #e3d8c6;
-  --ring: var(--brand-rose);
+  --destructive-foreground: #ffffff;
+  --border: rgba(140, 135, 126, 0.28); /* stone hairline */
+  --input: rgba(140, 135, 126, 0.34);
+  --ring: var(--brand-ink);
 }
 
+/* The brand is a light, porcelain world — dark mode inverts to ink ground with
+   porcelain type so nothing breaks, but the app default stays light. */
 .dark {
   --background: var(--brand-ink);
-  --foreground: var(--brand-cream);
-  --card: var(--brand-wine);
-  --card-foreground: var(--brand-cream);
-  --popover: var(--brand-wine);
-  --popover-foreground: var(--brand-cream);
-  --primary: var(--brand-blush);
-  --primary-foreground: var(--brand-wine);
-  --secondary: #3a201f;
-  --secondary-foreground: var(--brand-cream);
-  --muted: #3a201f;
-  --muted-foreground: var(--brand-blush);
-  --accent: var(--brand-rose);
-  --accent-foreground: var(--brand-cream);
+  --foreground: var(--brand-porcelain);
+  --card: #232322;
+  --card-foreground: var(--brand-porcelain);
+  --popover: #232322;
+  --popover-foreground: var(--brand-porcelain);
+  --primary: var(--brand-porcelain);
+  --primary-foreground: var(--brand-ink);
+  --secondary: #2b2b29;
+  --secondary-foreground: var(--brand-porcelain);
+  --muted: #2b2b29;
+  --muted-foreground: #b9b4ab;
+  --accent: #2b2b29;
+  --accent-foreground: var(--brand-porcelain);
   --destructive: #e5544b;
   --destructive-foreground: var(--brand-ink);
-  --border: #4a2a28;
-  --input: #4a2a28;
-  --ring: var(--brand-rose);
+  --border: rgba(243, 240, 235, 0.16);
+  --input: rgba(243, 240, 235, 0.2);
+  --ring: var(--brand-porcelain);
 }
 
 @theme inline {
@@ -85,22 +98,35 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* New canonical palette (usable as bg-porcelain, text-ink, border-stone, …) */
+  --color-ink: var(--brand-ink);
+  --color-charcoal: var(--brand-charcoal);
+  --color-stone: var(--brand-stone);
+  --color-porcelain: var(--brand-porcelain);
+  --color-sky: var(--brand-sky);
+  --color-white: var(--brand-white);
+
+  /* Legacy names kept so old classes keep working (remapped to neutrals) */
   --color-oxblood: var(--brand-oxblood);
   --color-wine: var(--brand-wine);
   --color-rose: var(--brand-rose);
   --color-blush: var(--brand-blush);
   --color-oat: var(--brand-oat);
   --color-cream: var(--brand-cream);
-  --color-ink: var(--brand-ink);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
-  --font-wordmark: var(--font-fredoka), var(--font-montserrat), sans-serif;
+  /* Body/UI = Archivo · headlines = Fraunces · editorial serif (wordmark) =
+     Playfair · heavy (ora., eyebrows, buttons) = Archivo Black */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-heavy: var(--font-archivo-black), var(--font-archivo), system-ui, sans-serif;
+  /* Wordmark kept as an alias so old references don't break */
+  --font-wordmark: var(--font-playfair), ui-serif, serif;
 }
 
 * {
