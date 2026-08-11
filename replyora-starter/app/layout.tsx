@@ -52,10 +52,7 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: "Replyora",
-  icons: {
-    icon: [{ url: "/brand/favicon.png", type: "image/png" }],
-    apple: [{ url: "/brand/replyora-badge.png" }],
-  },
+  // Favicon + apple icon are generated from app/icon.tsx + app/apple-icon.tsx.
   keywords: [
     "social media management",
     "content planning",

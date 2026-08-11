@@ -189,13 +189,8 @@ export function HeroStack() {
               Start free <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="rounded-full border-oxblood/30"
-          >
-            <Link href="/demo">Book a demo</Link>
+          <Button asChild size="lg" variant="link" className="text-ink">
+            <Link href="/demo">Book a demo →</Link>
           </Button>
         </motion.div>
 
