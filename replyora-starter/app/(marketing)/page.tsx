@@ -7,19 +7,27 @@ import { ImpactStats } from "@/components/marketing/social/impact-stats";
 import { BookCallCta } from "@/components/marketing/social/book-call-cta";
 
 export default function LandingPage() {
+  // Gentle porcelain → blush → sky rhythm down the page; hero + marquee stay on
+  // the porcelain base, the CTA keeps its ink ground.
   return (
     <>
       <HeroStack />
 
       <PlatformMarquee />
 
-      <TwoProducts />
+      <div className="bg-blush">
+        <TwoProducts />
+      </div>
 
       <MeetFounder />
 
-      <HowDemo />
+      <div className="bg-sky">
+        <HowDemo />
+      </div>
 
-      <ImpactStats />
+      <div className="bg-blush">
+        <ImpactStats />
+      </div>
 
       <BookCallCta />
     </>

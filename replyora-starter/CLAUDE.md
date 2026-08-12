@@ -80,7 +80,10 @@ Get ONE tenant working end-to-end (phases 1–6) before perfecting billing/marke
 - After widget: paste the snippet on a different-origin test.html, confirm streaming + isolation.
 - After billing: Stripe CLI to forward webhooks; confirm plan change flips limits.
 
-## Brand (for marketing site + widget defaults)
-Oxblood #5C1A1A, Deep Wine #3F1011, Rose #B26B62, Blush #D9AFA6, Oat #EAE3D2, Cream #FBF7EF, Ink #2B1413.
-Fonts: Playfair Display (headlines), Montserrat (body), Fredoka (wordmark, lowercase "replyora" with an open dot "°").
-Voice: confident not loud, clear, helpful-first, premium, human. Lead with the customer's pain, then the fix.
+## Brand — PORCELAIN + INK ("Socials, simplified.")
+Calm, editorial, minimal: a bold black wordmark on porcelain with two whisper-soft pastels. The logo does the talking; colour stays quiet. Source: `ReplyOra_Brand_Kit.md`.
+- Colours (tokens in `app/globals.css`): **Ink** #1A1A1A (logo/headings/body) · **Charcoal** #3A3A38 (secondary) · **Stone** #8C877E (muted/hairlines) · **Porcelain** #F3F0EB (base bg) · **Soft Blush** #F0E3E2 + **Soft Sky** #E3EBF0 (section washes only, never text) · **White** #FFFFFF (cards). Old classes (oxblood/cream/wine/rose/oat) are **remapped** to these neutrals — don't reintroduce burgundy.
+- Fonts (`app/layout.tsx`): **Fraunces** → headlines (`--font-display`) · **Playfair Display** italic → wordmark "reply" + editorial (`--font-serif`) · **Archivo Black** → "ora.", eyebrows, buttons, labels (`--font-heavy`) · **Archivo** → body/UI (`--font-sans`).
+- Logo: `components/brand/wordmark.tsx` = "replyora." as ONE word (italic-serif reply + heavy ora. + dot); `components/brand/mark.tsx` = companion "o" tile (favicon/avatar). Use `variant="inverted"` on ink. Never the old PNG badge.
+- Buttons: ink-fill pill + porcelain text (primary); quiet underlined link (secondary). Tagline everywhere: **"Socials, simplified."**
+- Voice: calm, confident, plain-spoken, a touch editorial. Short sentences. Comfortable in lowercase. Say "socials," not "social media presence."

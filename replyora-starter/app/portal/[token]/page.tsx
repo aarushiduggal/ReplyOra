@@ -47,9 +47,9 @@ export default async function ClientPortalPage({
       </main>
 
       {!data.whiteLabel && (
-        <footer className="border-t border-ink/10">
-          <div className="mx-auto max-w-3xl px-6 py-6 text-[11px] uppercase tracking-[0.16em] text-ink/75">
-            Powered by replyora°
+        <footer className="border-t border-stone/20">
+          <div className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-6 text-[11px] uppercase tracking-[0.16em] text-stone">
+            Powered by <Wordmark asLink={false} className="text-[15px] text-ink" />
           </div>
         </footer>
       )}

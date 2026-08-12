@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "About · Replyora",
   description:
-    "The story behind Replyora — why we built a warm, done-for-you social media platform for small businesses, and the values we run it by.",
+    "The story behind Replyora — Socials, simplified. Why we built a calm, editorial way to plan, design and publish a month of on-brand content, and the values we run it by.",
 };
 
 const VALUES: { icon: typeof Heart; title: string; body: string }[] = [
