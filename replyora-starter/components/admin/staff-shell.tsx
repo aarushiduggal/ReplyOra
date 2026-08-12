@@ -83,8 +83,8 @@ export function StaffShell({
         </div>
       </header>
 
-      {/* Internal warning strip (light amber) */}
-      <div className="flex items-center justify-center gap-2 border-b border-amber-200 bg-amber-100 px-6 py-1.5 text-center text-xs text-amber-900">
+      {/* Internal notice strip — ink text on a soft sky wash */}
+      <div className="flex items-center justify-center gap-2 border-b border-stone/25 bg-sky px-6 py-1.5 text-center text-xs text-ink/80">
         <ShieldAlert className="h-3.5 w-3.5" />
         Internal staff area — you are acting on behalf of clients. Every view and
         edit is audited.

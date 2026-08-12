@@ -19,8 +19,8 @@ export default async function ClientPortalPage({
   if (!data) notFound();
 
   return (
-    <div className="min-h-screen bg-white text-ink">
-      <header className="border-b border-ink/10">
+    <div className="min-h-screen bg-porcelain text-ink">
+      <header className="border-b border-stone/20 bg-blush">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <Wordmark href="#" className="text-lg" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
@@ -30,10 +30,10 @@ export default async function ClientPortalPage({
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-oxblood">
+        <p className="font-heavy text-[11px] uppercase tracking-[0.2em] text-stone">
           Content review
         </p>
-        <h1 className="mt-2 font-display text-3xl text-oxblood">
+        <h1 className="mt-2 font-display text-3xl text-ink">
           Hi {data.clientName} 👋
         </h1>
         <p className="mt-2 max-w-lg text-sm font-medium text-ink/90">
