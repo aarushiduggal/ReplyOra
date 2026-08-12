@@ -2,6 +2,7 @@ import "server-only";
 
 import { listClientConnections } from "@/lib/social/connections";
 import { HAS_INSTAGRAM_LOGIN } from "@/lib/social/publish";
+import { fetchOrTimeout } from "@/lib/social/http";
 
 /**
  * Live Instagram feed for the Grid. Reads the client's connected IG Business
@@ -72,11 +73,11 @@ export async function fetchLiveInstagramFeed(
   const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
   let profile: LiveProfile | null = null;
   try {
-    const pRes = await fetch(
+    const pRes = await fetchOrTimeout(
       `${GRAPH}/${target}?fields=username,name,biography,followers_count,follows_count,media_count,profile_picture_url&access_token=${ig.accessToken}`,
       { next: { revalidate: 300 } },
     );
-    if (pRes.ok) {
+    if (pRes && pRes.ok) {
       const p = (await pRes.json()) as {
         name?: string; biography?: string; followers_count?: number;
         follows_count?: number; media_count?: number; profile_picture_url?: string;
@@ -99,8 +100,8 @@ export async function fetchLiveInstagramFeed(
       `${GRAPH}/${target}/media` +
       `?fields=id,media_url,thumbnail_url,permalink,caption,media_type,timestamp` +
       `&limit=${limit}&access_token=${ig.accessToken}`;
-    const res = await fetch(url, { next: { revalidate: 300 } }); // cache 5 min
-    if (!res.ok) return { connected: true, username: ig.externalUsername, profile, media: [] };
+    const res = await fetchOrTimeout(url, { next: { revalidate: 300 } }); // cache 5 min
+    if (!res || !res.ok) return { connected: true, username: ig.externalUsername, profile, media: [] };
     const data = (await res.json()) as { data?: GraphMedia[] };
 
     const media: LiveMedia[] = (data.data ?? [])

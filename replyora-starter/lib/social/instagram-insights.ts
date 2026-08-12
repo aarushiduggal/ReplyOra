@@ -2,6 +2,7 @@ import "server-only";
 
 import { listClientConnections } from "@/lib/social/connections";
 import { HAS_INSTAGRAM_LOGIN } from "@/lib/social/publish";
+import { fetchOrTimeout } from "@/lib/social/http";
 
 /**
  * Real Instagram performance for the Reports page — pulls per-media insights via
@@ -75,14 +76,14 @@ export async function fetchInstagramInsights(
     const target = HAS_INSTAGRAM_LOGIN ? "me" : ig.externalAccountId;
     const mediaUrl = (fields: string) =>
       `${GRAPH}/${target}/media?fields=${fields}&limit=${limit}&access_token=${token}`;
-    let mediaRes = await fetch(
+    let mediaRes = await fetchOrTimeout(
       mediaUrl("id,media_type,like_count,comments_count,caption,permalink,media_url,thumbnail_url"),
       { next: { revalidate: 900 } },
     );
-    if (!mediaRes.ok) {
-      mediaRes = await fetch(mediaUrl("id,media_type"), { next: { revalidate: 900 } });
+    if (!mediaRes || !mediaRes.ok) {
+      mediaRes = await fetchOrTimeout(mediaUrl("id,media_type"), { next: { revalidate: 900 } });
     }
-    if (!mediaRes.ok) return null;
+    if (!mediaRes || !mediaRes.ok) return null;
     const media = ((await mediaRes.json()) as { data?: MediaNode[] }).data ?? [];
     if (media.length === 0) {
       return {

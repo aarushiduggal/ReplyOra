@@ -6,11 +6,12 @@ import "./globals.css";
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.com";
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
-// Editorial serif for the wordmark's italic "reply" + pull-quotes.
+// Editorial serif — used ONLY for the wordmark's italic "reply", so load the
+// italic style alone (drops the unused normal-style file).
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  weight: ["500", "600"],
+  style: ["italic"],
   variable: "--font-playfair",
   display: "swap",
 });
@@ -18,7 +19,7 @@ const playfair = Playfair_Display({
 // Engaging display serif for headlines across the app.
 const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
   variable: "--font-fraunces",
   display: "swap",
@@ -27,7 +28,7 @@ const fraunces = Fraunces({
 // Body / UI.
 const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
   variable: "--font-archivo",
   display: "swap",
 });
