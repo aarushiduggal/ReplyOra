@@ -17,7 +17,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm space-y-3">
-            <Logo variant="mark" height={48} />
+            <Logo variant="wordmark" height={24} />
             <p className="text-sm text-muted-foreground">
               One workspace to plan your content, manage your clients, and never
               miss a conversation.

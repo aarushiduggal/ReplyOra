@@ -12,7 +12,7 @@ export default function AuthLayout({
       {/* Form side */}
       <div className="flex flex-col bg-cream">
         <div className="p-6">
-          <Logo variant="mark" height={44} />
+          <Logo variant="wordmark" height={26} />
         </div>
         <div className="flex flex-1 items-center justify-center px-6 pb-16">
           {children}

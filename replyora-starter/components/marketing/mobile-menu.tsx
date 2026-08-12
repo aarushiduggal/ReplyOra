@@ -57,7 +57,7 @@ export function MobileMenu() {
           />
           <div className="absolute right-0 top-0 flex h-full w-80 max-w-[88%] flex-col bg-cream shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-border px-5">
-              <Logo variant="mark" height={36} />
+              <Logo variant="wordmark" height={22} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

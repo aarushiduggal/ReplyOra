@@ -90,7 +90,7 @@ export function SiteHeader() {
           scrolled ? "h-14" : "h-20",
         )}
       >
-        <Logo variant="mark" height={scrolled ? 44 : 54} priority className="transition-all" />
+        <Logo variant="wordmark" height={scrolled ? 22 : 26} priority className="transition-all" />
 
         {/* Desktop nav */}
         <nav

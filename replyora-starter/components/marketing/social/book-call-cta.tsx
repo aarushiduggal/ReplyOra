@@ -12,7 +12,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * until NEXT_PUBLIC_CALENDLY_URL is set).
  */
 
-const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL;
+const CALENDLY_URL =
+  process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/hello-replyora/30min";
 
 const BENEFITS = [
   "A 20-minute walkthrough tailored to your business",

@@ -10,7 +10,8 @@ const BENEFITS = [
   "Leave with a content plan for your first week.",
 ];
 
-const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL;
+const CALENDLY_URL =
+  process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/hello-replyora/30min";
 
 export default function DemoPage() {
   return (
