@@ -1,0 +1,112 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Archivo+Black&family=Archivo:wght@400;500;700&family=Newsreader:ital,opt,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap');
+
+@page { size: A4 portrait; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #cfcabf; padding: 24px 12px; font-family: 'Newsreader', Georgia, serif; }
+
+.page {
+  width: 210mm; min-height: 297mm; margin: 0 auto; background: #F3F0EB; color: #1A1A1A;
+  padding: 12mm 13mm 0; box-shadow: 0 18px 60px rgba(0,0,0,.22); display: flex; flex-direction: column;
+}
+.rule-top { border-top: 4px solid #1A1A1A; border-bottom: 1px solid #1A1A1A; height: 5px; }
+.masthead { text-align: center; padding: 12px 0 4px; }
+.masthead .m { font-size: 58px; line-height: .9; letter-spacing: -.01em; }
+.masthead .m .r { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; }
+.masthead .m .o { font-family: 'Archivo Black', sans-serif; margin-left: -3px; }
+.byline {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid #1A1A1A; border-bottom: 1px solid #1A1A1A;
+  padding: 6px 2px; margin-top: 8px;
+  font-family: 'Archivo', sans-serif; font-size: 10.5px; font-weight: 500;
+  letter-spacing: .18em; text-transform: uppercase;
+}
+.headline { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 37px; line-height: 1.02; text-align: center; margin: 18px 0 9px; }
+.subhead { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 15.5px; line-height: 1.38; text-align: center; color: #3A3A38; max-width: 600px; margin: 0 auto 14px; }
+.hr { border: 0; border-top: 1px solid #1A1A1A; margin: 12px 0 16px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+p.body { font-size: 13.5px; line-height: 1.46; margin-bottom: 10px; text-align: justify; }
+.lede:first-letter { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 50px; line-height: .78; float: left; margin: 5px 7px 0 0; }
+
+.kicker { font-family: 'Archivo Black', sans-serif; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; border-bottom: 2px solid #1A1A1A; padding-bottom: 5px; margin: 20px 0 12px; }
+
+.ph { border: 1px solid #1A1A1A; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; }
+.ph .lab { font-family: 'Archivo', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8C877E; }
+.ph .sub { font-family: 'Archivo', sans-serif; font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: #8C877E; }
+.ph.portrait { min-height: 210px; background: #F0E3E2; }
+.ph.wide { min-height: 140px; background: #E3EBF0; }
+
+.pull { text-align: center; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 24px; line-height: 1.2; padding: 14px 10px; margin: 18px 0; border-top: 3px double #1A1A1A; border-bottom: 3px double #1A1A1A; }
+
+.footer { background: #1A1A1A; color: #F3F0EB; margin: auto -13mm 0; padding: 14px 13mm; display: flex; justify-content: space-between; align-items: center; }
+.footer .fw { font-size: 20px; }
+.footer .fw .r { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; }
+.footer .fw .o { font-family: 'Archivo Black', sans-serif; margin-left: -2px; }
+.footer .fmeta { font-family: 'Archivo', sans-serif; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #D9CFC4; }
+
+@media print { body { background: #fff; padding: 0; } .page { box-shadow: none; } }
+</style>
+
+<div class="page">
+  <div class="rule-top"></div>
+
+  <div class="masthead">
+    <div class="m"><span class="r">reply</span><span class="o">ora.</span></div>
+  </div>
+
+  <div class="byline">
+    <span>Vol. 1 · Sydney</span>
+    <span>Socials, Simplified</span>
+    <span>Est. 2026</span>
+  </div>
+
+  <h1 class="headline">Your Whole Feed, Handled.</h1>
+  <p class="subhead">How Replyora turns a month of content, client approvals and reporting into one calm workspace — for agencies, social media managers, and the businesses they run.</p>
+  <hr class="hr">
+
+  <div class="grid2">
+    <div>
+      <p class="body lede">For most people running socials, the hard part was never the posting — it's everything around it. Content lives in one app, approvals in another, invoices in a spreadsheet, and the calendar in your head. Replyora was built to bring it all into one calm place.</p>
+      <p class="body">Replyora is a social media management platform where you plan the grid, generate on-brand captions, get client sign-off and schedule straight to Instagram, Facebook and TikTok — then send a branded report and an invoice without ever leaving the app.</p>
+      <p class="body">No new tabs. No chasing approvals over email. No end-of-month scramble.</p>
+    </div>
+    <div class="ph portrait">
+      <span class="lab">Photo</span>
+      <span class="sub">— founder portrait —</span>
+    </div>
+  </div>
+
+  <div class="kicker">One workspace, every client</div>
+  <div class="grid2">
+    <div class="ph wide">
+      <span class="lab">Photo</span>
+      <span class="sub">— product on laptop —</span>
+    </div>
+    <div>
+      <p class="body">Each client gets their own space — a visual grid planner, a shared calendar, a no-login approval link, and reports that write themselves. Agencies run their whole roster from one view; freelancers suddenly look like a team of ten. There's even an AI website chatbox answering visitors around the clock, so nothing slips.</p>
+    </div>
+  </div>
+
+  <div class="pull">"Plan it once. Post all month."</div>
+
+  <div class="kicker">Built for agencies &amp; social managers</div>
+  <div class="grid2">
+    <div>
+      <p class="body">Setup takes minutes, not weeks. Connect an account, add a brand, and batch a whole month of content in one sitting — Replyora learns the brand and goes live fast.</p>
+    </div>
+    <div>
+      <p class="body">Australian-built and billed in AUD, Replyora launches with plans from $49/month and a 7-day free trial, so you see your calm, sorted feed before committing to anything.</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:14px;">
+    <div class="ph wide"><span class="lab">Photo</span><span class="sub">— on camera / candid —</span></div>
+    <div class="ph wide"><span class="lab">Photo</span><span class="sub">— detail / flat-lay —</span></div>
+  </div>
+
+  <div class="footer">
+    <span class="fw"><span class="r">reply</span><span class="o">ora.</span></span>
+    <span class="fmeta">Socials, simplified · Sydney · est. 2026</span>
+  </div>
+</div>
