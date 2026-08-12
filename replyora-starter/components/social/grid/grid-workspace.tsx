@@ -106,7 +106,7 @@ export function GridWorkspace({
   profile: initialProfile,
   assets = [],
   connectedPlatforms = [],
-  liveFeed,
+  liveFeed: initialLiveFeed,
   feedAnalysis,
 }: {
   clientId: string;
@@ -119,6 +119,22 @@ export function GridWorkspace({
   feedAnalysis?: FeedAnalysis | null;
 }) {
   const base = `/clients/${clientId}`;
+  // The live Instagram feed loads AFTER first paint so a slow Graph API never
+  // blocks the Grid — the shell + planned tiles render instantly, the real feed
+  // streams in and swaps to the live view when it arrives.
+  const [liveFeed, setLiveFeed] = useState<LiveFeed | undefined>(initialLiveFeed);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/social/live-feed?client=${clientId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: LiveFeed | null) => {
+        if (!cancelled && data) setLiveFeed(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
   const [tiles, setTiles] = useState<GridTile[]>(initialTiles);
   const [past, setPast] = useState<GridTile[][]>([]);
   const [future, setFuture] = useState<GridTile[][]>([]);

@@ -4,9 +4,6 @@ import { getClient } from "@/lib/social/clients";
 import { getProfilePreview, listClientTiles } from "@/lib/social/grid";
 import { listClientAssets } from "@/lib/social/assets";
 import { listClientConnections } from "@/lib/social/connections";
-import { fetchLiveInstagramFeed } from "@/lib/social/instagram-feed";
-import { analyzeLiveFeed } from "@/lib/social/feed-analysis";
-
 export const dynamic = "force-dynamic";
 
 export default async function ClientGridPage({
@@ -25,22 +22,19 @@ export default async function ClientGridPage({
   };
   // Every fetch is fault-tolerant: a single failing call (a flaky Graph request,
   // a missing row) must never crash the whole Grid page.
-  const [client, tiles, profile, assets, connections, liveFeed] = await Promise.all([
+  const [client, tiles, profile, assets, connections] = await Promise.all([
     getClient(id).catch(() => null),
     listClientTiles(id).catch(() => []),
     getProfilePreview(id).catch(() => ({ ...EMPTY_PROFILE })),
     listClientAssets(id).catch(() => []),
     listClientConnections(id).catch(() => []),
-    fetchLiveInstagramFeed(id).catch(() => ({ connected: false, username: null, profile: null, media: [] })),
   ]);
   const name = client?.name ?? sampleName(id);
 
-  // Live grid intelligence: analyse the real feed's colours + how the planned
-  // (unpublished) tiles would shift its harmony. Null when IG isn't connected.
-  const plannedMediaUrls = tiles
-    .filter((t) => t.status !== "published" && t.mediaUrl)
-    .map((t) => t.mediaUrl as string);
-  const feedAnalysis = await analyzeLiveFeed(id, plannedMediaUrls).catch(() => null);
+  // The live IG feed + colour analysis are loaded client-side after the shell
+  // renders (GridWorkspace → /api/social/live-feed), so a slow Graph API never
+  // blocks the page. Start from not-connected.
+  const liveFeed = { connected: false, username: null, profile: null, media: [] };
 
   // A platform counts as connected if it has a stored connection or the flag.
   const connectedPlatforms = Array.from(
@@ -59,7 +53,7 @@ export default async function ClientGridPage({
       assets={assets.filter((a) => a.kind === "image").map((a) => ({ id: a.id, url: a.url }))}
       connectedPlatforms={connectedPlatforms}
       liveFeed={liveFeed}
-      feedAnalysis={feedAnalysis}
+      feedAnalysis={null}
     />
   );
 }

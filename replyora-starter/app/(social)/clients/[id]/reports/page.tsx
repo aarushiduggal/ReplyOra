@@ -18,9 +18,13 @@ export default async function ClientReportsPage({
     getClient(id),
     listClientPosts(id),
     getWorkspaceBilling(),
-    // Real Meta Insights (reach/engagement) — exercises manage_insights and
-    // powers the "at a glance" numbers. null when IG isn't connected.
-    fetchInstagramInsights(id).catch(() => null),
+    // Real Meta Insights (reach/engagement) — null when IG isn't connected.
+    // Capped at 4s so a slow Graph API can't hang the Reports page; the
+    // workspace degrades gracefully to the not-connected state on null.
+    Promise.race([
+      fetchInstagramInsights(id).catch(() => null),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+    ]),
   ]);
   const name = client?.name ?? sampleName(id);
 
