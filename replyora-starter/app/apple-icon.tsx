@@ -1,10 +1,21 @@
 import { ImageResponse } from "next/og";
 
-// Apple touch icon — the Mark on ink, larger.
+// Apple touch icon — the full "replyora." wordmark centred on porcelain.
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-export default function AppleIcon() {
+const fetchFont = (url: string) => fetch(url).then((r) => r.arrayBuffer());
+
+export default async function AppleIcon() {
+  const [serif, heavy] = await Promise.all([
+    fetchFont(
+      "https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.20/files/playfair-display-latin-600-italic.woff",
+    ),
+    fetchFont(
+      "https://cdn.jsdelivr.net/npm/@fontsource/archivo-black@5.0.20/files/archivo-black-latin-400-normal.woff",
+    ),
+  ]);
+
   return new ImageResponse(
     (
       <div
@@ -14,17 +25,26 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#1A1A1A",
-          color: "#F3F0EB",
-          fontSize: 132,
-          fontWeight: 900,
-          fontFamily: "sans-serif",
-          paddingBottom: 12,
+          background: "#F3F0EB",
+          padding: 20,
         }}
       >
-        o
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <span style={{ fontFamily: "S", fontStyle: "italic", color: "#1A1A1A", fontSize: 40 }}>
+            reply
+          </span>
+          <span style={{ fontFamily: "H", color: "#1A1A1A", fontSize: 40, marginLeft: -2 }}>
+            ora.
+          </span>
+        </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      fonts: [
+        { name: "S", data: serif, style: "italic", weight: 600 },
+        { name: "H", data: heavy, style: "normal", weight: 400 },
+      ],
+    },
   );
 }
