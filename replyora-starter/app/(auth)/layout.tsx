@@ -24,7 +24,7 @@ export default function AuthLayout({
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-rose/30 blur-3xl" />
         <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-wine/60 blur-3xl" />
         <div className="relative">
-          <Logo variant="mark" asLink={false} height={40} />
+          <Logo variant="wordmark" tone="inverted" asLink={false} height={26} />
         </div>
         <blockquote className="relative max-w-md">
           <p className="font-display text-3xl leading-snug">
