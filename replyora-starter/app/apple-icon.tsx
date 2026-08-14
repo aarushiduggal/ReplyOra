@@ -25,15 +25,15 @@ export default async function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#F3F0EB",
-          padding: 20,
+          background: "#1A1A1A",
+          borderRadius: "50%",
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline" }}>
-          <span style={{ fontFamily: "S", fontStyle: "italic", color: "#1A1A1A", fontSize: 40 }}>
+          <span style={{ fontFamily: "S", fontStyle: "italic", color: "#F3F0EB", fontSize: 44 }}>
             reply
           </span>
-          <span style={{ fontFamily: "H", color: "#1A1A1A", fontSize: 40, marginLeft: -2 }}>
+          <span style={{ fontFamily: "H", color: "#F3F0EB", fontSize: 44, marginLeft: -2 }}>
             ora.
           </span>
         </div>

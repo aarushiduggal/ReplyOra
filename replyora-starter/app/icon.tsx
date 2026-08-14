@@ -1,17 +1,20 @@
 import { ImageResponse } from "next/og";
 
-// Favicon — a compact mark that stays legible at ~16px: heavy "r." (the
-// replyora initial + the wordmark's signature dot) in porcelain on an ink tile.
-// The full wordmark can't be read at tab size, so it lives on the apple icon.
-export const size = { width: 48, height: 48 };
+// Favicon — a circular badge with the "replyora." wordmark in porcelain on ink.
+export const size = { width: 128, height: 128 };
 export const contentType = "image/png";
 
 const fetchFont = (url: string) => fetch(url).then((r) => r.arrayBuffer());
 
 export default async function Icon() {
-  const heavy = await fetchFont(
-    "https://cdn.jsdelivr.net/npm/@fontsource/archivo-black@5.0.20/files/archivo-black-latin-400-normal.woff",
-  );
+  const [serif, heavy] = await Promise.all([
+    fetchFont(
+      "https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.20/files/playfair-display-latin-600-italic.woff",
+    ),
+    fetchFont(
+      "https://cdn.jsdelivr.net/npm/@fontsource/archivo-black@5.0.20/files/archivo-black-latin-400-normal.woff",
+    ),
+  ]);
 
   return new ImageResponse(
     (
@@ -23,25 +26,25 @@ export default async function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#1A1A1A",
-          borderRadius: 10,
+          borderRadius: "50%",
         }}
       >
-        <span
-          style={{
-            fontFamily: "H",
-            color: "#F3F0EB",
-            fontSize: 30,
-            lineHeight: 1,
-            marginTop: -2,
-          }}
-        >
-          r.
-        </span>
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <span style={{ fontFamily: "S", fontStyle: "italic", color: "#F3F0EB", fontSize: 34 }}>
+            reply
+          </span>
+          <span style={{ fontFamily: "H", color: "#F3F0EB", fontSize: 34, marginLeft: -2 }}>
+            ora.
+          </span>
+        </div>
       </div>
     ),
     {
       ...size,
-      fonts: [{ name: "H", data: heavy, style: "normal", weight: 400 }],
+      fonts: [
+        { name: "S", data: serif, style: "italic", weight: 600 },
+        { name: "H", data: heavy, style: "normal", weight: 400 },
+      ],
     },
   );
 }

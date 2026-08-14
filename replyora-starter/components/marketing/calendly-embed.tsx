@@ -1,32 +1,47 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Script from "next/script";
 
 type CalendlyGlobal = {
   initInlineWidget: (opts: { url: string; parentElement: HTMLElement }) => void;
 };
 
+const SCRIPT_SRC = "https://assets.calendly.com/assets/external/widget.js";
+
 /**
- * Calendly inline embed. We initialise the widget EXPLICITLY (rather than
- * relying on the script's auto-init), so it also renders on client-side
- * navigation — where the cached script never re-scans the page and the embed
- * would otherwise show a blank card.
+ * Calendly inline embed. We load the script ourselves and POLL until Calendly
+ * is ready, then initialise the widget explicitly. This is bulletproof across
+ * fresh loads AND client-side navigation (where next/script's onLoad won't
+ * re-fire and the auto-scan never runs) — the previous versions left a blank
+ * card in those cases.
  */
 export function CalendlyEmbed({ url }: { url: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  function init() {
-    const c = (window as unknown as { Calendly?: CalendlyGlobal }).Calendly;
-    if (c && ref.current && ref.current.childElementCount === 0) {
-      c.initInlineWidget({ url, parentElement: ref.current });
-    }
-  }
-
-  // If the script is already loaded (client-side nav to this page), init on mount.
   useEffect(() => {
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const el = ref.current;
+    if (!el) return;
+
+    // Ensure the script is present (append once).
+    if (!document.querySelector(`script[src="${SCRIPT_SRC}"]`)) {
+      const s = document.createElement("script");
+      s.src = SCRIPT_SRC;
+      s.async = true;
+      document.body.appendChild(s);
+    }
+
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      const c = (window as unknown as { Calendly?: CalendlyGlobal }).Calendly;
+      if (c && el.childElementCount === 0) {
+        c.initInlineWidget({ url, parentElement: el });
+        window.clearInterval(timer);
+      } else if (++tries > 60) {
+        window.clearInterval(timer); // give up after ~15s
+      }
+    }, 250);
+
+    return () => window.clearInterval(timer);
   }, [url]);
 
   return (
@@ -35,11 +50,6 @@ export function CalendlyEmbed({ url }: { url: string }) {
         ref={ref}
         className="calendly-inline-widget"
         style={{ minWidth: "320px", height: "700px" }}
-      />
-      <Script
-        src="https://assets.calendly.com/assets/external/widget.js"
-        strategy="afterInteractive"
-        onLoad={init}
       />
     </div>
   );
