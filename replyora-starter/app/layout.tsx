@@ -3,7 +3,7 @@ import Script from "next/script";
 import { Playfair_Display, Fraunces, Archivo, Archivo_Black } from "next/font/google";
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.com";
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.net";
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
 // Editorial serif — used ONLY for the wordmark's italic "reply", so load the
@@ -53,7 +53,8 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: "Replyora",
-  // Favicon + apple icon are generated from app/icon.tsx + app/apple-icon.tsx.
+  // Favicon + apple icon come from app/icon.png + app/apple-icon.png (the real
+  // replyora. wordmark). OG/social image from app/opengraph-image.tsx.
   keywords: [
     "social media management",
     "content planning",

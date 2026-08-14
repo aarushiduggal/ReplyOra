@@ -1,7 +1,7 @@
 /** Single source of truth for site + brand + founder identity. */
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://replyora.com";
+  process.env.NEXT_PUBLIC_APP_URL || "https://replyora.net";
 
 export const IG_URL = "https://www.instagram.com/replyora/";
 

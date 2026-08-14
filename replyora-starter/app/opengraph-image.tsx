@@ -2,11 +2,11 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const alt =
-  "Replyora — AI that replies, captures leads, and books customers 24/7";
+  "Replyora — Socials, simplified. Plan, create and schedule your socials in one calm workspace.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/** Branded default OG image (burgundy & oat). */
+/** Default OG image — porcelain + ink brand. No external fonts (kept robust). */
 export default function OpengraphImage() {
   return new ImageResponse(
     (
@@ -17,18 +17,18 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          padding: "80px",
-          background: "#FBF7EF",
+          padding: "88px",
+          background: "#F3F0EB",
         }}
       >
-        {/* Wordmark: "replyora" + the brand open dot (hollow circle). */}
+        {/* Wordmark: "replyora" + the bold brand dot. */}
         <div style={{ display: "flex", alignItems: "flex-end" }}>
           <div
             style={{
-              fontSize: 64,
-              fontWeight: 700,
-              color: "#5C1A1A",
-              letterSpacing: "-2px",
+              fontSize: 68,
+              fontWeight: 800,
+              color: "#1A1A1A",
+              letterSpacing: "-3px",
               lineHeight: 1,
             }}
           >
@@ -36,28 +36,41 @@ export default function OpengraphImage() {
           </div>
           <div
             style={{
-              width: 18,
-              height: 18,
+              width: 20,
+              height: 20,
               borderRadius: "50%",
-              border: "5px solid #5C1A1A",
-              marginLeft: 5,
-              marginBottom: 8,
+              background: "#1A1A1A",
+              marginLeft: 6,
+              marginBottom: 6,
             }}
           />
         </div>
+
         <div
           style={{
-            marginTop: 32,
-            fontSize: 56,
-            lineHeight: 1.1,
-            color: "#2B1413",
+            marginTop: 40,
+            fontSize: 76,
+            fontWeight: 700,
+            lineHeight: 1.05,
+            color: "#1A1A1A",
+            letterSpacing: "-2px",
+            maxWidth: 940,
+          }}
+        >
+          Socials, simplified.
+        </div>
+
+        <div
+          style={{
+            marginTop: 28,
+            fontSize: 32,
+            lineHeight: 1.35,
+            color: "#8C877E",
             maxWidth: 900,
           }}
         >
-          Turn website visitors into booked customers — while you sleep.
-        </div>
-        <div style={{ marginTop: 28, fontSize: 30, color: "#6b5a52" }}>
-          Replies instantly · captures leads · books 24/7
+          Plan, create and schedule Instagram, Facebook &amp; TikTok — all in
+          one calm workspace.
         </div>
       </div>
     ),
