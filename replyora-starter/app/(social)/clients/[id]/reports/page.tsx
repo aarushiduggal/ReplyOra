@@ -3,7 +3,7 @@ import { LockedSection } from "@/components/social/locked-section";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
 import { listClientPosts } from "@/lib/social/posts";
-import { getWorkspaceBilling, currentEntitlements } from "@/lib/social/billing";
+import { currentEntitlements } from "@/lib/social/billing";
 import { fetchInstagramInsights } from "@/lib/social/instagram-insights";
 
 export const dynamic = "force-dynamic";
@@ -14,22 +14,10 @@ export default async function ClientReportsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, posts, billing, insights] = await Promise.all([
-    getClient(id),
-    listClientPosts(id),
-    getWorkspaceBilling(),
-    // Real Meta Insights (reach/engagement) — null when IG isn't connected.
-    // Capped at 4s so a slow Graph API can't hang the Reports page; the
-    // workspace degrades gracefully to the not-connected state on null.
-    Promise.race([
-      fetchInstagramInsights(id).catch(() => null),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
-    ]),
-  ]);
-  const name = client?.name ?? sampleName(id);
 
-  // Plan gate: reports are on Studio & Agency (owner + live Stripe plan aware).
-  const { ent } = await currentEntitlements();
+  // Gate FIRST (one billing read, reused below) — locked users must never pay
+  // the slow IG-insights round-trip just to see an upsell screen.
+  const { ent, billing } = await currentEntitlements();
   if (!ent.reports) {
     return (
       <LockedSection
@@ -40,6 +28,19 @@ export default async function ClientReportsPage({
       />
     );
   }
+
+  const [client, posts, insights] = await Promise.all([
+    getClient(id),
+    listClientPosts(id),
+    // Real Meta Insights (reach/engagement) — null when IG isn't connected.
+    // Capped at 4s so a slow Graph API can't hang the Reports page; the
+    // workspace degrades gracefully to the not-connected state on null.
+    Promise.race([
+      fetchInstagramInsights(id).catch(() => null),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+    ]),
+  ]);
+  const name = client?.name ?? sampleName(id);
   const connected = (client?.platforms ?? []).includes("instagram");
 
   const now = new Date();

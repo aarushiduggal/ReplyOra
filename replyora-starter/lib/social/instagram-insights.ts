@@ -97,11 +97,14 @@ export async function fetchInstagramInsights(
       media.map(async (m) => {
         let reach = 0, saved = 0, shares = 0;
         try {
-          const r = await fetch(
+          // Bounded (2s): 30 of these fire at once — an untimed fetch let a
+          // single slow media insight hold the whole Reports fetch open.
+          const r = await fetchOrTimeout(
             `${GRAPH}/${m.id}/insights?metric=${MEDIA_METRICS}&access_token=${token}`,
             { next: { revalidate: 900 } },
+            2000,
           );
-          if (r.ok) {
+          if (r && r.ok) {
             const rows = ((await r.json()) as {
               data?: { name: string; values?: { value?: number }[] }[];
             }).data ?? [];

@@ -122,14 +122,12 @@ export async function bulkSetTileStatus(
 ): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb() || ids.length === 0) return;
-  for (const id of ids) {
-    await sql()`
-      UPDATE social_posts SET status = ${status}
-      WHERE workspace_id = ${workspaceId}
-        AND client_id = ${clientId}
-        AND id = ${id}
-    `;
-  }
+  await sql()`
+    UPDATE social_posts SET status = ${status}
+    WHERE workspace_id = ${workspaceId}
+      AND client_id = ${clientId}
+      AND id = ANY(${ids})
+  `;
 }
 
 /** Schedule several tiles for a real date/time (moves them to the calendar). */
@@ -140,15 +138,13 @@ export async function scheduleTiles(
 ): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb() || ids.length === 0) return;
-  for (const id of ids) {
-    await sql()`
-      UPDATE social_posts
-         SET status = 'scheduled', scheduled_for = ${scheduledForIso}
-       WHERE workspace_id = ${workspaceId}
-         AND client_id = ${clientId}
-         AND id = ${id}
-    `;
-  }
+  await sql()`
+    UPDATE social_posts
+       SET status = 'scheduled', scheduled_for = ${scheduledForIso}
+     WHERE workspace_id = ${workspaceId}
+       AND client_id = ${clientId}
+       AND id = ANY(${ids})
+  `;
 }
 
 /** Remove a post from the schedule — back to draft, clears its scheduled time. */
@@ -171,14 +167,12 @@ export async function bulkDeleteTiles(
 ): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb() || ids.length === 0) return;
-  for (const id of ids) {
-    await sql()`
-      DELETE FROM social_posts
-      WHERE workspace_id = ${workspaceId}
-        AND client_id = ${clientId}
-        AND id = ${id}
-    `;
-  }
+  await sql()`
+    DELETE FROM social_posts
+    WHERE workspace_id = ${workspaceId}
+      AND client_id = ${clientId}
+      AND id = ANY(${ids})
+  `;
 }
 
 /** Persist the feed order — writes order_index in the given id sequence. */
@@ -187,15 +181,18 @@ export async function reorderClientTiles(
   orderedIds: string[],
 ): Promise<void> {
   const workspaceId = await getCurrentWorkspaceId();
-  if (!hasDb()) return;
-  for (let i = 0; i < orderedIds.length; i++) {
-    await sql()`
-      UPDATE social_posts SET order_index = ${i}
-      WHERE workspace_id = ${workspaceId}
-        AND client_id = ${clientId}
-        AND id = ${orderedIds[i]}
-    `;
-  }
+  if (!hasDb() || orderedIds.length === 0) return;
+  // One set-based write instead of one round-trip per tile: unnest the ordered
+  // ids with their position and join back by id. `ord` is 1-based → order_index
+  // is `ord - 1` to preserve the previous 0-based sequence.
+  await sql()`
+    UPDATE social_posts AS p
+       SET order_index = v.ord - 1
+      FROM unnest(${orderedIds}::text[]) WITH ORDINALITY AS v(id, ord)
+     WHERE p.workspace_id = ${workspaceId}
+       AND p.client_id = ${clientId}
+       AND p.id = v.id
+  `;
 }
 
 // ---- Profile preview -----------------------------------------------------
