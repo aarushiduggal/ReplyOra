@@ -107,7 +107,7 @@ export function GridWorkspace({
   assets = [],
   connectedPlatforms = [],
   liveFeed: initialLiveFeed,
-  feedAnalysis,
+  feedAnalysis: initialFeedAnalysis,
 }: {
   clientId: string;
   clientName: string;
@@ -130,6 +130,42 @@ export function GridWorkspace({
       .then((data: LiveFeed | null) => {
         if (!cancelled && data) setLiveFeed(data);
       })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+
+  // Real grid intelligence (live-feed palette + harmony, and when this
+  // account's followers are actually online) — also loaded after first paint
+  // since it does server-side image colour reads + a Graph insights call.
+  const [feedAnalysis, setFeedAnalysis] = useState<FeedAnalysis | null>(
+    initialFeedAnalysis ?? null,
+  );
+  const [recommendedTimes, setRecommendedTimes] = useState<string[]>([]);
+  const [timesSource, setTimesSource] = useState<"audience" | "general">(
+    "general",
+  );
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/social/grid-intelligence?client=${clientId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          data: {
+            analysis: FeedAnalysis | null;
+            times: string[];
+            timesSource: "audience" | "general";
+          } | null,
+        ) => {
+          if (cancelled || !data) return;
+          setFeedAnalysis(data.analysis);
+          if (Array.isArray(data.times) && data.times.length > 0) {
+            setRecommendedTimes(data.times);
+            setTimesSource(data.timesSource ?? "general");
+          }
+        },
+      )
       .catch(() => {});
     return () => {
       cancelled = true;
@@ -952,7 +988,12 @@ export function GridWorkspace({
         </div>
       </div>
 
-      <GridIntelligence feed={feed} analysis={feedAnalysis ?? null} />
+      <GridIntelligence
+        feed={feed}
+        analysis={feedAnalysis ?? null}
+        times={recommendedTimes}
+        timesSource={timesSource}
+      />
 
       {editOpen && (
         <Modal title="Edit profile" onClose={() => setEditOpen(false)}>
@@ -1554,16 +1595,23 @@ function Column({
   );
 }
 
-/** Recommended posting windows (general best-practice, not per-account analytics). */
-const RECOMMENDED_TIMES = ["Tue 7pm", "Thu 6pm", "Sun 11am"];
+/** General best-practice windows — shown only until real audience data loads. */
+const GENERAL_TIMES = ["Tue 7pm", "Thu 6pm", "Sun 11am"];
 
 function GridIntelligence({
   feed,
   analysis,
+  times,
+  timesSource,
 }: {
   feed: { harmony: number; palette: string[]; total: number };
   analysis: FeedAnalysis | null;
+  times: string[];
+  timesSource: "audience" | "general";
 }) {
+  // Real audience-online windows when we have them; general practice otherwise.
+  const shownTimes = times.length > 0 ? times : GENERAL_TIMES;
+  const timesAreReal = times.length > 0 && timesSource === "audience";
   // Prefer the LIVE analysis (real feed colours) when the account's connected.
   const live = Boolean(analysis && analysis.posts > 0);
   const harmony = live ? analysis!.liveHarmony : feed.harmony;
@@ -1652,7 +1700,7 @@ function GridIntelligence({
             <CalendarClock className="h-3.5 w-3.5" /> Recommended times
           </p>
           <div className="flex flex-wrap gap-2">
-            {RECOMMENDED_TIMES.map((t) => (
+            {shownTimes.map((t) => (
               <span
                 key={t}
                 className="rounded-full bg-oxblood/10 px-3 py-1 text-xs font-medium text-oxblood"
@@ -1661,6 +1709,11 @@ function GridIntelligence({
               </span>
             ))}
           </div>
+          <p className="mt-2 text-[11px] text-ink/55">
+            {timesAreReal
+              ? "When your followers are most active — from Instagram."
+              : "General best-practice windows."}
+          </p>
         </div>
       </div>
     </section>
