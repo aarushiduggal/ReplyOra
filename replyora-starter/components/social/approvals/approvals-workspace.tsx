@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, MessageSquareWarning, Send } from "lucide-react";
 
@@ -37,10 +37,21 @@ export function ApprovalsWorkspace({
   const [copied, setCopied] = useState(false);
   const [, startTransition] = useTransition();
 
-  const pending = posts.filter((p) => approvals[p.id] === "pending");
-  const approved = posts.filter((p) => approvals[p.id] === "approved");
-  const changes = posts.filter((p) => approvals[p.id] === "changes");
-  const notSent = posts.filter((p) => !approvals[p.id]);
+  // Optimistic layer over the server-provided statuses so a card jumps to its
+  // new column the instant you click — the server action + refresh reconciles
+  // underneath. Reverts automatically if the action fails.
+  const [optimisticApprovals, patchApproval] = useOptimistic(
+    approvals,
+    (state, patch: { id: string; status: ApprovalStatus }) => ({
+      ...state,
+      [patch.id]: patch.status,
+    }),
+  );
+
+  const pending = posts.filter((p) => optimisticApprovals[p.id] === "pending");
+  const approved = posts.filter((p) => optimisticApprovals[p.id] === "approved");
+  const changes = posts.filter((p) => optimisticApprovals[p.id] === "changes");
+  const notSent = posts.filter((p) => !optimisticApprovals[p.id]);
 
   function copyLink() {
     navigator.clipboard?.writeText(portalUrl).then(() => {
@@ -51,8 +62,10 @@ export function ApprovalsWorkspace({
 
   function send(postId: string) {
     startTransition(async () => {
+      patchApproval({ id: postId, status: "pending" }); // move to Pending instantly
       await sendForReviewAction(clientId, postId);
       router.refresh();
+      toast({ title: `Sent to ${clientName} for review`, type: "success" });
     });
   }
 
