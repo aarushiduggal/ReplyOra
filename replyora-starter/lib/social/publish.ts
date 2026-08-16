@@ -326,14 +326,38 @@ async function publishTikTok(
     return { ok: false, error: "tiktok_requires_video" };
   }
   const token = conn.access_token!;
+  const auth = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json; charset=UTF-8",
+  };
+
+  // TikTok requires querying creator_info first: it tells us which privacy
+  // levels this creator/app may use. Un-audited (sandbox) apps only get
+  // SELF_ONLY; a public post attempt is rejected. So we pick PUBLIC when it's
+  // offered and fall back to whatever's allowed — this works pre- AND post-audit.
+  let privacy = "SELF_ONLY";
+  try {
+    const ci = await fetch(
+      "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+      { method: "POST", headers: auth },
+    );
+    const cj = (await ci.json()) as {
+      data?: { privacy_level_options?: string[] };
+      error?: { code?: string; message?: string };
+    };
+    const opts = cj.data?.privacy_level_options ?? [];
+    if (opts.length > 0) {
+      privacy = opts.includes("PUBLIC_TO_EVERYONE") ? "PUBLIC_TO_EVERYONE" : opts[0]!;
+    }
+  } catch {
+    // creator_info unreachable — proceed with the safe SELF_ONLY default.
+  }
+
   const res = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json; charset=UTF-8",
-    },
+    headers: auth,
     body: JSON.stringify({
-      post_info: { title: fullCaption(post).slice(0, 2200), privacy_level: "PUBLIC_TO_EVERYONE" },
+      post_info: { title: fullCaption(post).slice(0, 2200), privacy_level: privacy },
       source_info: { source: "PULL_FROM_URL", video_url: post.media_url },
     }),
   });
