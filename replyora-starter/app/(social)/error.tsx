@@ -27,6 +27,7 @@ export default function SocialError({
         >
           Try again
         </button>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API route, intentional full navigation to clear the session */}
         <a
           href="/api/auth/signout?callbackUrl=/login"
           className="rounded-full border border-stone/30 px-5 py-2.5 text-sm font-medium text-ink transition-all duration-150 active:scale-[0.97] hover:bg-white"
