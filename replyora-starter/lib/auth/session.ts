@@ -14,7 +14,10 @@ import type { User } from "@/lib/data/types";
 export async function getCurrentUser(): Promise<User> {
   if (USE_AUTHJS) {
     const { auth } = await import("@/auth");
-    const session = await auth();
+    // A corrupt or incompatible session cookie (e.g. left over from a failed
+    // OAuth attempt, or an older token) must NOT 500 the whole dashboard —
+    // .catch swallows the decode error and we treat it as signed-out.
+    const session = await auth().catch(() => null);
     if (!session?.user?.id) redirect("/login");
     return {
       id: session.user.id,
@@ -55,7 +58,8 @@ export async function getCurrentUser(): Promise<User> {
 export async function getCurrentWorkspaceId(): Promise<string> {
   if (USE_AUTHJS) {
     const { auth } = await import("@/auth");
-    const session = await auth();
+    // bad/incompatible session → sign in again, never 500
+    const session = await auth().catch(() => null);
     if (!session?.user?.id) redirect("/login");
 
     // Staff/owner "Enter as": a valid, signed impersonation cookie whose actor
@@ -77,11 +81,15 @@ export async function getCurrentWorkspaceId(): Promise<string> {
     // First request right after sign-up (or a transient Neon error in the jwt
     // callback) can leave the token without a workspace id. Resolve/create it
     // here instead of bouncing to /login — this is what makes sign-up land.
-    const { getOrCreateWorkspace } = await import("@/lib/auth/users");
-    return getOrCreateWorkspace(
-      session.user.id,
-      session.user.name ?? session.user.email ?? "My",
-    );
+    try {
+      const { getOrCreateWorkspace } = await import("@/lib/auth/users");
+      return await getOrCreateWorkspace(
+        session.user.id,
+        session.user.name ?? session.user.email ?? "My",
+      );
+    } catch {
+      redirect("/login"); // couldn't resolve a workspace → sign in again, never 500
+    }
   }
 
   if (!USE_SUPABASE) return DEMO_WORKSPACE.id;
