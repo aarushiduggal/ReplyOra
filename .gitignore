@@ -1,0 +1,27 @@
+# Repo-root ignores. The Next.js app has its own .gitignore in replyora-starter/.
+
+# macOS clutter — these were being tracked, which is why they kept showing up
+# as "changed files" every time Finder touched a folder.
+.DS_Store
+**/.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Photo shoots and raw source imagery.
+# These are large binaries that git handles badly (every edit stores a whole new
+# copy) and they are not needed to build or deploy the site. Photos that the site
+# actually uses live in replyora-starter/public/marketing/ and ARE tracked.
+REPLYORA - YOUNNIS/
+photos/
+highlights cover/
+Posts - Week of */
+*.JPG
+*.jpeg
+
+# Local editor/tooling config that points at machine-specific paths.
+.claude/launch.json
+
+# Office lock files
+.~lock.*
+~$*
