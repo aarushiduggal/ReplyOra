@@ -66,10 +66,14 @@ export default async function ClientsPage() {
           {/* Client roster */}
           <div className="mt-12 border-t border-ink/10">
           {clients.map((c) => {
-            const initial = c.name.trim().charAt(0).toUpperCase() || "?";
+            // Null-safe: a client with a missing/empty name must never crash the
+            // whole roster (a broken record from a delete can leave name NULL).
+            const safeName = (c.name ?? "").trim() || "Untitled client";
+            const pillarCount = c.pillarCount ?? 0;
+            const initial = safeName.charAt(0).toUpperCase() || "?";
             const pillars =
-              c.pillarCount > 0
-                ? `${c.pillarCount} pillar${c.pillarCount === 1 ? "" : "s"}`
+              pillarCount > 0
+                ? `${pillarCount} pillar${pillarCount === 1 ? "" : "s"}`
                 : "No pillars yet";
             return (
               <div
@@ -82,7 +86,7 @@ export default async function ClientsPage() {
                   </span>
                   <div>
                     <p className="font-display text-2xl text-ink transition-colors group-hover:text-oxblood">
-                      {c.name}
+                      {safeName}
                     </p>
                     <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
                       {pillars}
@@ -90,8 +94,8 @@ export default async function ClientsPage() {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <DeleteClientButton clientId={c.id} clientName={c.name} />
-                  <Link href={`/clients/${c.id}`} aria-label={`Open ${c.name}`}>
+                  <DeleteClientButton clientId={c.id} clientName={safeName} />
+                  <Link href={`/clients/${c.id}`} aria-label={`Open ${safeName}`}>
                     <ArrowRight className="h-4 w-4 text-ink/60 transition-all group-hover:translate-x-1 group-hover:text-oxblood" />
                   </Link>
                 </div>
