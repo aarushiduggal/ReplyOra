@@ -1,4 +1,6 @@
-import { HeroStack } from "@/components/marketing/social/hero-stack";
+// Editorial-split hero. To revert to the fanned card stack, swap this import
+// and the <HeroSplit /> below back to HeroStack — hero-stack.tsx is untouched.
+import { HeroSplit } from "@/components/marketing/social/hero-split";
 import { PlatformMarquee } from "@/components/marketing/social/platform-marquee";
 import { TwoProducts } from "@/components/marketing/social/two-products";
 import { MeetFounder } from "@/components/marketing/social/meet-founder";
@@ -11,7 +13,7 @@ export default function LandingPage() {
   // the porcelain base, the CTA keeps its ink ground.
   return (
     <>
-      <HeroStack />
+      <HeroSplit />
 
       <PlatformMarquee />
 
