@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, ChevronRight, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 
@@ -19,15 +19,24 @@ export function TasksWorkspace({ tasks }: { tasks: AgencyTask[] }) {
   const [completedOpen, setCompletedOpen] = useState(false);
   const [, startTransition] = useTransition();
 
-  const todo = tasks.filter((t) => t.status === "todo");
-  const inProgress = tasks.filter((t) => t.status === "in_progress");
-  const done = tasks.filter((t) => t.status === "done");
+  // Optimistic layer so a dropped card lands in its new column immediately,
+  // instead of snapping back until the server round-trip + refresh returns.
+  const [optimisticTasks, moveOptimistic] = useOptimistic(
+    tasks,
+    (state, patch: { id: string; status: TaskStatus }) =>
+      state.map((t) => (t.id === patch.id ? { ...t, status: patch.status } : t)),
+  );
+
+  const todo = optimisticTasks.filter((t) => t.status === "todo");
+  const inProgress = optimisticTasks.filter((t) => t.status === "in_progress");
+  const done = optimisticTasks.filter((t) => t.status === "done");
 
   function drop(status: TaskStatus) {
     if (!dragId) return;
     const id = dragId;
     setDragId(null);
     startTransition(async () => {
+      moveOptimistic({ id, status }); // land in the new column instantly
       await moveTaskAction(id, status);
       router.refresh();
     });

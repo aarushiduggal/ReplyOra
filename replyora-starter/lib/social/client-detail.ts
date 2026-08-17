@@ -462,14 +462,24 @@ export async function savePillars(
   `) as unknown[];
   if (owns.length === 0) return;
   await sql()`DELETE FROM pillars WHERE client_id = ${clientId}`;
-  for (const p of pillars) {
-    const name = p.name.trim();
-    if (!name) continue;
-    await sql()`
-      INSERT INTO pillars (id, client_id, name, colour)
-      VALUES (${genId("pil")}, ${clientId}, ${name}, ${p.colour ?? null})
-    `;
-  }
+
+  // One multi-row insert instead of a query per pillar.
+  const clean = pillars
+    .map((p) => ({ name: p.name.trim(), colour: p.colour ?? null }))
+    .filter((p) => p.name);
+  if (clean.length === 0) return;
+  const ids = clean.map(() => genId("pil"));
+  const names = clean.map((p) => p.name);
+  const colours = clean.map((p) => p.colour);
+  await sql()`
+    INSERT INTO pillars (id, client_id, name, colour)
+    SELECT * FROM unnest(
+      ${ids}::text[],
+      ${clean.map(() => clientId)}::text[],
+      ${names}::text[],
+      ${colours}::text[]
+    )
+  `;
 }
 
 /** Create a client-portal invite; returns the shareable link path. */
