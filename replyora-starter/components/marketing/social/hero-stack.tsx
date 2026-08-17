@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 
@@ -29,6 +37,12 @@ type Card = {
   /** optional crop controls */
   bgSize?: string;
   pos?: string;
+  /**
+   * Parallax depth, 0–1. Higher = nearer the viewer, so it travels further on
+   * scroll and leans further with the cursor. The centre card sits on top, so
+   * it gets the most movement — that's what reads as depth rather than drift.
+   */
+  depth: number;
 };
 
 const CARDS: Card[] = [
@@ -46,6 +60,7 @@ const CARDS: Card[] = [
     floatDur: 7,
     floatY: 10,
     pos: "top",
+    depth: 0.5,
   },
   {
     src: "hero-center.png",
@@ -58,6 +73,7 @@ const CARDS: Card[] = [
     delay: 0.24,
     floatDur: 6,
     floatY: 14,
+    depth: 1,
   },
   {
     src: "brand-1.jpg",
@@ -73,6 +89,7 @@ const CARDS: Card[] = [
     // zoom + bottom-align to crop the second hand off the top (keeps the bag)
     bgSize: "112%",
     pos: "center bottom",
+    depth: 0.55,
   },
 ];
 
@@ -80,11 +97,26 @@ function StackCard({
   card,
   separated,
   reduce,
+  progress,
+  tiltX,
+  tiltY,
 }: {
   card: Card;
   separated: boolean;
   reduce: boolean;
+  /** 0 → 1 as the stage travels through the viewport. */
+  progress: MotionValue<number>;
+  tiltX: MotionValue<number>;
+  tiltY: MotionValue<number>;
 }) {
+  // Scroll parallax: nearer cards travel further and straighten as they go, so
+  // the fan closes gently instead of the whole group sliding as one flat sheet.
+  const driftY = useTransform(progress, [0, 1], [0, -150 * card.depth]);
+  const straighten = useTransform(progress, [0, 1], [0, -card.rotate * 0.75]);
+  // Cursor lean, scaled by depth for the same reason.
+  const leanY = useTransform(tiltX, (v) => v * 7 * card.depth);
+  const leanX = useTransform(tiltY, (v) => -v * 5 * card.depth);
+
   return (
     <motion.div
       className="absolute aspect-[3/4]"
@@ -107,25 +139,57 @@ function StackCard({
       }
       transition={{ type: "spring", stiffness: 190, damping: 20, delay: card.delay }}
     >
+      {/*
+        Middle layer owns scroll parallax + cursor lean. It's separate from the
+        entrance spring above and the float below, because all three animate
+        transforms — sharing one element would make them fight.
+      */}
       <motion.div
-        className="h-full w-full overflow-hidden rounded-[1.5rem] border-[6px] border-cream bg-oat shadow-2xl shadow-oxblood/20 ring-1 ring-oxblood/10"
-        style={{
-          backgroundImage: `url(/marketing/${card.src}), linear-gradient(150deg,#5C1A1A,#B26B62)`,
-          backgroundSize: card.bgSize ?? "cover",
-          backgroundPosition: card.pos ?? "center",
-        }}
-        animate={reduce ? undefined : { y: [0, -card.floatY, 0] }}
-        transition={
+        className="h-full w-full"
+        style={
           reduce
             ? undefined
             : {
-                duration: card.floatDur,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1.8,
+                y: driftY,
+                rotate: straighten,
+                rotateX: leanX,
+                rotateY: leanY,
+                transformPerspective: 1200,
               }
         }
-      />
+      >
+        <motion.div
+          className="h-full w-full cursor-pointer overflow-hidden rounded-[1.5rem] border-[6px] border-cream bg-oat shadow-2xl shadow-oxblood/20 ring-1 ring-oxblood/10"
+          style={{
+            backgroundImage: `url(/marketing/${card.src}), linear-gradient(150deg,#5C1A1A,#B26B62)`,
+            backgroundSize: card.bgSize ?? "cover",
+            backgroundPosition: card.pos ?? "center",
+          }}
+          animate={reduce ? undefined : { y: [0, -card.floatY, 0] }}
+          transition={
+            reduce
+              ? undefined
+              : {
+                  duration: card.floatDur,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1.8,
+                }
+          }
+          // Hover: the card steps forward and squares up, as if picked off the
+          // pile. Shadow deepens so it reads as lifted rather than just bigger.
+          whileHover={
+            reduce
+              ? undefined
+              : {
+                  scale: 1.05,
+                  rotate: -card.rotate * 0.6,
+                  boxShadow: "0 40px 80px -20px rgba(92,26,26,0.45)",
+                  transition: { type: "spring", stiffness: 260, damping: 18 },
+                }
+          }
+        />
+      </motion.div>
     </motion.div>
   );
 }
@@ -133,12 +197,37 @@ function StackCard({
 export function HeroStack() {
   const reduce = useReducedMotion() ?? false;
   const [separated, setSeparated] = useState(reduce);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (reduce) return;
     const t = setTimeout(() => setSeparated(true), 1400);
     return () => clearTimeout(t);
   }, [reduce]);
+
+  // Progress of the stage through the viewport, driving the card parallax.
+  const { scrollYProgress } = useScroll({
+    target: stageRef,
+    offset: ["start 80%", "end start"],
+  });
+
+  // Cursor position as -1…1 on each axis, spring-smoothed so the lean glides
+  // rather than snapping to every mouse sample.
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const tiltX = useSpring(rawX, { stiffness: 120, damping: 20, mass: 0.4 });
+  const tiltY = useSpring(rawY, { stiffness: 120, damping: 20, mass: 0.4 });
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    rawX.set(((e.clientX - r.left) / r.width) * 2 - 1);
+    rawY.set(((e.clientY - r.top) / r.height) * 2 - 1);
+  }
+  function onPointerLeave() {
+    rawX.set(0);
+    rawY.set(0);
+  }
 
   return (
     <section className="relative overflow-hidden bg-cream">
@@ -195,7 +284,12 @@ export function HeroStack() {
         </motion.div>
 
         {/* Stage: big scrolling wordmark + card stack that fans out */}
-        <div className="relative mt-12 h-[26rem] sm:h-[32rem]">
+        <div
+          ref={stageRef}
+          onPointerMove={onPointerMove}
+          onPointerLeave={onPointerLeave}
+          className="relative mt-12 h-[26rem] sm:h-[32rem]"
+        >
           <div className="pointer-events-none absolute left-1/2 top-1/2 w-screen max-w-none -translate-x-1/2 -translate-y-1/2 overflow-hidden">
             <motion.div
               className="flex whitespace-nowrap"
@@ -222,6 +316,9 @@ export function HeroStack() {
                 card={card}
                 separated={separated}
                 reduce={reduce}
+                progress={scrollYProgress}
+                tiltX={tiltX}
+                tiltY={tiltY}
               />
             ))}
 

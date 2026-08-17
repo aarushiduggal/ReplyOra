@@ -14,6 +14,27 @@ import type { Platform } from "./types";
  *   GeneratedPost[] shape. Nothing else changes.
  */
 
+/**
+ * Voice controls. These matter most when batching a month: without them a
+ * dozen captions generated in one pass all sound like the same sentence.
+ */
+export type Tone = "warm" | "expert" | "playful" | "direct" | "luxe";
+export type CaptionLength = "short" | "medium" | "long";
+
+export const TONES: { value: Tone; label: string; hint: string }[] = [
+  { value: "warm", label: "Warm", hint: "friendly, human, a little soft" },
+  { value: "expert", label: "Expert", hint: "calm authority, informative" },
+  { value: "playful", label: "Playful", hint: "light, cheeky, emoji-forward" },
+  { value: "direct", label: "Direct", hint: "short sentences, no fluff" },
+  { value: "luxe", label: "Luxe", hint: "editorial, understated, premium" },
+];
+
+export const CAPTION_LENGTHS: { value: CaptionLength; label: string }[] = [
+  { value: "short", label: "Short · 1–2 lines" },
+  { value: "medium", label: "Medium · 2–4 lines" },
+  { value: "long", label: "Long · 4–6 lines" },
+];
+
 export interface GenerateInput {
   businessName: string;
   industry: string;
@@ -22,6 +43,19 @@ export interface GenerateInput {
   topic: string;
   /** How many variations to return (default 3). */
   count?: number;
+  /** Voice controls — all optional so every existing caller keeps working. */
+  tone?: Tone;
+  length?: CaptionLength;
+  /** How many hashtags to return (default 6). */
+  hashtagCount?: number;
+  /** Free-text brand voice notes for this client, fed straight to the model. */
+  voiceNotes?: string;
+  /**
+   * Shifts which template lines this batch starts from. Without it, every
+   * pillar in a month batch begins at the same index and so opens with the
+   * identical body line — very obvious across 13 posts.
+   */
+  variantOffset?: number;
 }
 
 export interface GeneratedPost {
@@ -50,7 +84,7 @@ function buildHashtags(input: GenerateInput): string[] {
   const platformTag =
     input.platform === "instagram" ? "instagood" : "fyp";
   const set = Array.from(new Set([...base, platformTag]));
-  return set.slice(0, 6).map((t) => `#${t}`);
+  return set.slice(0, input.hashtagCount ?? 6).map((t) => `#${t}`);
 }
 
 /**
@@ -89,13 +123,39 @@ const HOOKS: Record<string, string[]> = {
   ],
 };
 
-/** Body lines that carry the value. */
-const BODIES: string[] = [
-  "At {name}, we make {topic} simple, calm, and genuinely worth your time.",
-  "Our team takes the stress out of {topic} so you can just show up and feel looked after.",
-  "We've helped so many locals with {topic} — and we'd love to help you next.",
-  "No jargon, no pressure — just {topic} done properly by people who care.",
-];
+/** Body lines that carry the value, per tone. */
+const TONE_BODIES: Record<Tone, string[]> = {
+  warm: [
+    "At {name}, we make {topic} simple, calm, and genuinely worth your time.",
+    "Our team takes the stress out of {topic} so you can just show up and feel looked after.",
+    "We've helped so many locals with {topic} — and we'd love to help you next.",
+    "No jargon, no pressure — just {topic} done properly by people who care.",
+  ],
+  expert: [
+    "{topic} is worth getting right, and the details are where most people slip.",
+    "Here's how we approach {topic} at {name} — and why it holds up.",
+    "Years of {topic} have taught us what actually works, and what only sounds good.",
+    "We'd rather explain {topic} properly than sell you the short version.",
+  ],
+  playful: [
+    "{topic}? Consider it handled ✨",
+    "We may be a little obsessed with {topic}. No regrets.",
+    "Come for {topic}, stay because we're delightful. Obviously.",
+    "{name} does {topic} so you don't have to think about it again 🙌",
+  ],
+  direct: [
+    "{topic}, done properly. That's it.",
+    "You need {topic}. We do {topic}. Simple.",
+    "No fuss. No upsell. Just {topic}.",
+    "Book {topic} at {name}. We'll take it from there.",
+  ],
+  luxe: [
+    "{topic}, considered down to the last detail.",
+    "At {name}, {topic} is unhurried, precise, and quietly excellent.",
+    "There is a right way to do {topic}. This is it.",
+    "{topic} — refined, and worth the wait.",
+  ],
+};
 
 /** Calls-to-action by platform (tone differs). */
 const CTAS: Record<Platform, string[]> = {
@@ -130,14 +190,32 @@ export function generatePosts(input: GenerateInput): GeneratedPost[] {
   const topic = input.topic.trim() || "what we do";
   const hooks = HOOKS[input.pillar] ?? HOOKS.Educational!;
   const ctas = CTAS[input.platform];
+  const bodies = TONE_BODIES[input.tone ?? "warm"];
   const hashtags = buildHashtags(input);
+  const length = input.length ?? "medium";
+
+  const fill = (s: string) =>
+    s.replace("{topic}", topic).replace("{name}", name);
+
+  const offset = input.variantOffset ?? 0;
 
   const out: GeneratedPost[] = [];
   for (let i = 0; i < count; i++) {
-    const hook = pick(hooks, i).replace("{topic}", topic).replace("{name}", name);
-    const body = pick(BODIES, i + 1).replace("{topic}", topic).replace("{name}", name);
-    const cta = pick(ctas, i);
-    const caption = [hook, body, cta].map(clean).join("\n\n");
+    const n = i + offset;
+    const hook = fill(pick(hooks, n));
+    const cta = pick(ctas, n);
+
+    // Length controls how much sits between the hook and the call to action.
+    // The body index is offset differently from the hook so the two patterns
+    // don't march in lockstep across a long batch.
+    const middle =
+      length === "short"
+        ? []
+        : length === "long"
+          ? [fill(pick(bodies, n + 1)), fill(pick(bodies, n + 3))]
+          : [fill(pick(bodies, n + 1))];
+
+    const caption = [hook, ...middle, cta].map(clean).join("\n\n");
     out.push({ caption, hashtags });
   }
   return out;
@@ -158,10 +236,26 @@ export async function generatePostsSmart(
   if (!key) return generatePosts(input);
 
   const count = input.count ?? 3;
+  const tone = TONES.find((t) => t.value === (input.tone ?? "warm"));
+  const lines =
+    input.length === "short"
+      ? "1-2 short lines"
+      : input.length === "long"
+        ? "4-6 short lines"
+        : "2-4 short lines";
+  const tags = input.hashtagCount ?? 6;
+
   const prompt = `You are a senior social media copywriter for a business${input.industry ? ` in the ${input.industry} industry` : ""} called "${input.businessName || "the brand"}".
 Write ${count} distinct ${input.platform} captions about: ${input.topic || "the business"}.
-Content pillar: ${input.pillar}. Voice: warm, human, confident, never salesy or generic. Each caption is 2-4 short lines with an emoji or two and one clear call to action.
-Return ONLY valid JSON — an array of ${count} objects, each {"caption": string, "hashtags": string[]} with 5-8 relevant lowercase hashtags (each starting with #, no duplicates). No markdown, no commentary.`;
+Content pillar: ${input.pillar}.
+Voice: ${tone?.label ?? "Warm"} — ${tone?.hint ?? "friendly, human"}. Human and confident, never salesy or generic.
+Each caption is ${lines} with one clear call to action.${
+    input.voiceNotes?.trim()
+      ? `\nBrand voice notes to follow closely: ${input.voiceNotes.trim()}`
+      : ""
+  }
+Make the ${count} captions genuinely different from each other — vary the opening line, the structure and the angle. Do not reuse the same hook pattern twice.
+Return ONLY valid JSON — an array of ${count} objects, each {"caption": string, "hashtags": string[]} with ${tags} relevant lowercase hashtags (each starting with #, no duplicates). No markdown, no commentary.`;
 
   try {
     const res = await fetch(

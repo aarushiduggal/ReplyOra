@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, Sparkles, X } from "lucide-react";
+import { Check, Crop, ImagePlus, Sparkles, X } from "lucide-react";
 
 import type { Asset } from "@/lib/social/assets";
 import type { GeneratedPost } from "@/lib/social/generate";
@@ -22,7 +22,10 @@ import {
   saveDraftsAction,
 } from "@/app/(social)/clients/[id]/studio/actions";
 import { GuideTrigger } from "@/components/social/guide";
+import { ImageEditor } from "@/components/social/studio/image-editor";
+import { MonthBatch } from "@/components/social/studio/month-batch";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 interface Draft extends GeneratedPost {
   id: string;
@@ -52,32 +55,51 @@ export function StudioWorkspace({
   const [count, setCount] = useState(3);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [pickingFor, setPickingFor] = useState<string | null>(null); // draft id awaiting an image
+  const [editingFor, setEditingFor] = useState<string | null>(null); // draft id whose photo is being cropped
   const [genPending, startGen] = useTransition();
   const [savePending, startSave] = useTransition();
+  // "single" is the original one-topic flow; "month" batches and schedules a
+  // whole month. Kept side by side so neither path loses anything.
+  const [mode, setMode] = useState<"single" | "month">("single");
 
   function generate() {
     if (!topic.trim()) return;
     startGen(async () => {
-      const posts = await generateDraftsAction({
-        businessName: businessName || clientName,
-        industry: "",
-        platform,
-        pillar,
-        topic,
-        count,
-      });
-      // Pre-fill each new draft's image from the library in order (if any).
-      setDrafts(
-        posts.map((p, i) => ({
-          ...p,
-          id: `d${i}-${Date.now()}-${p.caption.length}`,
-          pillar,
+      // A failure here used to leave the transition unresolved, so the button
+      // stayed disabled forever with nothing explaining why. Always settle, and
+      // always say something.
+      try {
+        const posts = await generateDraftsAction({
+          businessName: businessName || clientName,
+          industry: "",
           platform,
-          format,
-          mediaUrl: assets[i]?.url ?? null,
-          selected: true,
-        })),
-      );
+          pillar,
+          topic,
+          count,
+        });
+        if (posts.length === 0) {
+          toast({ title: "No captions came back — try again.", type: "error" });
+          return;
+        }
+        // Pre-fill each new draft's image from the library in order (if any).
+        setDrafts(
+          posts.map((p, i) => ({
+            ...p,
+            id: `d${i}-${Date.now()}-${p.caption.length}`,
+            pillar,
+            platform,
+            format,
+            mediaUrl: assets[i]?.url ?? null,
+            selected: true,
+          })),
+        );
+      } catch {
+        toast({
+          title: "Couldn't generate those captions.",
+          body: "Please try again in a moment.",
+          type: "error",
+        });
+      }
     });
   }
 
@@ -89,24 +111,33 @@ export function StudioWorkspace({
     const chosen = drafts.filter((d) => d.selected);
     if (chosen.length === 0) return;
     startSave(async () => {
-      await saveDraftsAction(
-        clientId,
-        chosen.map((d) => ({
-          caption: d.caption,
-          hashtags: d.hashtags,
-          pillar: d.pillar,
-          platform: d.platform,
-          format: d.format,
-          mediaUrl: d.mediaUrl,
-        })),
-      );
-      setDrafts([]);
-      setTopic("");
-      router.refresh();
-      toast({
-        title: `${chosen.length} draft${chosen.length === 1 ? "" : "s"} saved to the grid`,
-        type: "success",
-      });
+      try {
+        await saveDraftsAction(
+          clientId,
+          chosen.map((d) => ({
+            caption: d.caption,
+            hashtags: d.hashtags,
+            pillar: d.pillar,
+            platform: d.platform,
+            format: d.format,
+            mediaUrl: d.mediaUrl,
+          })),
+        );
+        setDrafts([]);
+        setTopic("");
+        router.refresh();
+        toast({
+          title: `${chosen.length} draft${chosen.length === 1 ? "" : "s"} saved to the grid`,
+          type: "success",
+        });
+      } catch {
+        // Keep the drafts on screen so nothing the user wrote is lost.
+        toast({
+          title: "Couldn't save those drafts.",
+          body: "Your work is still here — please try again.",
+          type: "error",
+        });
+      }
     });
   }
 
@@ -124,10 +155,59 @@ export function StudioWorkspace({
         </div>
       </div>
       <p className="mb-4 text-[12px] font-medium text-ink/85">
-        Create a batch of posts for {clientName} — follow the steps: write a brief, generate
-        captions, attach photos, then save. They land on the Grid &amp; Calendar as drafts.
+        {mode === "single" ? (
+          <>
+            Create a batch of posts for {clientName} — follow the steps: write a brief, generate
+            captions, attach photos, then save. They land on the Grid &amp; Calendar as drafts.
+          </>
+        ) : (
+          <>
+            Plan and write a whole month for {clientName} in one pass — choose the
+            shape and the voice, review every caption, then schedule the lot.
+          </>
+        )}
       </p>
 
+      {/* Mode switch — one post at a time, or the whole month. */}
+      <div className="mb-6 inline-flex rounded-full border border-ink/15 p-1">
+        {(
+          [
+            ["single", "One post"],
+            ["month", "Whole month"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value)}
+            aria-pressed={mode === value}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors",
+              mode === value
+                ? "bg-ink text-porcelain"
+                : "text-ink/70 hover:text-ink",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "month" ? (
+        <MonthBatch clientId={clientId} businessName={businessName || clientName} />
+      ) : (
+        <SinglePost />
+      )}
+    </div>
+  );
+
+  /**
+   * The original one-topic flow, unchanged — extracted only so the mode switch
+   * can choose between it and the month batcher.
+   */
+  function SinglePost() {
+    return (
+      <>
       {/* Numbered step guide — highlights where you are */}
       <ol className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-2">
         {STEPS.map((label, i) => {
@@ -273,6 +353,17 @@ export function StudioWorkspace({
                           </button>
                           <button
                             type="button"
+                            onClick={() => {
+                              setEditingFor(editingFor === d.id ? null : d.id);
+                              setPickingFor(null);
+                            }}
+                            className="absolute left-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                            aria-label="Crop this photo"
+                          >
+                            <Crop className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setPickingFor(pickingFor === d.id ? null : d.id)}
                             className="absolute inset-x-0 bottom-0 bg-ink/60 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white"
                           >
@@ -305,6 +396,21 @@ export function StudioWorkspace({
                       </p>
                     </div>
                   </div>
+
+                  {/* Crop & compose the attached photo for this draft */}
+                  {editingFor === d.id && d.mediaUrl && (
+                    <div className="mt-3">
+                      <ImageEditor
+                        src={d.mediaUrl}
+                        clientId={clientId}
+                        onDone={(url) => {
+                          patchDraft(d.id, { mediaUrl: url });
+                          setEditingFor(null);
+                        }}
+                        onCancel={() => setEditingFor(null)}
+                      />
+                    </div>
+                  )}
 
                   {/* Inline asset picker for this draft */}
                   {pickingFor === d.id && (
@@ -344,8 +450,9 @@ export function StudioWorkspace({
           )}
         </div>
       </div>
-    </div>
-  );
+      </>
+    );
+  }
 }
 
 const inp =
