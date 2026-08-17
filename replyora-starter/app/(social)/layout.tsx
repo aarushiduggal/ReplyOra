@@ -31,12 +31,6 @@ export default async function SocialPortalLayout({
 }) {
   const user = await getCurrentUser();
 
-  // Clients power the global ⌘K command bar — they don't gate anything, so kick
-  // the query off now and let it run CONCURRENTLY with the billing/impersonation
-  // work below instead of stacking after it (shaves a DB round-trip off every
-  // dashboard navigation).
-  const clientsPromise = listClients().catch(() => []);
-
   let impersonatingName: string | null = null;
   let owner = false;
   let ownerAccountType: SocialPlan | null = null;
@@ -64,7 +58,8 @@ export default async function SocialPortalLayout({
     }
   }
 
-  const clients = (await clientsPromise).map((c) => ({
+  // Clients power the global ⌘K command bar (jump straight to any client).
+  const clients = (await listClients().catch(() => [])).map((c) => ({
     id: c.id,
     name: c.name,
   }));
