@@ -11,9 +11,34 @@ export const runtime = "nodejs";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
+// Best-effort in-memory rate limit per IP, mirroring /api/chat. This endpoint is
+// public and runs bcrypt (cost 10) on every accepted request, so an unthrottled
+// flood is both a CPU cost and a way to probe which emails exist via the 409.
+// Serverless instances are short-lived so this isn't a hard guarantee — it stops
+// a single caller hammering signup. ~5 attempts / minute.
+const RATE_HITS = new Map<string, number[]>();
+function rateLimited(key: string, max = 5, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const hits = (RATE_HITS.get(key) ?? []).filter((t) => now - t < windowMs);
+  hits.push(now);
+  RATE_HITS.set(key, hits);
+  return hits.length > max;
+}
+
 export async function POST(req: Request) {
   if (!USE_AUTHJS) {
     return NextResponse.json({ error: "not_enabled" }, { status: 400 });
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-nf-client-connection-ip") ||
+    "anon";
+  if (rateLimited(ip)) {
+    return NextResponse.json(
+      { error: "Too many attempts — please wait a minute and try again." },
+      { status: 429 },
+    );
   }
 
   let body: { email?: unknown; password?: unknown; name?: unknown };

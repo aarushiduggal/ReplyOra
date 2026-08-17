@@ -66,18 +66,30 @@ if (googleEnabled) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   trustHost: true,
-  pages: { signIn: "/login" },
+  // error MUST point at /login. Without it, any OAuth failure dead-ends on the
+  // bare Auth.js page ("There is a problem with the server configuration") —
+  // unbranded, unactionable, and alarming. /login renders the reason instead
+  // (see errorMessage() in components/auth/auth-form.tsx).
+  pages: { signIn: "/login", error: "/login" },
   providers,
   callbacks: {
     // Google users may not yet have a Neon row — create it and pin the id.
+    // A DB blip here must NOT surface as "Configuration": that reads as a
+    // broken app when it's a transient outage. Return a specific code instead.
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
+      if (account?.provider !== "google") return true;
+      if (!user.email) return "/login?error=NoGoogleEmail";
+      try {
         const dbUser = await upsertOAuthUser({
           email: user.email,
           name: user.name ?? null,
           image: user.image ?? null,
         });
         user.id = dbUser.id;
+      } catch (err) {
+        // Surfaces in the Netlify function log with the real cause.
+        console.error("[auth] google sign-in: upsertOAuthUser failed", err);
+        return "/login?error=StoreUnavailable";
       }
       return true;
     },

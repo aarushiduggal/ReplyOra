@@ -1,6 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+
+/**
+ * Sign-in pages must never rank. Google had indexed /login and was showing it
+ * with long-superseded copy ("the done-for-you social media platform"), which
+ * competed with the real homepage result. noindex drops both /login and /signup
+ * from search; `follow` still lets crawlers pass through the links.
+ *
+ * Deliberately NOT a robots.txt Disallow — a blocked page can still surface as
+ * a bare URL, and Google must be able to fetch the page to see this directive.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+};
 
 export default function AuthLayout({
   children,

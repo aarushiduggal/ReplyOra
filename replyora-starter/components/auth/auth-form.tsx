@@ -32,6 +32,35 @@ const SIGNUP_PLANS: { slug: SignupPlan; name: string; price: number }[] = [
 ];
 
 /**
+ * Turn an Auth.js / callback error code into something a customer can act on.
+ * Auth.js codes are internal jargon ("Configuration", "OAuthCallback") — showing
+ * them raw looks broken, so anything unrecognised falls back to plain guidance.
+ */
+function errorMessage(code: string): string {
+  switch (code) {
+    case "auth":
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "Configuration":
+      return "We couldn't complete that sign-in. Please try again — if it keeps happening, sign in with your email and password.";
+    case "StoreUnavailable":
+      return "We couldn't reach your account just now. Please try again in a moment.";
+    case "NoGoogleEmail":
+      return "That Google account didn't share an email address, so we can't sign you in with it. Please use your email and password.";
+    case "AccessDenied":
+      return "Google sign-in was cancelled or declined. Please try again.";
+    case "OAuthAccountNotLinked":
+      return "That email already has an account. Please log in with your email and password.";
+    case "CredentialsSignin":
+      return "Wrong email or password.";
+    case "SessionRequired":
+      return "Please log in to continue.";
+    default:
+      return "Sign-in failed. Please try again.";
+  }
+}
+
+/**
  * Auth form.
  * LIVE: real Supabase — email/password + Google OAuth (redirects via
  * NEXT_PUBLIC_APP_URL/auth/callback). On first login the handle_new_user trigger
@@ -59,11 +88,19 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const showGoogle = socialMode ? HAS_GOOGLE_CLIENT : true;
   const showPlanSelector = isSignup && !socialMode;
 
-  // Surface any callback error (?error=...) and pre-select the plan (?plan=...).
+  // Surface any callback error (?error=... / ?authstale=1) and pre-select the
+  // plan (?plan=...). Never leave a bounce-back silent: landing on /login with
+  // no explanation is the worst possible sign-in experience.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
-    if (err) setError(err === "auth" ? "Sign-in failed. Please try again." : err);
+    if (params.get("authstale")) {
+      setError(
+        "That Google sign-in link had already been used or expired. Please try again.",
+      );
+    } else if (err) {
+      setError(errorMessage(err));
+    }
     const chosen = params.get("plan");
     if (chosen === "personal" || chosen === "agency") setPlan(chosen);
     // Social account-type intent (personal|studio|agency) from /pricing.

@@ -173,7 +173,7 @@ export function GridPlanner({
 
         <div className="mt-4 flex justify-center">
           <Button asChild size="sm" className="rounded-full">
-            <Link href="/dashboard/studio">
+            <Link href="/studio">
               <Plus className="h-4 w-4" /> New post
             </Link>
           </Button>
@@ -184,13 +184,15 @@ export function GridPlanner({
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/75">Assets</p>
-          <Link href="/dashboard/approvals" className="text-[11px] font-medium uppercase tracking-widest text-oxblood">
+          {/* Approvals are per-client (/clients/[id]/approvals) — there is no
+              workspace-wide queue, so send them to the roster to pick a client. */}
+          <Link href="/clients" className="text-[11px] font-medium uppercase tracking-widest text-oxblood">
             Approval queue →
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button asChild variant="outline" size="sm" className="rounded-lg">
-            <Link href="/dashboard/assets"><Upload className="h-3.5 w-3.5" /> Upload assets</Link>
+            <Link href="/assets"><Upload className="h-3.5 w-3.5" /> Upload assets</Link>
           </Button>
           <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setQrOpen(true)}>
             <QrCode className="h-3.5 w-3.5" /> From phone

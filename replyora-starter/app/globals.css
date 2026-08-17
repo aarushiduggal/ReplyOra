@@ -15,7 +15,12 @@
   /* Canonical new palette */
   --brand-ink: #1a1a1a;
   --brand-charcoal: #3a3a38;
-  --brand-stone: #8c877e;
+  /* Stone darkened from the original #8c877e. As text it measured 3.14:1 on
+     porcelain — below the 4.5:1 WCAG AA needs — which failed every small
+     uppercase eyebrow label on the marketing site. #716d66 is the smallest
+     darkening that passes (4.5:1 on porcelain, 5.12:1 on white) and is visually
+     near-identical. Hairlines are unaffected: --border below is its own rgba. */
+  --brand-stone: #716d66;
   --brand-porcelain: #f3f0eb;
   --brand-sky: #e3ebf0;
   --brand-white: #ffffff;

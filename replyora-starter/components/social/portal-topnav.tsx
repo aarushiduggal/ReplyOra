@@ -15,10 +15,18 @@ export function PortalTopNav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-oxblood/10 bg-cream/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Logo variant="wordmark" href="/clients" height={22} priority />
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <span className="shrink-0">
+          <Logo variant="wordmark" href="/clients" height={22} priority />
+        </span>
 
-        <nav className="flex items-center gap-6 text-[11px] font-semibold uppercase tracking-[0.2em]">
+        {/*
+          The nav is its own horizontal scroller. Without this the links pushed
+          the header to 626px on a 375px screen, so every signed-in page scrolled
+          sideways and the wordmark collided with the first link. Scrolling the
+          nav (not the page) keeps the desktop layout byte-identical.
+        */}
+        <nav className="flex min-w-0 flex-1 items-center justify-start gap-4 overflow-x-auto whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-end sm:gap-6 [&::-webkit-scrollbar]:hidden">
           <button
             type="button"
             onClick={() =>
@@ -37,7 +45,7 @@ export function PortalTopNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "pb-1 transition-colors hover:font-bold",
+                  "shrink-0 pb-1 transition-colors hover:font-bold",
                   active
                     ? "text-oxblood underline decoration-oxblood underline-offset-[7px]"
                     : "text-ink/85 hover:text-oxblood",
@@ -50,7 +58,7 @@ export function PortalTopNav() {
           <button
             type="button"
             onClick={() => void signOut({ redirectTo: "/login" })}
-            className="pb-1 uppercase tracking-[0.2em] text-ink/85 transition-colors hover:font-bold hover:text-oxblood"
+            className="shrink-0 pb-1 uppercase tracking-[0.2em] text-ink/85 transition-colors hover:font-bold hover:text-oxblood"
           >
             Logout
           </button>
