@@ -1,44 +1,50 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Playfair_Display, Fraunces, Archivo, Archivo_Black } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://replyora.net";
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
-// Editorial serif — used ONLY for the wordmark's italic "reply", so load the
-// italic style alone (drops the unused normal-style file).
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["italic"],
+// Fonts are SELF-HOSTED (app/fonts/*.woff2, Latin subset of the exact Google
+// files) rather than fetched from Google Fonts at build time — that build-time
+// fetch was rate-limited on the CI network and kept failing the deploy. Local
+// files remove the network dependency entirely; the build can never fail on
+// fonts again. Each family is a variable font, so one file covers its weights.
+
+// Editorial serif — used ONLY for the wordmark's italic "reply".
+const playfair = localFont({
+  src: [{ path: "./fonts/playfair-italic.woff2", weight: "500 600", style: "italic" }],
   variable: "--font-playfair",
   display: "swap",
+  fallback: ["Times New Roman", "serif"],
 });
 
 // Engaging display serif for headlines across the app.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+const fraunces = localFont({
+  src: [
+    { path: "./fonts/fraunces-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "./fonts/fraunces-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   variable: "--font-fraunces",
   display: "swap",
+  fallback: ["Times New Roman", "serif"],
 });
 
 // Body / UI.
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const archivo = localFont({
+  src: [{ path: "./fonts/archivo.woff2", weight: "400 500", style: "normal" }],
   variable: "--font-archivo",
   display: "swap",
+  fallback: ["Arial", "sans-serif"],
 });
 
 // Heavy: the wordmark's "ora.", eyebrows, buttons and labels.
-const archivoBlack = Archivo_Black({
-  subsets: ["latin"],
-  weight: "400",
+const archivoBlack = localFont({
+  src: [{ path: "./fonts/archivo-black.woff2", weight: "400", style: "normal" }],
   variable: "--font-archivo-black",
   display: "swap",
+  fallback: ["Arial", "sans-serif"],
 });
 
 const TITLE = "Replyora — Socials, simplified.";
