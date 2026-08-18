@@ -104,7 +104,7 @@ export function FeedGrid() {
     <section className="bg-cream">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 py-24 lg:grid-cols-[0.9fr_1.1fr]">
         <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             Your feed, built for you
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

@@ -36,7 +36,7 @@ export default function AboutPage() {
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 sm:py-24 md:grid-cols-[1fr_0.85fr]">
           <Reveal>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               Our story
             </p>
             <h1 className="mt-4 font-display text-5xl leading-[1.05] text-wine sm:text-6xl">
@@ -72,7 +72,7 @@ export default function AboutPage() {
       <section className="bg-cream">
         <div className="mx-auto max-w-3xl px-6 py-24">
           <Reveal>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               Why Replyora exists
             </p>
             <blockquote className="mt-5 font-display text-3xl leading-snug text-wine sm:text-4xl">
@@ -148,7 +148,7 @@ export default function AboutPage() {
       <section className="bg-cream">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               What we believe
             </p>
             <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

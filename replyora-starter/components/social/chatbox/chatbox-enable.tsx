@@ -36,7 +36,7 @@ export function ChatboxEnableCard({
           "Leads flow straight into the workspace",
         ].map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-rose" />
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-roseink" />
             {f}
           </li>
         ))}
@@ -95,7 +95,7 @@ export function ChatboxLiveBar({
         <button
           type="button"
           onClick={() => setConfirm(true)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-ink/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/75 hover:border-rose hover:text-rose"
+          className="inline-flex items-center gap-1.5 rounded-full border border-ink/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/75 hover:border-rose hover:text-roseink"
         >
           <Power className="h-3 w-3" /> Disable
         </button>

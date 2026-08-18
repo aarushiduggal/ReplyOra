@@ -14,7 +14,7 @@ export function MeetFounder() {
     <section className="bg-cream">
       <div className="mx-auto max-w-6xl px-6 py-12">
         <Reveal className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             The face behind it
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">
@@ -27,7 +27,7 @@ export function MeetFounder() {
             <p className="font-display text-2xl text-wine">
               Hello, <span className="italic">I&apos;m Aarushi.</span>
             </p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-rose">
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-roseink">
               Founder of Replyora
             </p>
 

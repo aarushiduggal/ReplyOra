@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 
 import { signIn as authjsSignIn } from "next-auth/react";
 
-import { createClient } from "@/lib/supabase/client";
 import {
   USE_SUPABASE,
   HAS_AUTHJS_CLIENT,
@@ -176,6 +175,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
 
+    // Loaded on demand: this deploy runs Auth.js, so the Supabase SDK must
+    // not sit in the initial bundle of our two conversion pages.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
 
     if (isSignup) {
@@ -231,6 +233,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       return;
     }
     if (isSignup) rememberPlan();
+    // Loaded on demand: this deploy runs Auth.js, so the Supabase SDK must
+    // not sit in the initial bundle of our two conversion pages.
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

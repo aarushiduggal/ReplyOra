@@ -128,7 +128,7 @@ export function AccountTypeChooser({
           ))}
         </div>
         {cycle === "yearly" && (
-          <span className="text-xs font-semibold uppercase tracking-widest text-rose">
+          <span className="text-xs font-semibold uppercase tracking-widest text-roseink">
             2 months free
           </span>
         )}

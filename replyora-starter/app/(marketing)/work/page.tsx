@@ -66,7 +66,7 @@ export default function WorkPage() {
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
           <Reveal className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               The work
             </p>
             <h1 className="mt-4 font-display text-5xl leading-[1.05] text-wine sm:text-6xl">
@@ -112,7 +112,7 @@ export default function WorkPage() {
       <section className="bg-cream">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               What we make
             </p>
             <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

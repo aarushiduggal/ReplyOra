@@ -305,7 +305,7 @@ function TaskCard({
         <button
           type="button"
           onClick={() => run(() => deleteTaskAction(task.id))}
-          className="text-ink/35 hover:text-rose"
+          className="text-ink/35 hover:text-roseink"
           aria-label="Delete task"
         >
           <Trash2 className="h-3.5 w-3.5" />

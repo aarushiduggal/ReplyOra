@@ -78,7 +78,7 @@ export function Funnel({
               <span className="text-muted-foreground">
                 {s.value.toLocaleString()}
                 {conv !== null && (
-                  <span className="ml-2 text-xs text-rose">{conv}%</span>
+                  <span className="ml-2 text-xs text-roseink">{conv}%</span>
                 )}
               </span>
             </div>

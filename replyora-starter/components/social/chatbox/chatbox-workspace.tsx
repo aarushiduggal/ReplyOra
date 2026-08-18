@@ -197,7 +197,7 @@ function TrainTab({
                       await deleteKnowledgeAction(clientId, k.id);
                       router.refresh();
                     }}
-                    className="text-ink/70 hover:text-rose"
+                    className="text-ink/70 hover:text-roseink"
                     aria-label="Remove source"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

@@ -60,7 +60,7 @@ export function DeleteClientButton({
         onClick={remove}
         disabled={pending}
         aria-label={`Delete ${clientName}`}
-        className="rounded-full p-2 text-ink/35 transition-colors hover:bg-rose/10 hover:text-rose disabled:opacity-50"
+        className="rounded-full p-2 text-ink/35 transition-colors hover:bg-rose/10 hover:text-roseink disabled:opacity-50"
       >
         <Trash2 className="h-4 w-4" />
       </button>

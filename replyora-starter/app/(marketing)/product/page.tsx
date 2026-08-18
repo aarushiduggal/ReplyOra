@@ -19,7 +19,7 @@ export default function ProductPage() {
       <section className="bg-cream">
         <div className="mx-auto max-w-4xl px-6 py-14 text-center sm:py-16">
           <Reveal>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
               The product
             </p>
             <h1 className="mx-auto mt-4 max-w-3xl font-display text-5xl leading-[1.04] text-wine sm:text-6xl">

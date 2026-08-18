@@ -56,7 +56,7 @@ export function Pricing() {
   return (
     <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-widest text-rose">
+        <p className="text-sm font-semibold uppercase tracking-widest text-roseink">
           Pricing
         </p>
         <h2 className="mt-3 font-display text-4xl text-oxblood">
@@ -142,7 +142,7 @@ export function Pricing() {
               <ul className="mt-6 flex-1 space-y-3 text-sm">
                 {features(plan).map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-rose" />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-roseink" />
                     <span className="text-ink/80">{f}</span>
                   </li>
                 ))}
@@ -266,7 +266,7 @@ function PlanMatrix() {
                 {row.values.map((v, i) => (
                   <td key={i} className="p-4 text-center">
                     {v === true ? (
-                      <Check className="mx-auto h-4 w-4 text-rose" />
+                      <Check className="mx-auto h-4 w-4 text-roseink" />
                     ) : v === false ? (
                       <Minus className="mx-auto h-4 w-4 text-ink/30" />
                     ) : (

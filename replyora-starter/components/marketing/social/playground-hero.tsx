@@ -119,7 +119,7 @@ export function PlaygroundHero() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-[1.05fr_1fr] lg:py-24">
         {/* Left — pitch + playground input */}
         <div>
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-rose">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-roseink">
             Social media management platform
             <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-rose" />
           </p>
@@ -129,7 +129,7 @@ export function PlaygroundHero() {
             <span key={rot} className="italic text-oxblood" style={{ animation: "fadeIn 0.5s ease" }}>
               {ROTATE[rot]}
             </span>
-            <span className="text-rose">.</span>
+            <span className="text-roseink">.</span>
           </h1>
 
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink/70">
@@ -175,21 +175,21 @@ export function PlaygroundHero() {
         <div className="flex flex-col gap-3">
           {/* Caption studio */}
           <div className="rounded-2xl border border-oxblood/10 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose">
+            <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-roseink">
               <Sparkles className="h-3.5 w-3.5" /> Caption studio · Instagram
             </div>
             <p className="min-h-[92px] whitespace-pre-line text-[13px] leading-relaxed text-ink">
               {typedCaption}
               <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-oxblood align-middle" />
             </p>
-            <p className="mt-2 text-[12px] font-medium text-rose">
+            <p className="mt-2 text-[12px] font-medium text-roseink">
               {tags.map((t) => `#${t}`).join(" ")}
             </p>
           </div>
 
           {/* Content calendar */}
           <div className="rounded-2xl border border-oxblood/10 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-roseink">
               <CalendarClock className="h-3.5 w-3.5" /> Scheduled this week
             </div>
             <div className="grid grid-cols-7 gap-1.5">

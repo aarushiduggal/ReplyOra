@@ -18,7 +18,7 @@ export function HeroEditorial() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.05fr_1fr] lg:py-24">
         {/* Left — statement */}
         <Reveal>
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-rose">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-roseink">
             Social media management platform
             <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-rose" />
           </p>

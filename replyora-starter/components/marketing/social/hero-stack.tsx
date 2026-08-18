@@ -239,7 +239,7 @@ export function HeroStack() {
           initial={reduce ? false : { opacity: 0, y: -22 }}
           animate={reduce ? undefined : { opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 320, damping: 16, delay: 0.05 }}
-          className="flex items-center justify-center gap-2 text-center text-xs font-semibold uppercase tracking-[0.28em] text-rose"
+          className="flex items-center justify-center gap-2 text-center text-xs font-semibold uppercase tracking-[0.28em] text-roseink"
         >
           Social media management platform
           <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-rose" />

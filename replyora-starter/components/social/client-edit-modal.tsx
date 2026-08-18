@@ -196,7 +196,7 @@ export function ClientEditModal({
                       router.push("/clients");
                     });
                   }}
-                  className="mt-3 rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 hover:border-rose hover:text-rose"
+                  className="mt-3 rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 hover:border-rose hover:text-roseink"
                 >
                   Delete client
                 </button>
@@ -402,7 +402,7 @@ function PillarsTab({
               value={n}
               onChange={(e) => setNames((p) => p.map((x, j) => (j === i ? e.target.value : x)))}
             />
-            <button type="button" onClick={() => setNames((p) => p.filter((_, j) => j !== i))} className="text-ink/40 hover:text-rose" aria-label="Remove">
+            <button type="button" onClick={() => setNames((p) => p.filter((_, j) => j !== i))} className="text-ink/40 hover:text-roseink" aria-label="Remove">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>

@@ -172,7 +172,7 @@ export function AgencyDetail({ agency }: { agency: AgencyDetail }) {
               <button
                 type="button"
                 onClick={cancelSubscription}
-                className="rounded-full border border-rose/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose transition-colors hover:bg-rose/5"
+                className="rounded-full border border-rose/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-roseink transition-colors hover:bg-rose/5"
               >
                 Cancel subscription (void fee)
               </button>

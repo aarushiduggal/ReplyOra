@@ -295,7 +295,7 @@ function Card({
           <button
             type="button"
             onClick={onDisconnect}
-            className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:border-rose hover:text-rose"
+            className="rounded-full border border-ink/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85 hover:border-rose hover:text-roseink"
           >
             Disconnect
           </button>

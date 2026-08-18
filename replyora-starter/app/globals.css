@@ -115,6 +115,13 @@
   --color-oxblood: var(--brand-oxblood);
   --color-wine: var(--brand-wine);
   --color-rose: var(--brand-rose);
+  /* Text-only companion to `rose`. `rose` is also used for 33 background
+     washes, so it can't simply be darkened — but as TEXT it measured 3.14:1 on
+     porcelain, below the 4.5:1 WCAG AA requires, and every small uppercase
+     eyebrow on the marketing site failed. #716d66 is the least-dark value that
+     passes (4.5:1 on porcelain, 5.12:1 on white). Use text-roseink for copy;
+     keep bg-rose for washes. */
+  --color-roseink: #716d66;
   --color-blush: var(--brand-blush);
   --color-oat: var(--brand-oat);
   --color-cream: var(--brand-cream);

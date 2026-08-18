@@ -56,7 +56,7 @@ export function FaqAccordion() {
     <section id="faq" className="scroll-mt-20 bg-cream">
       <div className="mx-auto max-w-3xl px-6 py-24">
         <Reveal className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             Good to know
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">
@@ -78,7 +78,7 @@ export function FaqAccordion() {
                   >
                     <span className="font-display text-lg text-wine">{f.q}</span>
                     <Plus
-                      className={`h-5 w-5 shrink-0 text-rose transition-transform duration-300 ${
+                      className={`h-5 w-5 shrink-0 text-roseink transition-transform duration-300 ${
                         isOpen ? "rotate-45" : ""
                       }`}
                       aria-hidden="true"

@@ -31,7 +31,7 @@ export function FounderNote() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             Why Replyora exists
           </p>
           <blockquote className="mt-4 font-display text-2xl leading-snug text-wine sm:text-3xl">

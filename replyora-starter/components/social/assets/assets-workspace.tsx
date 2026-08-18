@@ -194,7 +194,7 @@ export function AssetsWorkspace({
                 Connect storage · add R2 keys in Netlify to enable uploads
               </p>
             )}
-            {error && <p className="mt-1 text-[11px] font-medium text-rose">{error}</p>}
+            {error && <p className="mt-1 text-[11px] font-medium text-roseink">{error}</p>}
           </div>
 
           {assets.length === 0 ? (
@@ -271,7 +271,7 @@ function Section({
                     await deleteAssetAction(clientId, a.id);
                     onChange();
                   }}
-                  className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-ink/85 opacity-0 transition-opacity hover:text-rose group-hover:opacity-100"
+                  className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-ink/85 opacity-0 transition-opacity hover:text-roseink group-hover:opacity-100"
                   aria-label="Delete asset"
                 >
                   <Trash2 className="h-3 w-3" />

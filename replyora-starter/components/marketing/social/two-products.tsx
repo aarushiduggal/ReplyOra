@@ -69,7 +69,7 @@ export function TwoProducts() {
     <section className="bg-cream">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             Two products, one studio
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">
@@ -85,7 +85,7 @@ export function TwoProducts() {
           {/* Product 01 — the feed */}
           <Reveal className="h-full">
             <div className="flex h-full flex-col rounded-[2rem] border border-oxblood/10 bg-white p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-roseink">
                 01 · The feed
               </p>
               <h3 className="mt-2 font-display text-2xl text-wine">

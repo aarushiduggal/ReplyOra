@@ -14,7 +14,7 @@ export function BrandStrip() {
     <section className="bg-white">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <Reveal className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             The brand, in real life
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

@@ -105,7 +105,7 @@ export function SocialPricing() {
           ))}
         </div>
         {cycle === "yearly" && (
-          <p className="text-xs font-semibold uppercase tracking-widest text-rose">2 months free</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-roseink">2 months free</p>
         )}
       </div>
 
@@ -148,7 +148,7 @@ export function SocialPricing() {
               <ul className="mt-6 flex-1 space-y-2.5">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.featured ? "text-blush" : "text-rose"}`} />
+                    <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.featured ? "text-blush" : "text-roseink"}`} />
                     <span className={plan.featured ? "text-cream/90" : "text-ink/75"}>{f}</span>
                   </li>
                 ))}
@@ -163,7 +163,7 @@ export function SocialPricing() {
               {plan.key === "agency" && (
                 <a
                   href="mailto:hello.replyora@gmail.com?subject=More%20than%208%20clients"
-                  className={`mt-3 block text-center text-[11px] font-semibold uppercase tracking-[0.12em] ${plan.featured ? "text-cream/70" : "text-ink/50"} hover:text-rose`}
+                  className={`mt-3 block text-center text-[11px] font-semibold uppercase tracking-[0.12em] ${plan.featured ? "text-cream/70" : "text-ink/50"} hover:text-roseink`}
                 >
                   Need more than 8 clients? Contact us
                 </a>
@@ -181,7 +181,7 @@ export function SocialPricing() {
       {/* Full feature comparison — shown inline on the page */}
       <div className="mx-auto mt-16 max-w-4xl">
         <div className="mb-5 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose">( Compare plans )</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-roseink">( Compare plans )</p>
           <h2 className="mt-2 font-display text-3xl text-oxblood">Every feature, side by side</h2>
         </div>
 
@@ -196,7 +196,7 @@ export function SocialPricing() {
                   return (
                     <th key={p.key} className="px-2 pb-3 pt-1 text-center align-bottom">
                       <span
-                        className={`block text-[11px] font-semibold uppercase tracking-[0.14em] ${p.featured ? "text-rose" : "text-ink/70"}`}
+                        className={`block text-[11px] font-semibold uppercase tracking-[0.14em] ${p.featured ? "text-roseink" : "text-ink/70"}`}
                       >
                         {p.name}
                         {p.featured ? " ★" : ""}

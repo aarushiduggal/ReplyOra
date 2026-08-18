@@ -70,11 +70,11 @@ export function Paywall({
                 </p>
                 <ul className="mt-3 space-y-1.5 text-xs text-ink/80">
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-rose" />
+                    <Check className="h-3.5 w-3.5 text-roseink" />
                     {p.messagesPerMonth.toLocaleString()} messages/mo
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-rose" />~{p.kbPages} pages
+                    <Check className="h-3.5 w-3.5 text-roseink" />~{p.kbPages} pages
                     KB · {p.teamSeats} seats
                   </li>
                 </ul>

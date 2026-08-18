@@ -36,7 +36,7 @@ export default async function BrandsPage() {
 
         {/* heading */}
         <div className="mt-16">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-rose">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-roseink">
             ( Select a brand )
           </p>
           <h1 className="mt-3 font-display text-5xl text-oxblood">Your brands</h1>

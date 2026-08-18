@@ -165,7 +165,7 @@ export function FeatureShowcase() {
     <section id="features" className="scroll-mt-20 bg-white">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             One calm dashboard
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

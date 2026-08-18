@@ -15,7 +15,7 @@ export function BlogTimeline() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <div className="flex flex-col items-center text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
           Building in public
         </p>
         <h1 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

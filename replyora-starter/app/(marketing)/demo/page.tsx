@@ -18,7 +18,7 @@ export default function DemoPage() {
     <div className="mx-auto max-w-4xl px-6 py-16">
       <div className="grid gap-10 md:grid-cols-2">
         <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-widest text-rose">
+          <p className="text-sm font-semibold uppercase tracking-widest text-roseink">
             Book a demo
           </p>
           <h1 className="mt-3 font-display text-4xl text-oxblood">
@@ -32,7 +32,7 @@ export default function DemoPage() {
           <ul className="mt-6 space-y-3">
             {BENEFITS.map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-ink/80">
-                <CalendarCheck className="mt-0.5 h-4 w-4 shrink-0 text-rose" />
+                <CalendarCheck className="mt-0.5 h-4 w-4 shrink-0 text-roseink" />
                 {b}
               </li>
             ))}

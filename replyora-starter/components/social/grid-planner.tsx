@@ -106,7 +106,7 @@ export function GridPlanner({
           </Button>
         </div>
         <div className="rounded-xl border border-oxblood/10 bg-oat/20 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose">The plan</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-roseink">The plan</p>
           <p className="mt-1 text-xs text-ink/80">
             Arrange how the feed will look, then turn each tile into a scheduled
             post. Drag tiles to reorder.

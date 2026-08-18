@@ -215,7 +215,7 @@ function RowActions({
       <button
         type="button"
         onClick={remove}
-        className="text-ink/40 transition-colors hover:text-rose"
+        className="text-ink/40 transition-colors hover:text-roseink"
         aria-label="Delete invoice"
       >
         <Trash2 className="h-3.5 w-3.5" />
@@ -292,7 +292,7 @@ function NewInvoiceModal({
               <input value={it.description} onChange={(e) => setItem(idx, { description: e.target.value })} placeholder="Description" className="flex-1 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
               <input type="number" min={1} value={it.quantity} onChange={(e) => setItem(idx, { quantity: Number(e.target.value) })} className="w-14 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
               <input type="number" min={0} step="0.01" value={it.unitCents / 100} onChange={(e) => setItem(idx, { unitCents: Math.round(Number(e.target.value) * 100) })} placeholder="0.00" className="w-24 rounded-lg border border-oxblood/20 px-2 py-1.5 text-sm outline-none focus:border-oxblood" />
-              <button type="button" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))} className="text-ink/60 hover:text-rose" aria-label="Remove line"><Trash2 className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))} className="text-ink/60 hover:text-roseink" aria-label="Remove line"><Trash2 className="h-4 w-4" /></button>
             </div>
           ))}
           <button type="button" onClick={() => setItems((p) => [...p, { description: "", quantity: 1, unitCents: 0 }])} className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline">

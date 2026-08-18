@@ -454,7 +454,7 @@ export function ProductShowcase() {
     <section className="bg-cream">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-roseink">
             Two systems, one login
           </p>
           <h2 className="mt-3 font-display text-4xl text-oxblood sm:text-5xl">

@@ -1584,7 +1584,7 @@ function Column({
               onClick={() => unschedule(t.id)}
               disabled={pending}
               aria-label="Remove from schedule"
-              className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-rose/10 hover:text-rose disabled:opacity-50"
+              className="shrink-0 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-rose/10 hover:text-roseink disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" />
             </button>
