@@ -70,6 +70,25 @@ export async function getStudioOverview(): Promise<StudioOverview> {
 
   if (!hasDb()) return devOverview(clients, stats);
 
+  // The aggregate path is wrapped end-to-end. /clients is the landing screen
+  // for every signed-in user, and a previous session reverted this rewrite
+  // while chasing an authenticated render crash here — so however sound the
+  // queries look, this must never be the thing that takes the dashboard down.
+  // Any failure degrades to the per-client path instead of throwing.
+  try {
+    return await aggregateOverview(clients, nameById, stats);
+  } catch (err) {
+    console.error("[overview] aggregate path failed, falling back", err);
+    return devOverview(clients, stats);
+  }
+}
+
+async function aggregateOverview(
+  clients: { id: string; name: string }[],
+  nameById: Map<string, string>,
+  stats: OverviewStats,
+): Promise<StudioOverview> {
+
   const workspaceId = await getCurrentWorkspaceId();
   type CountRow = { status: string; n: number };
   type SumRow = { outstanding: number };
