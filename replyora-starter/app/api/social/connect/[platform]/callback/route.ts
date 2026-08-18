@@ -1,3 +1,4 @@
+import { verifyOAuthState } from "@/lib/social/oauth-state";
 import { NextResponse } from "next/server";
 
 import { HAS_META, HAS_INSTAGRAM_LOGIN, HAS_TIKTOK } from "@/lib/social/publish";
@@ -20,7 +21,10 @@ export async function GET(
   const { platform } = await params;
   const sp = new URL(req.url).searchParams;
   const code = sp.get("code");
-  const clientId = sp.get("state") ?? "";
+  // `state` is an HMAC of clientId + issue time (lib/social/oauth-state.ts), so
+  // a callback can only carry a clientId this server actually issued. An
+  // unsigned or expired value is treated as no client at all.
+  const clientId = verifyOAuthState(sp.get("state") ?? "") ?? "";
   const back = `${APP_URL}/clients/${clientId}/integrations`;
   if (!code || !clientId) {
     return NextResponse.redirect(`${back}?integration=error`);

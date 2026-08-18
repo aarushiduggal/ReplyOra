@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { ApprovalsWorkspace } from "@/components/social/approvals/approvals-workspace";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
@@ -22,6 +23,11 @@ export default async function ClientApprovalsPage({
     listClientPosts(id),
     getClientApprovals(id),
   ]);
+  // With a real database configured, an id that resolves to nothing is either
+  // another workspace's client or simply gone — either way it is not found, and
+  // rendering a placeholder shell for it was misleading. Local/mock dev has no
+  // DATABASE_URL, so the built-in demo client keeps working there.
+  if (!client && process.env.DATABASE_URL) notFound();
   const name = client?.name ?? sampleName(id);
 
   const approvals: Record<string, ApprovalStatus> = {};

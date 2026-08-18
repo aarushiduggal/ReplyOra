@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { InvoicesWorkspace } from "@/components/social/invoices/invoices-workspace";
 import { LockedSection } from "@/components/social/locked-section";
 import { clientName as sampleName } from "@/components/social/portal-nav";
@@ -18,6 +19,11 @@ export default async function ClientInvoicesPage({
     listClientInvoices(id),
     getWorkspaceBilling(),
   ]);
+  // With a real database configured, an id that resolves to nothing is either
+  // another workspace's client or simply gone — either way it is not found, and
+  // rendering a placeholder shell for it was misleading. Local/mock dev has no
+  // DATABASE_URL, so the built-in demo client keeps working there.
+  if (!client && process.env.DATABASE_URL) notFound();
   const name = client?.name ?? sampleName(id);
 
   // Client invoicing + branded PDF exports are on the Agency plan.

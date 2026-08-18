@@ -8,6 +8,7 @@ import {
   type PPPlatform,
 } from "@/lib/social/postpeer";
 import { getClient } from "@/lib/social/clients";
+import { makeOAuthState } from "@/lib/social/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -62,7 +63,7 @@ export async function GET(
         `&client_id=${process.env.INSTAGRAM_APP_ID}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=code&scope=${encodeURIComponent(scope)}` +
-        `&state=${encodeURIComponent(clientId)}`;
+        `&state=${encodeURIComponent(makeOAuthState(clientId))}`;
       return NextResponse.redirect(url);
     }
 
@@ -79,7 +80,7 @@ export async function GET(
     const url =
       `https://www.facebook.com/v21.0/dialog/oauth?client_id=${process.env.META_APP_ID}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${encodeURIComponent(clientId)}` +
+      `&state=${encodeURIComponent(makeOAuthState(clientId))}` +
       grant +
       `&response_type=code`;
     return NextResponse.redirect(url);
@@ -97,7 +98,7 @@ export async function GET(
     const url =
       `https://www.facebook.com/v21.0/dialog/oauth?client_id=${process.env.META_APP_ID}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${encodeURIComponent(clientId)}` +
+      `&state=${encodeURIComponent(makeOAuthState(clientId))}` +
       grant +
       `&response_type=code`;
     return NextResponse.redirect(url);
@@ -111,7 +112,7 @@ export async function GET(
       `https://www.tiktok.com/v2/auth/authorize/?client_key=${process.env.TIKTOK_CLIENT_KEY}` +
       `&scope=${encodeURIComponent(scope)}&response_type=code` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${encodeURIComponent(clientId)}`;
+      `&state=${encodeURIComponent(makeOAuthState(clientId))}`;
     return NextResponse.redirect(url);
   }
 

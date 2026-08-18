@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { IntegrationsWorkspace } from "@/components/social/integrations/integrations-workspace";
 import { clientName as sampleName } from "@/components/social/portal-nav";
 import { getClient } from "@/lib/social/clients";
@@ -28,6 +29,11 @@ export default async function ClientIntegrationsPage({
     getClient(id),
     listClientConnections(id),
   ]);
+  // With a real database configured, an id that resolves to nothing is either
+  // another workspace's client or simply gone — either way it is not found, and
+  // rendering a placeholder shell for it was misleading. Local/mock dev has no
+  // DATABASE_URL, so the built-in demo client keeps working there.
+  if (!client && process.env.DATABASE_URL) notFound();
   const name = client?.name ?? sampleName(id);
 
   // A platform is "connected" if it has a stored account (real) or the legacy
