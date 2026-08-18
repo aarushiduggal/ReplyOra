@@ -52,6 +52,19 @@ function sql() {
  * dozens of serverless calls. Falls back to the per-client path only in the
  * no-DB dev/memory mode.
  */
+/**
+ * Neon returns TIMESTAMPTZ columns as JavaScript Date objects, not strings —
+ * while the in-memory dev path supplies ISO strings. ActivityItem.at is typed
+ * as a string and later sorted with localeCompare, so an unconverted Date threw
+ * "localeCompare is not a function" and took the whole dashboard down for any
+ * workspace that had posts or invoices. Normalise at the boundary.
+ */
+function isoOf(v: unknown): string {
+  if (!v) return "";
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? "" : v.toISOString();
+  return String(v);
+}
+
 export async function getStudioOverview(): Promise<StudioOverview> {
   const clients = await listClients();
   // Normalise the name ONCE, here. A client row left with a NULL/empty name by a
@@ -92,8 +105,8 @@ async function aggregateOverview(
   const workspaceId = await getCurrentWorkspaceId();
   type CountRow = { status: string; n: number };
   type SumRow = { outstanding: number };
-  type PostRow = { client_id: string; status: string; scheduled_for: string | null; created_at: string | null };
-  type InvRow = { client_id: string; number: string; status: string; issued_at: string | null };
+  type PostRow = { client_id: string; status: string; scheduled_for: unknown; created_at: unknown };
+  type InvRow = { client_id: string; number: string; status: string; issued_at: unknown };
 
   const [postCounts, outstanding, pendingApprovals, recentPosts, recentInvoices] =
     await Promise.all([
@@ -140,13 +153,14 @@ async function aggregateOverview(
       : kind === "scheduled" ? "Scheduled a post for"
       : "Drafted a post for";
     const name = nameById.get(p.client_id) ?? "a client";
-    activity.push({ kind, text: `${verb} ${name}`, at: p.scheduled_for ?? p.created_at ?? "", clientId: p.client_id });
+    activity.push({ kind, text: `${verb} ${name}`, at: isoOf(p.scheduled_for ?? p.created_at), clientId: p.client_id });
   }
   for (const inv of recentInvoices as InvRow[]) {
     const name = nameById.get(inv.client_id) ?? "a client";
-    activity.push({ kind: "invoice", text: `Invoice ${inv.number} ${inv.status} · ${name}`, at: inv.issued_at ?? "", clientId: inv.client_id });
+    activity.push({ kind: "invoice", text: `Invoice ${inv.number} ${inv.status} · ${name}`, at: isoOf(inv.issued_at), clientId: inv.client_id });
   }
-  activity.sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
+  // String() so this can never throw again, whatever `at` turns out to be.
+  activity.sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
 
   return { stats, activity: activity.slice(0, 6) };
 }
@@ -191,6 +205,7 @@ async function devOverview(
       }
     }),
   );
-  activity.sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
+  // String() so this can never throw again, whatever `at` turns out to be.
+  activity.sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
   return { stats, activity: activity.slice(0, 6) };
 }
