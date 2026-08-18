@@ -124,6 +124,9 @@ export async function getPortalData(clientId: string): Promise<PortalData | null
     scheduledFor: r.scheduled_for ? new Date(r.scheduled_for).toISOString() : null,
     orderIndex: r.order_index ?? 0,
     createdAt: new Date(r.created_at).toISOString(),
+    mediaUrl: null,
+    mediaKind: null,
+    publishError: null,
   }));
 
   let apprRows: { post_id: string; status: string; agency_reply?: string | null }[];

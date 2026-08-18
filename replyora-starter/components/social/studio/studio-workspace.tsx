@@ -33,6 +33,9 @@ interface Draft extends GeneratedPost {
   platform: Platform;
   format: PostFormat;
   mediaUrl: string | null;
+  /** From the asset itself — publish.ts needs it to pick REELS vs image, and
+      TikTok refuses anything that isn't video. */
+  mediaKind: "image" | "video" | null;
   selected: boolean;
 }
 
@@ -90,6 +93,7 @@ export function StudioWorkspace({
             platform,
             format,
             mediaUrl: assets[i]?.url ?? null,
+            mediaKind: assets[i]?.kind ?? null,
             selected: true,
           })),
         );
@@ -121,6 +125,7 @@ export function StudioWorkspace({
             platform: d.platform,
             format: d.format,
             mediaUrl: d.mediaUrl,
+            mediaKind: d.mediaKind,
           })),
         );
         setDrafts([]);
@@ -345,7 +350,7 @@ export function StudioWorkspace({
                           <img src={d.mediaUrl} alt="" className="h-full w-full object-cover" />
                           <button
                             type="button"
-                            onClick={() => patchDraft(d.id, { mediaUrl: null })}
+                            onClick={() => patchDraft(d.id, { mediaUrl: null, mediaKind: null })}
                             className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
                             aria-label="Remove photo"
                           >
@@ -426,7 +431,7 @@ export function StudioWorkspace({
                               key={a.id}
                               type="button"
                               onClick={() => {
-                                patchDraft(d.id, { mediaUrl: a.url });
+                                patchDraft(d.id, { mediaUrl: a.url, mediaKind: a.kind });
                                 setPickingFor(null);
                               }}
                               className={`relative aspect-square overflow-hidden rounded-md border-2 ${d.mediaUrl === a.url ? "border-oxblood" : "border-transparent hover:border-oxblood/40"}`}

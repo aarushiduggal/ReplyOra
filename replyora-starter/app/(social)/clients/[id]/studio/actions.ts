@@ -167,6 +167,7 @@ export async function saveDraftsAction(
     platform: Platform;
     format?: PostFormat;
     mediaUrl?: string | null;
+    mediaKind?: "image" | "video" | null;
   }[],
 ): Promise<void> {
   for (const d of drafts) {
@@ -181,6 +182,7 @@ export async function saveDraftsAction(
       status: "draft",
       scheduledFor: null,
       mediaUrl: d.mediaUrl ?? null,
+      mediaKind: d.mediaKind ?? null,
     });
   }
   revalidatePath(`/clients/${clientId}/studio`);

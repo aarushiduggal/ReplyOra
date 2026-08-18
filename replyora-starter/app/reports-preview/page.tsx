@@ -45,6 +45,9 @@ function samplefeed(todayMs: number): ClientPost[] {
       scheduledFor: `${d}T10:00:00.000Z`,
       orderIndex: i,
       createdAt: `${d}T10:00:00.000Z`,
+      mediaUrl: null,
+      mediaKind: null,
+      publishError: null,
     } satisfies ClientPost;
   });
 }

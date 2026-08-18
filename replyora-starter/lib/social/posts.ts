@@ -27,6 +27,15 @@ export interface ClientPost {
   scheduledFor: string | null;
   orderIndex: number;
   createdAt: string;
+  /** Attached media, if any, and whether it is a video (TikTok requires video). */
+  mediaUrl: string | null;
+  mediaKind: "image" | "video" | null;
+  /**
+   * Why the last publish attempt failed, straight from the provider. Written by
+   * the publisher and previously never read — a failed post simply never went
+   * out and nobody was told. Surfaced in the calendar and approvals views.
+   */
+  publishError: string | null;
 }
 
 export interface NewClientPost {
@@ -40,6 +49,12 @@ export interface NewClientPost {
   format?: PostFormat;
   scheduledFor?: string | null;
   mediaUrl?: string | null;
+  /**
+   * "image" | "video". Must be stored: publish.ts gates TikTok on it and picks
+   * Instagram's REELS vs image endpoint from it. It was never written before,
+   * so it was NULL everywhere and TikTok publishing always failed.
+   */
+  mediaKind?: "image" | "video" | null;
 }
 
 const hasDb = (): boolean => Boolean(process.env.DATABASE_URL);
@@ -77,6 +92,9 @@ interface Row {
   scheduled_for: string | Date | null;
   order_index: number | null;
   created_at: string | Date;
+  media_url?: string | null;
+  media_kind?: string | null;
+  publish_error?: string | null;
 }
 
 function toPost(r: Row): ClientPost {
@@ -95,6 +113,10 @@ function toPost(r: Row): ClientPost {
       : null,
     orderIndex: r.order_index ?? 0,
     createdAt: new Date(r.created_at).toISOString(),
+    mediaUrl: r.media_url ?? null,
+    mediaKind:
+      r.media_kind === "video" ? "video" : r.media_kind === "image" ? "image" : null,
+    publishError: r.publish_error ?? null,
   };
 }
 
@@ -117,7 +139,8 @@ export async function listClientPosts(clientId: string): Promise<ClientPost[]> {
   try {
     rows = (await sql()`
       SELECT id, client_id, platform, pillar, topic, caption, hashtags,
-             status, format, scheduled_for, order_index, created_at
+             status, format, scheduled_for, order_index, created_at,
+             media_url, media_kind, publish_error
       FROM social_posts
       WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
       ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
@@ -126,7 +149,8 @@ export async function listClientPosts(clientId: string): Promise<ClientPost[]> {
     // 0010 (format column) not applied yet — read without it.
     rows = (await sql()`
       SELECT id, client_id, platform, pillar, topic, caption, hashtags,
-             status, scheduled_for, order_index, created_at
+             status, scheduled_for, order_index, created_at,
+             media_url, media_kind, publish_error
       FROM social_posts
       WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
       ORDER BY scheduled_for ASC NULLS LAST, order_index ASC, created_at DESC
@@ -152,6 +176,9 @@ export async function createClientPost(
     scheduledFor: input.scheduledFor ?? null,
     orderIndex: 0,
     createdAt: new Date().toISOString(),
+    mediaUrl: input.mediaUrl ?? null,
+    mediaKind: input.mediaKind ?? null,
+    publishError: null,
   };
   if (!hasDb()) {
     MEM.push({ ...post, workspaceId });
@@ -161,24 +188,26 @@ export async function createClientPost(
     await sql()`
       INSERT INTO social_posts
         (id, workspace_id, client_id, platform, pillar, topic, caption,
-         hashtags, status, format, scheduled_for, order_index, created_at, media_url)
+         hashtags, status, format, scheduled_for, order_index, created_at,
+         media_url, media_kind)
       VALUES
         (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
          ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
          ${post.status}, ${post.format}, ${post.scheduledFor}, ${post.orderIndex},
-         ${post.createdAt}, ${input.mediaUrl ?? null})
+         ${post.createdAt}, ${input.mediaUrl ?? null}, ${input.mediaKind ?? null})
     `;
   } catch {
     // 0010 (format column) not applied yet — insert without it.
     await sql()`
       INSERT INTO social_posts
         (id, workspace_id, client_id, platform, pillar, topic, caption,
-         hashtags, status, scheduled_for, order_index, created_at, media_url)
+         hashtags, status, scheduled_for, order_index, created_at,
+         media_url, media_kind)
       VALUES
         (${post.id}, ${workspaceId}, ${post.clientId}, ${post.platform},
          ${post.pillar}, ${post.topic}, ${post.caption}, ${post.hashtags},
          ${post.status}, ${post.scheduledFor}, ${post.orderIndex}, ${post.createdAt},
-         ${input.mediaUrl ?? null})
+         ${input.mediaUrl ?? null}, ${input.mediaKind ?? null})
     `;
   }
   return post;
@@ -201,7 +230,8 @@ export async function updateClientPost(
   }
   const rows = (await sql()`
     SELECT id, client_id, platform, pillar, topic, caption, hashtags,
-           status, scheduled_for, order_index, created_at
+           status, scheduled_for, order_index, created_at,
+           media_url, media_kind, publish_error
     FROM social_posts
     WHERE workspace_id = ${workspaceId} AND id = ${id}
     LIMIT 1

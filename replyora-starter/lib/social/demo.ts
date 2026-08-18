@@ -117,6 +117,9 @@ export function demoPosts(nowMs: number): ClientPost[] {
       scheduledFor: d,
       orderIndex: i,
       createdAt: d,
+      mediaUrl: null,
+      mediaKind: null,
+      publishError: null,
     };
   });
 }
