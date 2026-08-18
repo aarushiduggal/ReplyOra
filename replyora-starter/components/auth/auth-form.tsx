@@ -95,8 +95,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
     if (params.get("authstale")) {
+      // `from` records the path Google actually landed on. Shown so a failure
+      // reports where it went wrong instead of just "try again" forever.
+      const from = params.get("from");
       setError(
-        "That Google sign-in link had already been used or expired. Please try again.",
+        "That Google sign-in link had already been used or expired. Please try again." +
+          (from ? ` (came back to ${from})` : ""),
       );
     } else if (err) {
       setError(errorMessage(err));

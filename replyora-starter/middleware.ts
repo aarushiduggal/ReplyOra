@@ -12,14 +12,27 @@ export async function middleware(request: NextRequest) {
   // — which would render a signed-out dashboard page and 500. Detect that stray
   // callback anywhere other than /api/auth and bounce it to /login for a clean
   // retry instead of crashing the app.
+  // A signed-in visitor is NOT a stray callback. Auth.js can land you on the
+  // post-login destination with the OAuth params still on the URL, and bouncing
+  // that to /login threw away a session the user had just successfully created
+  // — which is exactly what made Google sign-in look permanently broken while
+  // email/password worked fine. If a session cookie is present, let it through.
+  const hasSession = Boolean(
+    request.cookies.get("__Secure-authjs.session-token") ??
+      request.cookies.get("authjs.session-token"),
+  );
+
   if (
+    !hasSession &&
     !pathname.startsWith("/api/auth") &&
     searchParams.get("code") &&
     (searchParams.get("iss") ?? "").includes("accounts.google.com")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = "?authstale=1";
+    // Carry the path it actually came from, so if this ever fires again we can
+    // see WHERE Google landed instead of guessing.
+    url.search = `?authstale=1&from=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);
   }
 
