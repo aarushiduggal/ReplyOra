@@ -184,6 +184,17 @@ export function MonthBatch({
               </Chip>
             ))}
           </div>
+          {/*
+            TikTok's API only accepts video. A month batched here has captions
+            but no media yet, so without this the posts would schedule happily
+            and then fail silently at publish time.
+          */}
+          {platform === "tiktok" && (
+            <p className="mt-2 rounded-lg border border-ink/15 bg-oat/50 px-3 py-2 text-[11px] leading-relaxed text-ink/80">
+              TikTok only publishes video. These captions will schedule fine, but
+              each post needs a video attached on the Grid before it can go out.
+            </p>
+          )}
         </Field>
 
         <Field label={`Content pillars (${pillars.length})`}>

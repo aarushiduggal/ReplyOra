@@ -200,7 +200,7 @@ async function publishViaPostPeer(post: PostRow): Promise<PublishOutcome> {
     body: JSON.stringify({
       content: fullCaption(post),
       mediaItems: [
-        { url: post.media_url, type: post.media_kind === "video" ? "video" : "image" },
+        { url: post.media_url, type: isVideoPost(post) ? "video" : "image" },
       ],
       platforms: [{ platform, accountId }],
       publishNow: true,
@@ -241,7 +241,7 @@ async function publishInstagram(
   const target = HAS_INSTAGRAM_LOGIN ? "me" : igUser;
 
   const caption = fullCaption(post);
-  const isVideo = post.media_kind === "video";
+  const isVideo = isVideoPost(post);
   const createParams = new URLSearchParams({ caption, access_token: token });
   if (isVideo) {
     createParams.set("media_type", "REELS");
@@ -290,7 +290,7 @@ async function publishFacebook(
   if (!pageId) return { ok: false, error: "no_fb_page" };
 
   const caption = fullCaption(post);
-  const isVideo = post.media_kind === "video";
+  const isVideo = isVideoPost(post);
   const endpoint = isVideo ? "videos" : "photos";
   const params = new URLSearchParams({ access_token: token, published: "true" });
   if (isVideo) {
@@ -317,13 +317,31 @@ async function publishFacebook(
   return { ok: true, externalId: id };
 }
 
+/**
+ * Whether a post's media is a video.
+ *
+ * social_posts.media_kind is read here but was NEVER written — createClientPost
+ * omits it entirely — so it is NULL for every post the app creates. That made
+ * publishTikTok's `media_kind !== "video"` guard reject 100% of TikTok posts,
+ * and made Instagram treat every video as a photo. Fall back to the file
+ * extension so existing rows work too; an explicit media_kind still wins.
+ */
+const VIDEO_EXT = /\.(mp4|mov|m4v|webm|avi|mkv)$/i;
+function isVideoPost(post: { media_kind: string | null; media_url: string | null }): boolean {
+  if (post.media_kind) return post.media_kind === "video";
+  const path = (post.media_url ?? "").split("?")[0] ?? "";
+  return VIDEO_EXT.test(path);
+}
+
 /** TikTok Content Posting API: direct-post a video by pulling the media URL. */
 async function publishTikTok(
   conn: ConnRow,
   post: PostRow,
 ): Promise<PublishOutcome> {
-  if (post.media_kind !== "video") {
-    return { ok: false, error: "tiktok_requires_video" };
+  if (!isVideoPost(post)) {
+    // TikTok only accepts video. Reported verbatim so the reason is visible
+    // rather than a post silently never going out.
+    return { ok: false, error: "TikTok posts must have a video attached" };
   }
   const token = conn.access_token!;
   const auth = {
