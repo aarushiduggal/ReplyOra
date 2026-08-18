@@ -22,11 +22,26 @@ export async function middleware(request: NextRequest) {
       request.cookies.get("authjs.session-token"),
   );
 
+  const isStrayOAuth =
+    !pathname.startsWith("/api/auth") &&
+    Boolean(searchParams.get("code")) &&
+    (searchParams.get("iss") ?? "").includes("accounts.google.com");
+
+  // Signed in, but the URL still carries the OAuth response. Google can land a
+  // (stale) authorization straight on a page like /clients instead of the
+  // callback; the sign-in itself is fine, but leaving code/iss/scope on the URL
+  // made the page error. Strip them and re-render the same route cleanly.
+  if (hasSession && isStrayOAuth) {
+    const clean = request.nextUrl.clone();
+    for (const k of ["code", "iss", "scope", "authuser", "prompt", "hd", "state"]) {
+      clean.searchParams.delete(k);
+    }
+    return NextResponse.redirect(clean);
+  }
+
   if (
     !hasSession &&
-    !pathname.startsWith("/api/auth") &&
-    searchParams.get("code") &&
-    (searchParams.get("iss") ?? "").includes("accounts.google.com")
+    isStrayOAuth
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
