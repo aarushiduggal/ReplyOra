@@ -48,7 +48,7 @@ const PHOTOS: Frame[] = [
     // as clutter piled on top of it.
     src: "brand-1.jpg",
     alt: "Replyora brand photography",
-    className: "right-[-10%] top-0 w-[62%] z-10",
+    className: "right-[-9%] top-[2%] w-[54%] z-10",
     rotate: 1.5,
     depth: 1,
     delay: 0.18,
@@ -56,23 +56,26 @@ const PHOTOS: Frame[] = [
     bgPos: "center 26%",
   },
   {
-    // Product UI, overlapping the hero image's lower-left so the app is present
-    // without covering the figure.
+    // Product UI, lower-left. Overlaps the hero image's edge so the group reads
+    // as one composition rather than three separate pictures.
     src: "hero-left.jpg",
     alt: "The Replyora grid planner",
-    className: "left-0 bottom-[4%] w-[46%] z-30",
-    rotate: -6,
+    className: "left-[16%] bottom-[2%] w-[46%] z-30",
+    rotate: -5,
     depth: 0.55,
     delay: 0.28,
     bgPos: "top",
   },
-  // A third frame (the styled flatlay) was tried here and removed. In a
-  // half-width column it ended up wedged between the other two, showing only a
-  // pale sliver — it read as a smudge rather than a photograph. Two frames with
-  // real space around them is the stronger editorial composition. To bring it
-  // back, add: { src: "hero-center.png", alt: "Styled content flatlay",
-  // className: "left-[30%] top-[4%] w-[30%] z-20", rotate: 6, depth: 0.4,
-  // delay: 0.34 } — and give the column more height so it isn't crowded.
+  {
+    // Styled flatlay, upper-left. Given its own clear zone — when it sat
+    // between the other two it showed only a sliver and read as a smudge.
+    src: "hero-center.png",
+    alt: "Styled content flatlay",
+    className: "left-0 top-[4%] w-[34%] z-20",
+    rotate: 6,
+    depth: 0.4,
+    delay: 0.36,
+  },
 ];
 
 export function HeroSplit() {
@@ -160,7 +163,7 @@ export function HeroSplit() {
           ref={colRef}
           onPointerMove={onPointerMove}
           onPointerLeave={reset}
-          className="relative h-[24rem] sm:h-[30rem] lg:h-[34rem]"
+          className="relative h-[26rem] sm:h-[32rem] lg:h-[37rem]"
         >
           {PHOTOS.map((f) => (
             <SplitFrame
