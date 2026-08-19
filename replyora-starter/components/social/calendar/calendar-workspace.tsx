@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, ChevronLeft, ChevronRight, Circle, Film, Layers, Plus, Send, Square, Trash2, X, AlertTriangle } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Circle, Film, Layers, Plus, Send, Square, Trash2, X } from "lucide-react";
 
 import type { ClientPost } from "@/lib/social/posts";
 import type { ApprovalStatus } from "@/lib/social/approvals";
@@ -14,6 +14,7 @@ import {
   sendForApprovalAction,
   publishNowAction,
 } from "@/app/(social)/clients/[id]/calendar/actions";
+import { PublishFailure } from "@/components/social/shared/publish-failure";
 import { GuideTrigger } from "@/components/social/guide";
 import { PublishAssist } from "@/components/social/publish-assist";
 import { toast } from "@/lib/toast";
@@ -185,16 +186,16 @@ export function CalendarWorkspace({
   return (
     <div>
       {failed.length > 0 && (
-        <div className="mb-5 flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
-          <div className="text-[13px] leading-relaxed text-ink/85">
-            <strong className="font-semibold text-ink">
-              {failed.length} post{failed.length === 1 ? "" : "s"} didn&apos;t publish.
-            </strong>{" "}
-            {failed[0]?.publishError}
-            {failed.length > 1 && " (first of several)"} — fix the issue, then
-            reschedule. Failed posts are retried for two hours after their time.
-          </div>
+        <div className="mb-5">
+          <PublishFailure
+            clientId={clientId}
+            postId={failed[0]!.id}
+            error={
+              failed.length === 1
+                ? (failed[0]!.publishError ?? "")
+                : `${failed.length} posts didn't publish. First: ${failed[0]!.publishError}`
+            }
+          />
         </div>
       )}
       {/* header row */}
@@ -503,12 +504,13 @@ function SpreadsheetRow({
         {/* publish_error was written by the publisher and shown nowhere, so a
             post that failed simply never went out and nobody was told. */}
         {post.publishError && (
-          <span
-            className="mt-1 flex items-start gap-1 text-[11px] font-medium text-destructive"
-            title={post.publishError}
-          >
-            <AlertTriangle className="mt-px h-3 w-3 shrink-0" aria-hidden="true" />
-            Didn&apos;t publish
+          <span className="mt-1 block">
+            <PublishFailure
+              clientId={clientId}
+              postId={post.id}
+              error={post.publishError}
+              compact
+            />
           </span>
         )}
       </td>

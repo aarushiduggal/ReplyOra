@@ -1,5 +1,6 @@
 "use client";
 
+import { PublishFailure } from "@/components/social/shared/publish-failure";
 import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, MessageSquareWarning, Send } from "lucide-react";
@@ -125,10 +126,10 @@ export function ApprovalsWorkspace({
         <Stat label="Changes requested" n={changes.length} tone="text-rose-700" />
       </div>
 
-      <Group title={`In review (${pending.length})`} posts={pending} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
-      <Group title={`Changes requested (${changes.length})`} posts={changes} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
-      <Group title={`Approved (${approved.length})`} posts={approved} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
-      <Group title={`Not sent yet (${notSent.length})`} posts={notSent} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} showSend />
+      <Group clientId={clientId} title={`In review (${pending.length})`} posts={pending} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group clientId={clientId} title={`Changes requested (${changes.length})`} posts={changes} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group clientId={clientId} title={`Approved (${approved.length})`} posts={approved} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} />
+      <Group clientId={clientId} title={`Not sent yet (${notSent.length})`} posts={notSent} approvals={approvals} notes={notes} replies={replies} resolutions={resolutions} onSend={send} onRespond={respond} showSend />
     </div>
   );
 }
@@ -149,6 +150,7 @@ function Stat({ label, n, tone }: { label: string; n: number; tone: string }) {
 }
 
 function Group({
+  clientId,
   title,
   posts,
   approvals,
@@ -159,6 +161,7 @@ function Group({
   onRespond,
   showSend,
 }: {
+  clientId: string;
   title: string;
   posts: ClientPost[];
   approvals: Record<string, ApprovalStatus>;
@@ -184,6 +187,18 @@ function Group({
                 <p className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-ink/85">
                   {p.scheduledFor?.slice(0, 10) ?? "Unscheduled"} · {PLATFORM_LABEL[p.platform]}
                 </p>
+                {/* An approved post that then failed to publish looked identical
+                    to one still waiting to go out. */}
+                {p.publishError && (
+                  <span className="mt-1.5 block">
+                    <PublishFailure
+                      clientId={clientId}
+                      postId={p.id}
+                      error={p.publishError}
+                      compact
+                    />
+                  </span>
+                )}
               </div>
               {showSend && (
                 <button

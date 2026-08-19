@@ -1,5 +1,6 @@
 "use client";
 
+import { PublishFailure } from "@/components/social/shared/publish-failure";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1578,6 +1579,16 @@ function Column({
               )}
             </span>
           </Link>
+          {/* Outside the Link — a failed post needs a retry button, and nesting
+              a button inside an anchor is invalid and unclickable. */}
+          {t.publishError && (
+            <PublishFailure
+              clientId={clientId}
+              postId={t.id}
+              error={t.publishError}
+              compact
+            />
+          )}
           {variant === "scheduled" && (
             <button
               type="button"

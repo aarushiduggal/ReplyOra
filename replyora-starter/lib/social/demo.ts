@@ -80,6 +80,7 @@ export function demoTiles(): GridTile[] {
       r[1] === "scheduled"
         ? new Date(Date.now() + (i - 5) * 86_400_000).toISOString()
         : null,
+    publishError: null,
   }));
 }
 

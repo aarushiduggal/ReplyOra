@@ -29,6 +29,8 @@ export interface GridTile {
   mediaUrl: string | null;
   /** ISO datetime this post is scheduled to publish (null unless scheduled). */
   scheduledFor: string | null;
+  /** Why the last publish attempt failed. Null when it hasn't failed. */
+  publishError: string | null;
 }
 
 export interface ProfilePreview {
@@ -75,13 +77,15 @@ interface TileRow {
   order_index: number | null;
   media_url: string | null;
   scheduled_for: string | Date | null;
+  publish_error?: string | null;
 }
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
-    SELECT id, caption, status, platform, pillar, order_index, media_url, scheduled_for
+    SELECT id, caption, status, platform, pillar, order_index, media_url, scheduled_for,
+           publish_error
     FROM social_posts
     WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
     ORDER BY order_index ASC NULLS LAST, created_at DESC
@@ -95,6 +99,7 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
     orderIndex: r.order_index ?? i,
     mediaUrl: r.media_url ?? null,
     scheduledFor: r.scheduled_for ? new Date(r.scheduled_for).toISOString() : null,
+    publishError: r.publish_error ?? null,
   }));
 }
 

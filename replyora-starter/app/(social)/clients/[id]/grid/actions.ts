@@ -39,6 +39,7 @@ export async function addEmptyTileAction(
     orderIndex: 0,
     mediaUrl: null,
     scheduledFor: null,
+    publishError: null,
   };
 }
 
