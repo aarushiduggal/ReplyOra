@@ -72,7 +72,7 @@ export function StudioWorkspace({
       // stayed disabled forever with nothing explaining why. Always settle, and
       // always say something.
       try {
-        const posts = await generateDraftsAction({
+        const res = await generateDraftsAction({
           businessName: businessName || clientName,
           industry: "",
           platform,
@@ -80,13 +80,25 @@ export function StudioWorkspace({
           topic,
           count,
         });
-        if (posts.length === 0) {
+        if (res.posts.length === 0) {
           toast({ title: "No captions came back — try again.", type: "error" });
           return;
         }
+        // Say which wrote them. A wrong or missing key used to look exactly
+        // like working AI — just duller copy — with nothing to tell you.
+        if (res.source === "template") {
+          toast({
+            title: "Written with the built-in templates",
+            body:
+              res.reason === "no key"
+                ? "Add GEMINI_API_KEY in Netlify for AI-written captions (free tier)."
+                : `AI unavailable: ${res.reason ?? "unknown"}`,
+            type: "info",
+          });
+        }
         // Pre-fill each new draft's image from the library in order (if any).
         setDrafts(
-          posts.map((p, i) => ({
+          res.posts.map((p, i) => ({
             ...p,
             id: `d${i}-${Date.now()}-${p.caption.length}`,
             pillar,

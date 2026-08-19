@@ -229,11 +229,56 @@ export function generatePosts(input: GenerateInput): GeneratedPost[] {
  *
  * Dependency-free (fetch). responseMimeType forces valid JSON back from Gemini.
  */
+/** What actually wrote the captions, so callers can tell the user. */
+/** Pinned here so upgrading the model is one line, not a buried string. */
+const MODEL = "gemini-2.0-flash";
+
+export interface GenerationResult {
+  posts: GeneratedPost[];
+  source: "ai" | "template";
+  /** Why AI was skipped or failed. Present whenever source === "template". */
+  reason?: string;
+}
+
+/**
+ * Real caption generation via Google Gemini (free tier), falling back to the
+ * local template generator.
+ *
+ * Every fallback is REPORTED, not swallowed. This previously returned templates
+ * silently on a missing key, an HTTP error, an empty response or bad JSON — so
+ * a wrong key or a deprecated model looked identical to working AI, just with
+ * duller copy. That is the same silent-failure shape that hid media_kind and
+ * the /clients crash, and it is the one thing that makes a fallback dangerous
+ * rather than safe.
+ */
+/**
+ * Pull the readable sentence out of a Google API error body.
+ *
+ * The raw body is nested JSON ({"error":{"code":400,"message":"API key not
+ * valid. Please pass a valid API key.",...}}). That message is exactly what the
+ * user needs to fix the problem; the rest is noise in a toast.
+ */
+function geminiErrorMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { error?: { message?: string } };
+    const msg = parsed.error?.message;
+    if (msg) return msg;
+  } catch {
+    // Not JSON — fall through and show the raw body instead.
+  }
+  return body.slice(0, 200);
+}
+
 export async function generatePostsSmart(
   input: GenerateInput,
-): Promise<GeneratedPost[]> {
+): Promise<GenerationResult> {
+  const template = (reason: string): GenerationResult => {
+    if (reason !== "no key") console.error(`[generate] falling back to templates: ${reason}`);
+    return { posts: generatePosts(input), source: "template", reason };
+  };
+
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return generatePosts(input);
+  if (!key) return template("no key");
 
   const count = input.count ?? 3;
   const tone = TONES.find((t) => t.value === (input.tone ?? "warm"));
@@ -259,27 +304,37 @@ Return ONLY valid JSON — an array of ${count} objects, each {"caption": string
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.9,
-            responseMimeType: "application/json",
-          },
+          generationConfig: { temperature: 0.9, responseMimeType: "application/json" },
         }),
+        signal: AbortSignal.timeout(20_000),
       },
     );
-    if (!res.ok) return generatePosts(input);
+
+    if (!res.ok) {
+      // Google's body says WHY — bad key, model not found, quota. Keep it.
+      const detail = await res.text().catch(() => "");
+      return template(geminiErrorMessage(detail) || `Gemini HTTP ${res.status}`);
+    }
+
     const data = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return generatePosts(input);
+    if (!text) return template("Gemini returned no text (often a safety block)");
 
-    const parsed = JSON.parse(text) as { caption?: string; hashtags?: string[] }[];
+    let parsed: { caption?: string; hashtags?: string[] }[];
+    try {
+      parsed = JSON.parse(text) as { caption?: string; hashtags?: string[] }[];
+    } catch {
+      return template("Gemini returned unparseable JSON");
+    }
+
     const posts = parsed
       .filter((p) => p?.caption)
       .map((p) => ({
@@ -288,8 +343,11 @@ Return ONLY valid JSON — an array of ${count} objects, each {"caption": string
           h.startsWith("#") ? h : `#${h.replace(/^#+/, "")}`,
         ),
       }));
-    return posts.length > 0 ? posts : generatePosts(input);
-  } catch {
-    return generatePosts(input);
+    if (posts.length === 0) return template("Gemini returned no usable captions");
+
+    return { posts, source: "ai" };
+  } catch (err) {
+    return template(err instanceof Error ? err.message : "Gemini request failed");
   }
 }
+

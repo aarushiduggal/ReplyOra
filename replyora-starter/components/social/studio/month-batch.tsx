@@ -107,9 +107,20 @@ export function MonthBatch({
           // Minutes EAST of UTC — the server runs in UTC and cannot infer this.
           tzOffsetMinutes: -new Date().getTimezoneOffset(),
         });
-        setDrafts(result);
-        if (result.length === 0) {
+        setDrafts(result.drafts);
+        if (result.drafts.length === 0) {
           toast({ title: "No dates left in that month — try the next one.", type: "info" });
+        } else if (result.source === "template") {
+          // Across 13 captions the difference between AI and templates is very
+          // visible, so never leave the user guessing which they got.
+          toast({
+            title: "Written with the built-in templates",
+            body:
+              result.reason === "no key"
+                ? "Add GEMINI_API_KEY in Netlify for AI-written captions (free tier)."
+                : `AI unavailable: ${result.reason ?? "unknown"}`,
+            type: "info",
+          });
         }
       } catch {
         toast({ title: "Couldn't plan that month. Please try again.", type: "error" });

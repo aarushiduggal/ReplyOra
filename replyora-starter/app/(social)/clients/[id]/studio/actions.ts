@@ -7,6 +7,7 @@ import {
   generatePostsSmart,
   type CaptionLength,
   type GeneratedPost,
+  type GenerationResult,
   type Tone,
 } from "@/lib/social/generate";
 import {
@@ -30,7 +31,10 @@ export async function generateDraftsAction(input: {
   pillar: string;
   topic: string;
   count: number;
-}): Promise<GeneratedPost[]> {
+}): Promise<GenerationResult> {
+  // Returns the source too, so the UI can say whether real AI wrote these or
+  // the built-in templates did. Silently returning either was how a wrong key
+  // looked exactly like working AI.
   return generatePostsSmart(input);
 }
 
@@ -38,6 +42,13 @@ export async function generateDraftsAction(input: {
 export interface MonthDraft extends PlannedSlot {
   caption: string;
   hashtags: string[];
+}
+
+/** A written month, plus what actually wrote it. */
+export interface MonthPlan {
+  drafts: MonthDraft[];
+  source: "ai" | "template";
+  reason?: string;
 }
 
 /**
@@ -67,7 +78,7 @@ export async function generateMonthAction(input: {
    * correct wall-clock scheduling: this server runs in UTC.
    */
   tzOffsetMinutes: number;
-}): Promise<MonthDraft[]> {
+}): Promise<MonthPlan> {
   // Real posting times for this account when Instagram is connected, else the
   // general defaults. Never let this fail the whole batch.
   const recommended = await computeRecommendedTimes(input.clientId).catch(
@@ -86,7 +97,7 @@ export async function generateMonthAction(input: {
     notBefore: input.nowIso,
     tzOffsetMinutes: input.tzOffsetMinutes,
   });
-  if (slots.length === 0) return [];
+  if (slots.length === 0) return { drafts: [], source: "template" };
 
   // Group the slots by pillar so each pillar is one generation call.
   const byPillar = new Map<string, PlannedSlot[]>();
@@ -98,7 +109,7 @@ export async function generateMonthAction(input: {
 
   const written = await Promise.all(
     Array.from(byPillar.entries()).map(async ([pillar, group], pillarIndex) => {
-      const posts = await generatePostsSmart({
+      const result = await generatePostsSmart({
         businessName: input.businessName,
         industry: input.industry,
         platform: input.platform,
@@ -111,18 +122,35 @@ export async function generateMonthAction(input: {
         // Start each pillar at a different point in the template rotation, so
         // the first post of every pillar doesn't share one body line.
         variantOffset: pillarIndex * 2,
-      }).catch(() => [] as GeneratedPost[]);
+      }).catch(
+        (err): GenerationResult => ({
+          posts: [] as GeneratedPost[],
+          source: "template",
+          reason: err instanceof Error ? err.message : "generation failed",
+        }),
+      );
 
-      return group.map((slot, i) => ({
-        ...slot,
-        caption: posts[i]?.caption ?? "",
-        hashtags: posts[i]?.hashtags ?? [],
-      }));
+      return {
+        result,
+        drafts: group.map((slot, i) => ({
+          ...slot,
+          caption: result.posts[i]?.caption ?? "",
+          hashtags: result.posts[i]?.hashtags ?? [],
+        })),
+      };
     }),
   );
 
+  // If ANY pillar fell back, say so — a month that is half AI and half template
+  // reads inconsistently, and the user should know which they got.
+  const fellBack = written.find((w) => w.result.source === "template");
+
   // Back into calendar order — the review UI reads as a month, not as pillars.
-  return written.flat().sort((a, b) => a.index - b.index);
+  return {
+    drafts: written.flatMap((w) => w.drafts).sort((a, b) => a.index - b.index),
+    source: fellBack ? "template" : "ai",
+    reason: fellBack?.result.reason,
+  };
 }
 
 /**

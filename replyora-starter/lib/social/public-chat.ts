@@ -96,6 +96,13 @@ export async function answerFromNeon(
   const key = process.env.GEMINI_API_KEY;
   if (!key) return cannedReply(assistant);
 
+  // The visitor always gets an answer, but the agency needs to know WHY it was
+  // a canned one — a silent fallback looks identical to a working assistant.
+  const fallback = (reason: string): string => {
+    console.error(`[public-chat] canned reply for ${assistant.name}: ${reason}`);
+    return cannedReply(assistant);
+  };
+
   const kb = assistant.knowledge.join("\n").slice(0, 6000);
   const prompt = `You are ${assistant.name}, the assistant on a business's website. Tone: ${assistant.tone || "warm, helpful, concise"}.
 Answer the visitor using ONLY the business knowledge below. If the answer isn't there, say you'll pass it to the team and ask for their name and email. Keep it to 2-4 short sentences.
@@ -116,15 +123,27 @@ VISITOR MESSAGE: ${message}`;
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.5 },
         }),
+        // Without this a hung Gemini call holds the visitor's request open
+        // until the platform kills the function.
+        signal: AbortSignal.timeout(15_000),
       },
     );
-    if (!res.ok) return cannedReply(assistant);
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      let msg = detail.slice(0, 200);
+      try {
+        msg = (JSON.parse(detail) as { error?: { message?: string } }).error?.message ?? msg;
+      } catch {
+        // Not JSON — keep the raw snippet.
+      }
+      return fallback(`Gemini HTTP ${res.status}: ${msg}`);
+    }
     const data = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return text?.trim() || cannedReply(assistant);
-  } catch {
-    return cannedReply(assistant);
+    return text?.trim() || fallback("Gemini returned no text");
+  } catch (err) {
+    return fallback(err instanceof Error ? err.message : "Gemini request failed");
   }
 }
