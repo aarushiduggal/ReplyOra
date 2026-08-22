@@ -15,6 +15,11 @@ import {
   type TileStatus,
 } from "@/lib/social/grid";
 import { createClientPost } from "@/lib/social/posts";
+import {
+  listPostMedia,
+  setPostMedia,
+  type PostMedia,
+} from "@/lib/social/post-media";
 import type { Platform } from "@/lib/social/types";
 
 /** Create a new empty planned tile (the "+" on the grid) — fill it by dragging an asset. */
@@ -111,4 +116,32 @@ export async function unscheduleTileAction(
   await unscheduleTile(clientId, tileId);
   revalidatePath(`/clients/${clientId}/grid`);
   revalidatePath(`/clients/${clientId}/calendar`);
+}
+
+/* ── Carousel slides ──────────────────────────────────────────────────── */
+
+/**
+ * Read a post's slides. Used when the editor opens, so a carousel that was
+ * built earlier comes back in the right order.
+ */
+export async function listSlidesAction(postId: string): Promise<PostMedia[]> {
+  return listPostMedia(postId);
+}
+
+/**
+ * Replace a post's slides with this exact list, in this order.
+ *
+ * The whole list is sent rather than a diff: reordering is the common edit and
+ * a positional diff against a UNIQUE(post_id, position) index deadlocks on the
+ * swap. setPostMedia verifies the post belongs to the caller's workspace.
+ */
+export async function saveSlidesAction(
+  clientId: string,
+  postId: string,
+  slides: { url: string; kind?: "image" | "video" | null }[],
+): Promise<PostMedia[]> {
+  const saved = await setPostMedia(postId, slides);
+  revalidatePath(`/clients/${clientId}/grid`);
+  revalidatePath(`/clients/${clientId}/calendar`);
+  return saved;
 }

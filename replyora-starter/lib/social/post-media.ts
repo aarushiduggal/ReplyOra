@@ -4,7 +4,14 @@ import { randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
-import { MAX_SLIDES } from "@/lib/social/types";
+// The media types and the carousel validity rule live in the client-safe
+// module so the Grid editor and the publisher share one copy of the rule.
+import {
+  MAX_SLIDES,
+  shapeOf,
+  type MediaKind,
+  type PostMedia,
+} from "@/lib/social/types";
 
 /**
  * Ordered media for a post — the slides of a carousel, or the single image or
@@ -34,16 +41,10 @@ function sql() {
   return _sql;
 }
 
-export type MediaKind = "image" | "video";
-
-export interface PostMedia {
-  url: string;
-  kind: MediaKind;
-  position: number;
-}
 
 // Re-exported so server code can keep importing it from here.
-export { MAX_SLIDES } from "@/lib/social/types";
+export { MAX_SLIDES, shapeOf } from "@/lib/social/types";
+export type { MediaKind, MediaShape, PostMedia } from "@/lib/social/types";
 
 interface Row {
   url: string;
@@ -169,34 +170,3 @@ export async function removePostMedia(
   );
 }
 
-/**
- * Is this list publishable as one post, and as what?
- *
- * Instagram refuses a carousel that mixes video and images, and refuses a
- * carousel of one. Checking here means the Grid can warn while the user is
- * still editing, instead of the post failing hours later at publish time.
- */
-export type MediaShape =
-  | { kind: "empty" }
-  | { kind: "image" }
-  | { kind: "video" }
-  | { kind: "carousel"; slides: number }
-  | { kind: "invalid"; reason: string };
-
-export function shapeOf(media: PostMedia[]): MediaShape {
-  if (media.length === 0) return { kind: "empty" };
-  if (media.length === 1) {
-    return media[0]!.kind === "video" ? { kind: "video" } : { kind: "image" };
-  }
-  if (media.length > MAX_SLIDES) {
-    return { kind: "invalid", reason: `Carousels can hold at most ${MAX_SLIDES} slides.` };
-  }
-  const videos = media.filter((m) => m.kind === "video").length;
-  if (videos > 0 && videos < media.length) {
-    return {
-      kind: "invalid",
-      reason: "Instagram won't publish a carousel that mixes photos and video.",
-    };
-  }
-  return { kind: "carousel", slides: media.length };
-}

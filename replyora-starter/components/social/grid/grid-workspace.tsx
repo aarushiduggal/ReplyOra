@@ -10,6 +10,9 @@ import {
   Facebook,
   Grid3x3,
   Heart,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
   ImageIcon,
   Images,
   Instagram,
@@ -34,7 +37,13 @@ import {
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
 import type { LiveFeed } from "@/lib/social/instagram-feed";
 import type { FeedAnalysis } from "@/lib/social/feed-analysis";
-import { MAX_SLIDES, PLATFORM_LABEL, type Platform } from "@/lib/social/types";
+import {
+  MAX_SLIDES,
+  PLATFORM_LABEL,
+  shapeOf as shapeOfSlides,
+  type Platform,
+  type PostMedia,
+} from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
 import {
@@ -42,6 +51,8 @@ import {
   bulkDeleteAction,
   bulkStatusAction,
   placeAssetAction,
+  listSlidesAction,
+  saveSlidesAction,
   reorderTilesAction,
   saveProfilePreviewAction,
   scheduleTilesAction,
@@ -1048,12 +1059,13 @@ export function GridWorkspace({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
                   Drafts ({drafts.length})
                 </p>
-                <Link
-                  href={`${base}/studio`}
-                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-oxblood hover:underline"
-                >
-                  + Carousel
-                </Link>
+                {/* Was "+ Carousel" linking to Studio, which did nothing —
+                    there was no carousel feature behind it. Carousels are now
+                    built by opening a tile and adding slides, so the label says
+                    where to go instead of promising a screen that isn't there. */}
+                <span className="text-[10px] text-ink/45">
+                  Open a tile to add slides
+                </span>
               </div>
               <Column tiles={drafts} empty="No drafts yet" base={base} clientId={clientId} variant="draft" />
             </div>
@@ -1170,6 +1182,55 @@ function PostEditorModal({
   const [date, setDate] = useState(initial ? initial.toISOString().slice(0, 10) : "");
   const [time, setTime] = useState(initial ? initial.toISOString().slice(11, 16) : "09:00");
   const [swap, setSwap] = useState(false);
+  // Carousel slides. Loaded on open rather than passed down, because the Grid
+  // only knows how MANY slides a post has (for the badge), not what they are.
+  const [slides, setSlides] = useState<PostMedia[]>([]);
+  const [slidesLoaded, setSlidesLoaded] = useState(false);
+  const [savingSlides, setSavingSlides] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    listSlidesAction(tile.id)
+      .then((rows) => {
+        if (cancelled) return;
+        // A post created before post_media existed has media_url but no rows;
+        // show it as slide 1 so the editor isn't misleadingly empty.
+        setSlides(
+          rows.length === 0 && tile.mediaUrl
+            ? [{ url: tile.mediaUrl, kind: tile.mediaKind ?? "image", position: 0 }]
+            : rows,
+        );
+        setSlidesLoaded(true);
+      })
+      .catch(() => setSlidesLoaded(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [tile.id, tile.mediaUrl, tile.mediaKind]);
+
+  /** Persist a new slide order/list and keep the tile's thumbnail in step. */
+  function commitSlides(next: { url: string; kind: "image" | "video" }[]) {
+    setSavingSlides(true);
+    const optimistic = next.map((n, i) => ({ ...n, position: i }));
+    setSlides(optimistic);
+    setMediaUrl(next[0]?.url ?? null);
+    onLocalChange({
+      mediaUrl: next[0]?.url ?? null,
+      mediaKind: next[0]?.kind ?? null,
+      mediaCount: next.length,
+    });
+    startTransition(async () => {
+      try {
+        await saveSlidesAction(clientId, tile.id, next);
+      } catch {
+        toast({ title: "Couldn't save those slides.", type: "error" });
+      } finally {
+        setSavingSlides(false);
+      }
+    });
+  }
+
+  const shape = shapeOfSlides(slides);
 
   function persist(extra?: { status?: TileStatus; scheduledFor?: string | null }) {
     onLocalChange({ caption, platform, mediaUrl, ...extra });
@@ -1231,20 +1292,143 @@ function PostEditorModal({
 
         {swap && (
           <div className="border-b border-ink/10 p-3">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/60">Pick a photo</p>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/60">
+              {slides.length > 0 ? "Add a slide" : "Pick a photo"}
+            </p>
             <div className="grid grid-cols-6 gap-1.5">
               {assets.map((a) => (
                 <button
                   key={a.id}
                   type="button"
-                  onClick={() => { setMediaUrl(a.url); setSwap(false); }}
-                  className="aspect-square overflow-hidden rounded-md border-2 border-transparent hover:border-oxblood/40"
+                  onClick={() => {
+                    // Adding always appends a slide; the tile thumbnail follows
+                    // slide 1, so a single-image post is just a one-slide list.
+                    const next = [
+                      ...slides.map((m) => ({ url: m.url, kind: m.kind })),
+                      { url: a.url, kind: (a.kind ?? "image") as "image" | "video" },
+                    ];
+                    if (next.length > MAX_SLIDES) {
+                      toast({
+                        title: `A carousel holds at most ${MAX_SLIDES} slides.`,
+                        type: "error",
+                      });
+                      return;
+                    }
+                    commitSlides(next);
+                    setSwap(false);
+                  }}
+                  className="relative aspect-square overflow-hidden rounded-md border-2 border-transparent hover:border-oxblood/40"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.url} alt="" className="h-full w-full object-cover" />
+                  {a.kind === "video" && (
+                    <span className="absolute bottom-0.5 right-0.5 text-white drop-shadow">
+                      <Play className="h-2.5 w-2.5 fill-current" />
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Slides ──────────────────────────────────────────────────────
+            A post IS its slide list — one image is a one-slide carousel. That
+            keeps a single mental model instead of a separate "carousel mode",
+            and matches how post_media stores it. */}
+        {slidesLoaded && slides.length > 0 && (
+          <div className="border-b border-ink/10 p-3">
+            <div className="mb-2 flex items-baseline justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink/60">
+                {slides.length === 1
+                  ? "1 slide"
+                  : `Carousel · ${slides.length} slides`}
+              </p>
+              <span className="text-[10px] text-ink/45">
+                {savingSlides ? "Saving…" : "Slide 1 shows on the grid"}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {slides.map((m, i) => (
+                <div
+                  key={`${m.url}-${i}`}
+                  className="group relative h-14 w-14 overflow-hidden rounded-md border border-ink/10"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={m.url} alt="" className="h-full w-full object-cover" />
+                  <span className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-sm bg-ink text-[9px] font-bold text-cream">
+                    {i + 1}
+                  </span>
+                  {m.kind === "video" && (
+                    <span className="absolute bottom-0.5 right-0.5 text-white drop-shadow">
+                      <Play className="h-2.5 w-2.5 fill-current" />
+                    </span>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-ink/70 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      disabled={i === 0}
+                      onClick={() => {
+                        const next = slides.map((x) => ({ url: x.url, kind: x.kind }));
+                        const [moved] = next.splice(i, 1);
+                        next.splice(i - 1, 0, moved!);
+                        commitSlides(next);
+                      }}
+                      className="text-cream disabled:opacity-30"
+                      aria-label={`Move slide ${i + 1} earlier`}
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        commitSlides(
+                          slides
+                            .filter((_, j) => j !== i)
+                            .map((x) => ({ url: x.url, kind: x.kind })),
+                        )
+                      }
+                      className="text-cream"
+                      aria-label={`Remove slide ${i + 1}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={i === slides.length - 1}
+                      onClick={() => {
+                        const next = slides.map((x) => ({ url: x.url, kind: x.kind }));
+                        const [moved] = next.splice(i, 1);
+                        next.splice(i + 1, 0, moved!);
+                        commitSlides(next);
+                      }}
+                      className="text-cream disabled:opacity-30"
+                      aria-label={`Move slide ${i + 1} later`}
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {slides.length < MAX_SLIDES && (
+                <button
+                  type="button"
+                  onClick={() => setSwap(true)}
+                  className="flex h-14 w-14 items-center justify-center rounded-md border border-dashed border-ink/30 text-ink/45 transition-colors hover:border-oxblood hover:text-oxblood"
+                  aria-label="Add a slide"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {/* The same rule the publisher enforces — said here, while it can
+                still be fixed, instead of at publish time. */}
+            {shape.kind === "invalid" && (
+              <p className="mt-2 flex items-start gap-1.5 text-[11px] text-destructive">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                {shape.reason}
+              </p>
+            )}
           </div>
         )}
 
