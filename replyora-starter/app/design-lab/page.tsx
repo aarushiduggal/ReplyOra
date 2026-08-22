@@ -20,12 +20,12 @@ export const metadata: Metadata = {
  */
 
 const PROFILE = {
-  username: "marie_beers",
-  displayName: "Marie Beers",
+  username: "bloomhairstudio",
+  displayName: "Bloom Hair Studio",
   followers: "1529",
   following: "15",
-  bio: "Digital Creator",
-  website: "mariebeers.com.au",
+  bio: "Colour specialists · Sydney",
+  website: "bloomhairstudio.com.au",
 };
 
 const IMAGES = [
@@ -101,7 +101,7 @@ export default function DesignLabPage() {
             </p>
             <GridWorkspace
               clientId="lab"
-              clientName="Marie Beers"
+              clientName="Bloom Hair Studio"
               tiles={TILES}
               profile={PROFILE}
               assets={ASSETS}

@@ -313,8 +313,8 @@ function MiniGrid() {
           <span>The Grid</span>
           <span>16 Aug</span>
         </div>
-        <p className="mt-[2px] font-display text-[13px] leading-[0.95] text-ink">
-          Marie Beers
+        <p className="mt-[2px] text-balance font-display text-[11px] leading-[1] text-ink">
+          Bloom Hair Studio
         </p>
         <div className="mt-[3px] flex justify-center gap-[7px] text-[3.4px] font-semibold uppercase tracking-[0.14em]">
           <span className="border-b border-ink pb-[1px] text-ink">Instagram</span>
