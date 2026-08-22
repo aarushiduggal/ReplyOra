@@ -52,25 +52,25 @@ const PHOTOS: Frame[] = [
     // The hero image. Bleeds past the right edge — the section clips it. Kept
     // narrow enough that the two tucked frames read as deliberate rather than
     // as clutter piled on top of it.
-    src: "brand-1.jpg",
-    alt: "Replyora brand photography",
+    src: "hero-news-sitting.jpg",
+    alt: "Replyora's founder reading The Business News",
     className: "right-[-9%] top-[2%] w-[54%] z-10",
     rotate: 1.5,
     depth: 1,
     delay: 0.18,
-    bgSize: "118%",
-    bgPos: "center 26%",
+    bgSize: "112%",
+    bgPos: "center 34%",
   },
   {
     // Product UI, lower-left. Overlaps the hero image's edge so the group reads
     // as one composition rather than three separate pictures.
-    src: "hero-left.jpg",
-    alt: "The Replyora grid planner",
+    src: "hero-news-walking.jpg",
+    alt: "Replyora campaign posters on the floor",
     className: "left-[16%] bottom-[2%] w-[46%] z-30",
     rotate: -5,
     depth: 0.55,
     delay: 0.28,
-    bgPos: "top",
+    bgPos: "center 62%",
   },
   {
     // The product itself, rendered live rather than screenshotted. Upper-left,
@@ -270,50 +270,102 @@ function SplitFrame({
  *
  * Deliberately not a screenshot: this stays sharp on retina, weighs nothing
  * next to a photograph, and can't drift out of date when the Grid changes.
- * The sample client is invented — showing Replyora's own account here would
- * ask an agency to picture the wrong thing.
+ *
+ * It renders the real Broadsheet furniture — masthead, platform tabs, the stat
+ * rule, carousel and reel marks — at hero scale. Type sizes are absurdly small
+ * on purpose: at ~250px wide the frame has to read as a dense, working tool
+ * rather than three big words, which is what makes it look real.
+ *
+ * The sample client is invented. Showing Replyora's own account here would ask
+ * an agency to picture the wrong thing.
  */
 function MiniGrid() {
   const tiles = [
-    { src: "grid-1.jpg", badge: "4" },
-    { src: "grid-2.jpg", badge: null },
-    { src: "grid-3.jpg", badge: null },
-    { src: "grid-4.jpg", badge: null },
-    { src: "grid-5.jpg", badge: "3" },
-    { src: "grid-6.jpg", badge: null },
+    { src: "grid-1.jpg", mark: "carousel" as const, n: 4 },
+    { src: "grid-2.jpg", mark: "reel" as const, n: 0 },
+    { src: "grid-3.jpg", mark: null, n: 0 },
+    { src: "grid-4.jpg", mark: null, n: 0 },
+    { src: "grid-5.jpg", mark: "carousel" as const, n: 3 },
+    { src: "grid-6.jpg", mark: null, n: 0 },
+    { src: "grid-7.jpg", mark: "reel" as const, n: 0 },
+    { src: "grid-8.jpg", mark: null, n: 0 },
+    { src: "feed-1.jpg", mark: null, n: 0 },
   ];
   return (
     <div className="flex h-full w-full flex-col bg-porcelain">
-      <div className="border-b border-ink/15 px-2.5 pb-1.5 pt-2 text-center">
-        <p className="text-[4.5px] font-semibold uppercase tracking-[0.18em] text-ink/45">
-          The Grid
-        </p>
-        <p className="mt-0.5 font-display text-[11px] leading-none text-ink">
+      {/* app chrome — the sliver that says "this is software" */}
+      <div className="flex items-center gap-[3px] border-b border-ink/10 bg-cream px-2 py-[3px]">
+        <span className="h-[3px] w-[3px] rounded-full bg-ink/20" />
+        <span className="h-[3px] w-[3px] rounded-full bg-ink/20" />
+        <span className="h-[3px] w-[3px] rounded-full bg-ink/20" />
+        <span className="ml-1 font-serif text-[5px] italic text-ink/70">
+          reply<span className="font-sans font-bold not-italic">ora.</span>
+        </span>
+        <span className="ml-auto rounded-full bg-ink px-[4px] py-[1px] text-[3.5px] font-bold uppercase tracking-[0.1em] text-cream">
+          Add post
+        </span>
+      </div>
+
+      {/* masthead */}
+      <div className="border-b-[1.5px] border-ink px-2 pb-[3px] pt-[5px] text-center">
+        <div className="flex items-center justify-between text-[3.2px] font-semibold uppercase tracking-[0.16em] text-ink/45">
+          <span>Connected</span>
+          <span>The Grid</span>
+          <span>16 Aug</span>
+        </div>
+        <p className="mt-[2px] font-display text-[13px] leading-[0.95] text-ink">
           Marie Beers
         </p>
-        <div className="mt-1 flex justify-center gap-2 text-[4px] font-semibold uppercase tracking-[0.14em]">
-          <span className="border-b border-ink pb-0.5 text-ink">Instagram</span>
+        <div className="mt-[3px] flex justify-center gap-[7px] text-[3.4px] font-semibold uppercase tracking-[0.14em]">
+          <span className="border-b border-ink pb-[1px] text-ink">Instagram</span>
+          <span className="text-ink/30">Facebook</span>
           <span className="text-ink/30">TikTok</span>
         </div>
       </div>
-      <div className="flex justify-between border-b border-ink/15 px-2.5 py-1 text-[4px] font-semibold uppercase tracking-[0.14em] text-ink/60">
+
+      {/* stat rule */}
+      <div className="flex justify-between border-b border-ink/70 px-2 py-[2px] text-[3.4px] font-semibold uppercase tracking-[0.14em] text-ink/65">
         <span>9 planned</span>
+        <span>2 drafts</span>
         <span>Harmony 71%</span>
       </div>
-      <div className="grid flex-1 grid-cols-3 gap-[2px] p-1.5">
-        {tiles.map((t) => (
-          <div
-            key={t.src}
-            className="relative bg-oat bg-cover bg-center"
-            style={{ backgroundImage: `url(/marketing/${t.src})` }}
-          >
-            {t.badge && (
-              <span className="absolute right-0.5 top-0.5 rounded-[1px] bg-ink/75 px-[2px] text-[4px] font-bold leading-[1.4] text-cream">
-                ▤{t.badge}
-              </span>
-            )}
+
+      {/* the plate */}
+      <div className="flex flex-1 gap-[3px] p-[5px]">
+        <div className="grid flex-1 grid-cols-3 gap-[2px]">
+          {tiles.map((t) => (
+            <div
+              key={t.src}
+              className="relative bg-oat bg-cover bg-center"
+              style={{ backgroundImage: `url(/marketing/${t.src})` }}
+            >
+              {t.mark === "carousel" && (
+                <span className="absolute right-[1px] top-[1px] flex items-center gap-[1px] bg-ink/75 px-[2px] text-[3.2px] font-bold leading-[1.5] text-cream">
+                  <span className="block h-[3px] w-[3px] border border-cream" />
+                  {t.n}
+                </span>
+              )}
+              {t.mark === "reel" && (
+                <span className="absolute right-[1.5px] top-[1px] text-[4px] leading-none text-white drop-shadow">
+                  ▶
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        {/* assets rail */}
+        <div className="flex w-[14%] flex-col gap-[2px]">
+          {["feed-2.jpg", "feed-3.jpg", "feed-4.jpg"].map((a) => (
+            <div
+              key={a}
+              className="aspect-square bg-oat bg-cover bg-center"
+              style={{ backgroundImage: `url(/marketing/${a})` }}
+            />
+          ))}
+          <div className="flex aspect-square items-center justify-center border border-dashed border-ink/25 text-[5px] leading-none text-ink/35">
+            +
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
