@@ -62,27 +62,27 @@ const PHOTOS: Frame[] = [
     bgPos: "center 34%",
   },
   {
-    // Product UI, lower-left. Overlaps the hero image's edge so the group reads
-    // as one composition rather than three separate pictures.
-    src: "hero-news-walking.jpg",
-    alt: "Replyora campaign posters on the floor",
+    // The product, front and centre. It sits in the largest of the two tucked
+    // frames and overlaps the hero photo's edge, so the group reads as one
+    // composition — and at 46% the interface is actually legible.
+    src: "mini-grid",
+    alt: "A client's planned feed in Replyora",
     className: "left-[16%] bottom-[2%] w-[46%] z-30",
     rotate: -5,
     depth: 0.55,
     delay: 0.28,
-    bgPos: "center 62%",
+    render: <MiniGrid />,
   },
   {
-    // The product itself, rendered live rather than screenshotted. Upper-left,
-    // in its own clear zone — when it sat between the other two it showed only
-    // a sliver and read as a smudge.
-    src: "mini-grid",
-    alt: "A client's planned feed in Replyora",
+    // Campaign photography, upper-left, in its own clear zone — when anything
+    // sat between the other two it showed only a sliver and read as a smudge.
+    src: "hero-news-walking.jpg",
+    alt: "Replyora campaign posters on the floor",
     className: "left-0 top-[4%] w-[36%] z-20",
     rotate: 6,
     depth: 0.4,
     delay: 0.36,
-    render: <MiniGrid />,
+    bgPos: "center 62%",
   },
 ];
 
