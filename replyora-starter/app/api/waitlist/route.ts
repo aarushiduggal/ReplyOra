@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { addWaitlistSignup, isValidEmail } from "@/lib/waitlist";
 import { sendEmail } from "@/lib/email";
+import { addWaitlistToNotion } from "@/lib/notion";
 
 export const runtime = "nodejs";
 
@@ -84,6 +85,16 @@ export async function POST(req: Request) {
   // Fire-and-forget: the person is already on the list, so a failed alert must
   // never turn their successful signup into an error.
   if (isNew) {
+    // Mirror into Notion if it's configured (no-op otherwise).
+    void addWaitlistToNotion({
+      email: entry.email,
+      name: entry.name,
+      role: entry.role,
+      source: entry.source,
+    }).catch(() => {
+      /* already logged inside addWaitlistToNotion */
+    });
+
     const to = (process.env.OWNER_EMAILS ?? "").split(",")[0]?.trim();
     if (to) {
       const lines = [
