@@ -4,6 +4,7 @@ import { neon } from "@neondatabase/serverless";
 import type { ClientPost } from "@/lib/social/posts";
 import type { Approval, ApprovalStatus } from "@/lib/social/approvals";
 import { DEMO_CLIENT, DEMO_CLIENT_ID, demoPosts } from "@/lib/social/demo";
+import { signingSecret } from "@/lib/signing-secret";
 
 /**
  * ReplyOra Social — public client-review portal.
@@ -15,13 +16,10 @@ import { DEMO_CLIENT, DEMO_CLIENT_ID, demoPosts } from "@/lib/social/demo";
  * touch the agency session.
  */
 
-const SECRET =
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  "replyora-dev-portal-secret";
+
 
 function sign(clientId: string): string {
-  return createHmac("sha256", SECRET).update(clientId).digest("base64url").slice(0, 24);
+  return createHmac("sha256", signingSecret()).update(clientId).digest("base64url").slice(0, 24);
 }
 
 export function makeShareToken(clientId: string): string {

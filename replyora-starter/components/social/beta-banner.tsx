@@ -41,7 +41,7 @@ export function BetaBanner({
           .
         </span>
         <Link
-          href="/settings/billing"
+          href="/settings?tab=billing"
           className="ml-auto font-semibold underline underline-offset-4"
         >
           Add a card to keep going

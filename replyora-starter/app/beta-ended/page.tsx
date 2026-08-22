@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { redirect } from "next/navigation";
+
 import { getCurrentUser } from "@/lib/auth/session";
 import { betaWindowFor } from "@/lib/beta";
 import { Button } from "@/components/ui/button";
@@ -22,8 +24,11 @@ export const dynamic = "force-dynamic";
  * between "add a card when you're ready" and "pay now or lose your work".
  */
 export default async function BetaEndedPage() {
+  // Signed-out visitors were being shown "your beta ended", which is confusing
+  // for someone who never had one. Send them to log in.
   const user = await getCurrentUser().catch(() => null);
-  const beta = await betaWindowFor(user?.email);
+  if (!user) redirect("/login");
+  const beta = await betaWindowFor(user.email);
   const ended = beta.expiresAt
     ? new Date(beta.expiresAt).toLocaleDateString("en-AU", {
         day: "numeric",
@@ -53,7 +58,7 @@ export default async function BetaEndedPage() {
 
         <div className="mt-9 flex flex-wrap justify-center gap-3">
           <Button asChild className="rounded-full">
-            <Link href="/settings/billing">Choose a plan →</Link>
+            <Link href="/settings?tab=billing">Choose a plan →</Link>
           </Button>
           <Button asChild variant="link" className="text-ink">
             <Link href="/api/auth/signout">Log out</Link>

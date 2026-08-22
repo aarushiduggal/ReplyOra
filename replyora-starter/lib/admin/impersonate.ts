@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createHmac } from "crypto";
 
 import { isStaff } from "@/lib/auth/owner";
+import { signingSecret } from "@/lib/signing-secret";
 
 /**
  * Staff/owner impersonation ("Enter as") for the new Neon/Auth.js stack.
@@ -15,8 +16,7 @@ import { isStaff } from "@/lib/auth/owner";
  */
 
 const COOKIE = "rp_imp";
-const SECRET =
-  process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "replyora-dev-imp";
+
 
 export interface Impersonation {
   actorUserId: string;
@@ -25,7 +25,7 @@ export interface Impersonation {
 }
 
 function sign(data: string): string {
-  return createHmac("sha256", SECRET).update(data).digest("base64url");
+  return createHmac("sha256", signingSecret()).update(data).digest("base64url");
 }
 
 function encode(p: Impersonation): string {

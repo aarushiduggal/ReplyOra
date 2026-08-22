@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { signingSecret } from "@/lib/signing-secret";
 
 /**
  * Signed `state` for the social-account connect flows (Instagram / Facebook /
@@ -16,16 +17,13 @@ import { createHmac, timingSafeEqual } from "crypto";
  * Mirrors lib/social/upload-token.ts (same secret, same constant-time compare).
  */
 
-const SECRET =
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  "replyora-dev-portal-secret";
+
 
 /** OAuth round-trips are seconds; 30 minutes is generous and bounds replay. */
 const MAX_AGE_MS = 30 * 60 * 1000;
 
 function sign(payload: string): string {
-  return createHmac("sha256", SECRET).update(payload).digest("base64url");
+  return createHmac("sha256", signingSecret()).update(payload).digest("base64url");
 }
 
 /** Build the `state` value to send to the provider. */

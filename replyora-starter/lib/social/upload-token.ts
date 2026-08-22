@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { signingSecret } from "@/lib/signing-secret";
 
 /**
  * Signed, expiring token for the "upload from phone" flow.
@@ -9,15 +10,12 @@ import { createHmac, timingSafeEqual } from "crypto";
  * Can't be forged without AUTH_SECRET, and it stops working after 30 minutes.
  */
 
-const SECRET =
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  "replyora-dev-portal-secret";
+
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function sign(payload: string): string {
-  return createHmac("sha256", SECRET).update(payload).digest("base64url");
+  return createHmac("sha256", signingSecret()).update(payload).digest("base64url");
 }
 
 export function makeUploadToken(
