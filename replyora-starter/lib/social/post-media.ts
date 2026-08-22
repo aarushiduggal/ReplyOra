@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
+import { MAX_SLIDES } from "@/lib/social/types";
 
 /**
  * Ordered media for a post — the slides of a carousel, or the single image or
@@ -41,8 +42,8 @@ export interface PostMedia {
   position: number;
 }
 
-/** Instagram's hard limit. Facebook's is higher; this is the binding one. */
-export const MAX_SLIDES = 10;
+// Re-exported so server code can keep importing it from here.
+export { MAX_SLIDES } from "@/lib/social/types";
 
 interface Row {
   url: string;

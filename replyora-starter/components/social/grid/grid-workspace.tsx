@@ -11,6 +11,7 @@ import {
   Grid3x3,
   Heart,
   ImageIcon,
+  Images,
   Instagram,
   Loader2,
   Menu,
@@ -33,7 +34,7 @@ import {
 import type { GridTile, ProfilePreview, TileStatus } from "@/lib/social/grid";
 import type { LiveFeed } from "@/lib/social/instagram-feed";
 import type { FeedAnalysis } from "@/lib/social/feed-analysis";
-import { PLATFORM_LABEL, type Platform } from "@/lib/social/types";
+import { MAX_SLIDES, PLATFORM_LABEL, type Platform } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
 import { toast } from "@/lib/toast";
 import {
@@ -113,6 +114,9 @@ export function GridWorkspace({
   connectedPlatforms = [],
   liveFeed: initialLiveFeed,
   feedAnalysis: initialFeedAnalysis,
+  /** Which tab opens first. Lets a link land straight on a client's TikTok
+      queue instead of always starting at Instagram. */
+  initialPlatform = "instagram",
 }: {
   clientId: string;
   clientName: string;
@@ -122,6 +126,7 @@ export function GridWorkspace({
   connectedPlatforms?: string[];
   liveFeed?: LiveFeed;
   feedAnalysis?: FeedAnalysis | null;
+  initialPlatform?: Platform;
 }) {
   const base = `/clients/${clientId}`;
   // The live Instagram feed loads AFTER first paint so a slow Graph API never
@@ -230,8 +235,14 @@ export function GridWorkspace({
       /* ignore */
     }
   }, [showDates, clientId]);
-  const [platform, setPlatform] = useState<Platform>("instagram");
+  const [platform, setPlatform] = useState<Platform>(initialPlatform);
   const isTikTok = platform === "tiktok";
+  // TikTok only accepts video. Showing photos in the tray would invite a post
+  // that can never publish, so the tray narrows with the platform.
+  const shownAssets = useMemo(
+    () => (isTikTok ? assets.filter((a) => a.kind === "video") : assets),
+    [assets, isTikTok],
+  );
   const [, startTransition] = useTransition();
 
   // Live Instagram feed (real, via Meta Graph API) — only offered when the
@@ -414,169 +425,178 @@ export function GridWorkspace({
 
   return (
     <div>
-      {/* sub-title row */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/85">
-          <span className="text-oxblood">( 02 )</span> Grid
-          <span className="text-ink/60">·</span>
-          <span className="text-ink/80">
-            Studio · {PLATFORM_LABEL[platform]}
+      {/* ── Masthead ────────────────────────────────────────────────────
+          Broadsheet: the client's name is the headline, the platform tabs are
+          which paper you're reading, and the rule under them carries the
+          numbers. Everything below this changes with the platform; this does
+          not. Replaces fourteen competing uppercase labels with one entry
+          point. */}
+      <div className="border-b-[3px] border-ink pb-3">
+        <div className="flex items-baseline justify-between gap-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-ink/55">
+          <span>
+            {connectedPlatforms.includes(platform) ? "Connected" : "Not connected"}
           </span>
-          <GuideTrigger pageKey="grid" clientId={clientId} />
+          <span className="hidden sm:inline">The Grid</span>
+          <div className="flex items-center gap-3">
+            <GuideTrigger pageKey="grid" clientId={clientId} />
+            <Link
+              href={`${base}/approvals`}
+              className="tracking-[0.16em] text-ink/70 hover:text-ink"
+            >
+              Approvals
+            </Link>
+            <Link
+              href={`${base}/studio`}
+              className="inline-flex items-center gap-1.5 bg-ink px-3.5 py-1.5 tracking-[0.16em] text-cream transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-3 w-3" /> {isTikTok ? "Add clip" : "Add post"}
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href={`${base}/studio`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-oxblood px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream transition-opacity hover:opacity-90"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add post
-          </Link>
-          <Link
-            href={`${base}/approvals`}
-            className="text-[11px] font-semibold uppercase tracking-[0.16em] text-oxblood hover:underline"
-          >
-            Approval queue →
-          </Link>
+        <h2 className="mt-2 text-center font-display text-[34px] font-light leading-[0.95] tracking-tight text-ink sm:text-[42px]">
+          {clientName}
+        </h2>
+        {/* the only navigation on the page */}
+        <div className="mt-3 flex justify-center gap-6 text-[10px] font-semibold uppercase tracking-[0.18em] sm:gap-8">
+          {(["instagram", "facebook", "tiktok"] as Platform[]).map((pf) => (
+            <button
+              key={pf}
+              type="button"
+              onClick={() => setPlatform(pf)}
+              aria-pressed={platform === pf}
+              className={
+                platform === pf
+                  ? "border-b-2 border-ink pb-1 text-ink"
+                  : "pb-1 text-ink/35 transition-colors hover:text-ink/70"
+              }
+            >
+              {PLATFORM_LABEL[pf]}
+            </button>
+          ))}
         </div>
       </div>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-ink py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-ink/70 sm:justify-between">
+        <span>
+          {visible.length} {isTikTok ? "clip" : "post"}
+          {visible.length === 1 ? "" : "s"} planned
+        </span>
+        <span className="hidden sm:inline">·</span>
+        <span>{drafts.length} draft{drafts.length === 1 ? "" : "s"}</span>
+        <span className="hidden sm:inline">·</span>
+        <span>{scheduled.length} scheduled</span>
+        <span className="hidden sm:inline">·</span>
+        <span>
+          {feedAnalysis
+            ? `Harmony ${Math.round(feedAnalysis.liveHarmony)}%`
+            : isTikTok
+              ? "Video only"
+              : "—"}
+        </span>
+      </div>
 
-      {/* How-it-works step guide (dismissible) */}
-      {showGuide && (
-        <div className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-2 rounded-2xl border border-oxblood/15 bg-oat/25 px-4 py-3">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood">
-            How it works
-          </span>
-          {[
-            "Connect the account",
-            "Press + to add a tile",
-            "Drag a photo from Assets",
-            "Schedule or post",
-          ].map((label, i, arr) => (
-            <span key={label} className="flex items-center gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-oxblood text-[10px] font-bold text-cream">
-                {i + 1}
-              </span>
-              <span className="text-[11px] font-medium text-ink/85">{label}</span>
-              {i < arr.length - 1 && <span className="mx-1 hidden h-px w-4 bg-ink/20 sm:block" />}
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={dismissGuide}
-            className="ml-auto text-ink/50 hover:text-oxblood"
-            aria-label="Dismiss guide"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
-      <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,320px)_1fr]">
-        {/* Left — platform + profile controls */}
-        <aside className="space-y-6">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_1.9fr_1fr]">
+        {/* Left column — set like a newspaper sidebar: a serif sub-head, a
+            short rule, then plain prose. The Platform control moved up into
+            the masthead, which is what freed this column to breathe. */}
+        <aside className="space-y-6 text-[12px] leading-relaxed text-ink/75">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
-              Platform
-            </p>
-            {/* Grid is a visual planner → Instagram + Facebook only. TikTok is a
-                video feed (no grid); it stays a direct-posting target in Studio
-                and the calendar composer. */}
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
-              {(["instagram", "facebook"] as Platform[]).map((p) => {
-                const active = platform === p;
-                const Icon =
-                  p === "instagram" ? Instagram : p === "tiktok" ? Music2 : Facebook;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPlatform(p)}
-                    className={`flex items-center gap-1.5 pb-1 transition-colors ${
-                      active
-                        ? "text-oxblood underline decoration-oxblood underline-offset-[6px]"
-                        : "text-ink/50 hover:text-ink/80"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {PLATFORM_LABEL[p]}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-2 text-xs font-medium text-ink/85">
-              {visible.length} posts{isTikTok ? "" : " · 0 highlights"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
-              Profile preview
-            </p>
-            <p className="mt-1 text-xs font-medium text-ink/85">
-              Username, bio, followers &amp; photo shown on the mock.
-            </p>
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="mt-3 w-full rounded-full border border-oxblood/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-oxblood transition-colors hover:bg-oxblood hover:text-cream"
-            >
-              Edit profile preview
-            </button>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/85">
-              Account
-            </p>
+            <p className="mb-1.5 font-display text-[15px] text-ink">The account</p>
+            <div className="mb-2 h-px w-8 bg-ink/30" />
             {connectedPlatforms.includes(platform) ? (
-              <Link
-                href={`${base}/integrations`}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-800 transition-colors hover:border-emerald-400"
-              >
-                <Check className="h-3.5 w-3.5" /> {PLATFORM_LABEL[platform]} connected
-              </Link>
+              <>
+                <p>
+                  Connected as{" "}
+                  <span className="text-ink">
+                    {profile.username || PLATFORM_LABEL[platform].toLowerCase()}
+                  </span>
+                  .{" "}
+                  {isTikTok
+                    ? "Clips post straight to TikTok at the time you set."
+                    : "Live posts are pulled in; planned tiles sit on top."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="mt-1.5 text-ink underline underline-offset-4 hover:text-oxblood"
+                >
+                  Edit profile preview
+                </button>
+              </>
             ) : (
               <>
+                <p>
+                  No {PLATFORM_LABEL[platform]} account connected yet, so nothing
+                  here can publish.
+                </p>
                 <Link
                   href={`${base}/integrations`}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-ink/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80 transition-colors hover:border-oxblood hover:text-oxblood"
+                  className="mt-1.5 inline-block text-ink underline underline-offset-4 hover:text-oxblood"
                 >
-                  {platform === "instagram" ? (
-                    <Instagram className="h-3.5 w-3.5" />
-                  ) : platform === "facebook" ? (
-                    <Facebook className="h-3.5 w-3.5" />
-                  ) : (
-                    <Music2 className="h-3.5 w-3.5" />
-                  )}{" "}
-                  Connect {PLATFORM_LABEL[platform]}
+                  Connect {PLATFORM_LABEL[platform]} →
                 </Link>
-                <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-ink/75">
-                  Paid feature
+              </>
+            )}
+          </div>
+
+          <div>
+            <p className="mb-1.5 font-display text-[15px] text-ink">Formats</p>
+            <div className="mb-2 h-px w-8 bg-ink/30" />
+            {isTikTok ? (
+              <p>
+                Video only — TikTok rejects anything else, so photo assets are
+                hidden on this tab.
+              </p>
+            ) : (
+              <>
+                <p>Post · Carousel up to {MAX_SLIDES} · Reel</p>
+                <p className="mt-1.5 text-[11px] text-ink/55">
+                  Photo and video can&apos;t be mixed inside one carousel.
                 </p>
               </>
             )}
           </div>
 
           {!isTikTok && (
-            <div className="space-y-3">
-              <Toggle
-                label="Reels"
-                on={reels}
-                onChange={setReels}
-                help="Show a Reels play icon on video tiles in the preview."
-              />
-              <Toggle
-                label="Scheduled dates"
-                on={showDates}
-                onChange={setShowDates}
-                help="Show the scheduled date on each planned tile."
-              />
+            <div>
+              <p className="mb-1.5 font-display text-[15px] text-ink">Display</p>
+              <div className="mb-2.5 h-px w-8 bg-ink/30" />
+              <div className="space-y-3">
+                <Toggle
+                  label="Reels"
+                  on={reels}
+                  onChange={setReels}
+                  help="Show a play icon on video tiles."
+                />
+                <Toggle
+                  label="Scheduled dates"
+                  on={showDates}
+                  onChange={setShowDates}
+                  help="Show the date on each planned tile."
+                />
+              </div>
             </div>
           )}
         </aside>
 
-        {/* Centre — iPhone mock */}
+        {/* Centre — the plate.
+            Squares for a grid-shaped network, a 9:16 shelf for TikTok. TikTok
+            was previously excluded from the Grid entirely ("a video feed, no
+            grid") — correct, but it left TikTok with nowhere to attach a video
+            at all. The masthead and both side columns are identical either
+            way; only this changes. */}
         <div>
+          {isTikTok ? (
+            <ClipShelf
+              clips={visible.filter((t) => t.status !== "published")}
+              onAdd={addEmptyTile}
+              onOpen={setActionTile}
+              onRemove={removeTile}
+              dropTarget={dropTarget}
+              setDropTarget={setDropTarget}
+              onDrop={onDrop}
+              dragging={Boolean(dragAssetUrl)}
+            />
+          ) : (
           <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2rem] border border-oxblood/15 bg-white shadow-sm">
             <div className="flex items-center justify-between px-4 pt-3 text-[10px] font-medium text-ink/85">
               <span>9:41</span>
@@ -711,6 +731,25 @@ export function GridWorkspace({
                         <span className="absolute left-1 top-1 z-10 rounded-sm bg-oxblood px-1 py-0.5 text-[7px] font-bold uppercase tracking-wide text-cream">
                           Planned
                         </span>
+                        {/* Format marks. Reading a month's mix of posts,
+                            carousels and reels at a glance is the whole point
+                            of a grid view. */}
+                        {t.mediaCount > 1 ? (
+                          <span
+                            className="absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-sm bg-ink/75 px-1 py-0.5 text-[8px] font-bold text-cream"
+                            title={`Carousel · ${t.mediaCount} slides`}
+                          >
+                            <Images className="h-2.5 w-2.5" />
+                            {t.mediaCount}
+                          </span>
+                        ) : t.mediaKind === "video" && reels ? (
+                          <span
+                            className="absolute right-1 top-1 z-10 text-cream drop-shadow"
+                            title="Reel"
+                          >
+                            <Play className="h-3 w-3 fill-current" />
+                          </span>
+                        ) : null}
                         {!t.mediaUrl && <ImageIcon className="h-5 w-5 text-oxblood/30" />}
                         <button
                           type="button"
@@ -826,6 +865,25 @@ export function GridWorkspace({
                           <Play className="h-2.5 w-2.5 fill-white text-white" />
                         </span>
                       )}
+                      {/* Format marks. These belong on BOTH tile renderers —
+                          this is the branch most workspaces actually see, since
+                          it's what shows before a live feed is connected. */}
+                      {!isTikTok && t.mediaCount > 1 ? (
+                        <span
+                          className="absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-sm bg-ink/75 px-1 py-0.5 text-[8px] font-bold text-cream"
+                          title={`Carousel · ${t.mediaCount} slides`}
+                        >
+                          <Images className="h-2.5 w-2.5" />
+                          {t.mediaCount}
+                        </span>
+                      ) : !isTikTok && t.mediaKind === "video" && reels ? (
+                        <span
+                          className="absolute right-1 top-1 z-10 text-cream drop-shadow"
+                          title="Reel"
+                        >
+                          <Play className="h-3 w-3 fill-current" />
+                        </span>
+                      ) : null}
                       {isTarget && (
                         <span className="absolute inset-0 flex items-center justify-center bg-oxblood/40 text-[8px] font-bold uppercase tracking-wide text-cream">
                           Drop
@@ -850,6 +908,7 @@ export function GridWorkspace({
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Right — assets + drafts/scheduled */}
@@ -907,7 +966,10 @@ export function GridWorkspace({
 
           <div>
             <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
-              <span>{assets.length} assets</span>
+              <span>
+                {shownAssets.length} {isTikTok ? "video" : "asset"}
+                {shownAssets.length === 1 ? "" : "s"}
+              </span>
               <Link
                 href={`${base}/assets`}
                 className="text-oxblood hover:underline"
@@ -915,10 +977,10 @@ export function GridWorkspace({
                 Manage
               </Link>
             </div>
-            {assets.length === 0 ? (
+            {shownAssets.length === 0 ? (
               <div className="mt-2 flex flex-col items-center gap-1 rounded-xl border border-dashed border-oxblood/20 px-4 py-8 text-center">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/85">
-                  No assets yet
+                  {isTikTok ? "No video yet" : "No assets yet"}
                 </p>
                 <Link
                   href={`${base}/assets`}
@@ -930,20 +992,32 @@ export function GridWorkspace({
             ) : (
               <>
                 <div className="mt-2 grid grid-cols-4 gap-1.5">
-                  {assets.map((a) => (
+                  {shownAssets.map((a) => (
                     <div
                       key={a.id}
                       draggable
                       onDragStart={() => setDragAssetUrl(a.url)}
                       onDragEnd={() => setDragAssetUrl(null)}
-                      className="aspect-square cursor-grab rounded-md bg-oat bg-cover bg-center ring-1 ring-oxblood/10 transition hover:ring-oxblood/40 active:cursor-grabbing"
+                      className="relative aspect-square cursor-grab rounded-md bg-oat bg-cover bg-center ring-1 ring-oxblood/10 transition hover:ring-oxblood/40 active:cursor-grabbing"
                       style={{ backgroundImage: `url(${a.url})` }}
-                      title="Drag onto a grid tile to place"
-                    />
+                      title={
+                        a.kind === "video"
+                          ? "Video — drag onto a tile"
+                          : "Drag onto a grid tile to place"
+                      }
+                    >
+                      {a.kind === "video" && (
+                        <span className="absolute bottom-0.5 right-0.5 text-cream drop-shadow">
+                          <Play className="h-2.5 w-2.5 fill-current" />
+                        </span>
+                      )}
+                    </div>
                   ))}
                 </div>
                 <p className="mt-2 text-[10px] text-ink/55">
-                  Drag an asset onto a grid tile to place it.
+                  {isTikTok
+                    ? "Only video is shown — TikTok rejects anything else."
+                    : "Drag an asset onto a grid tile to place it."}
                 </p>
               </>
             )}
@@ -1732,5 +1806,133 @@ function GridIntelligence({
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * TikTok's plate: a horizontal shelf of 9:16 clips.
+ *
+ * Deliberately NOT a grid. TikTok is a queue of vertical videos, and squaring
+ * them off would misrepresent what the client will actually see. Each clip is
+ * a drop target, so dragging a video from the Assets column fills it — the
+ * step that was impossible before, because the Grid filtered video out of the
+ * asset tray entirely.
+ */
+function ClipShelf({
+  clips,
+  onAdd,
+  onOpen,
+  onRemove,
+  dropTarget,
+  setDropTarget,
+  onDrop,
+  dragging,
+}: {
+  clips: GridTile[];
+  onAdd: () => void;
+  onOpen: (t: GridTile) => void;
+  onRemove: (id: string) => void;
+  dropTarget: string | null;
+  setDropTarget: React.Dispatch<React.SetStateAction<string | null>>;
+  onDrop: (id: string) => void;
+  dragging: boolean;
+}) {
+  return (
+    <div className="border border-ink/15 bg-white p-3">
+      <div className="mb-3 flex items-baseline justify-between">
+        <p className="font-display text-[15px] text-ink">
+          {clips.length} clip{clips.length === 1 ? "" : "s"} queued
+        </p>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/45">
+          Video only
+        </span>
+      </div>
+
+      {clips.length === 0 ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex aspect-[9/16] w-full max-w-[150px] flex-col items-center justify-center gap-2 border border-dashed border-ink/30 text-ink/45 transition-colors hover:border-oxblood hover:text-oxblood"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-[9px] font-semibold uppercase tracking-[0.12em]">
+            Add clip
+          </span>
+        </button>
+      ) : (
+        <div className="flex gap-2.5 overflow-x-auto pb-1">
+          {clips.map((t) => {
+            const isTarget = dropTarget === t.id;
+            return (
+              <div key={t.id} className="w-[104px] shrink-0">
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragging) setDropTarget(t.id);
+                  }}
+                  onDragLeave={() => setDropTarget((d) => (d === t.id ? null : d))}
+                  onDrop={() => onDrop(t.id)}
+                  onClick={() => t.mediaUrl && onOpen(t)}
+                  title={t.mediaUrl ? "Click to post or schedule" : "Drag a video here"}
+                  className={`group relative aspect-[9/16] bg-cover bg-center ring-1 ring-inset ${
+                    isTarget ? "ring-2 ring-oxblood" : "ring-oxblood/40"
+                  } ${
+                    t.mediaUrl
+                      ? "cursor-pointer"
+                      : "flex items-center justify-center border border-dashed border-oxblood/30 bg-oat/40"
+                  }`}
+                  style={
+                    t.mediaUrl ? { backgroundImage: `url(${t.mediaUrl})` } : undefined
+                  }
+                >
+                  {t.mediaUrl && (
+                    <span className="absolute inset-0 flex items-center justify-center text-cream/90 drop-shadow">
+                      <Play className="h-6 w-6 fill-current" />
+                    </span>
+                  )}
+                  {!t.mediaUrl && <ImageIcon className="h-5 w-5 text-oxblood/30" />}
+                  {/* TikTok rejects photos outright, so say so on the tile
+                      rather than letting it fail at publish time. */}
+                  {t.mediaUrl && t.mediaKind === "image" && (
+                    <span className="absolute inset-x-0 bottom-0 bg-oxblood px-1 py-0.5 text-center text-[7px] font-bold uppercase tracking-wide text-cream">
+                      Needs video
+                    </span>
+                  )}
+                  {isTarget && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-oxblood/40 text-[8px] font-bold uppercase tracking-wide text-cream">
+                      Drop
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(t.id);
+                    }}
+                    className="absolute right-1 top-1 z-10 rounded-full bg-ink/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Remove clip"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+                <p className="mt-1.5 truncate text-[10px] uppercase tracking-[0.1em] text-ink/60">
+                  {t.scheduledFor ? scheduleLabel(t.scheduledFor) : "Not scheduled"}
+                </p>
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex aspect-[9/16] w-[104px] shrink-0 flex-col items-center justify-center gap-1.5 border border-dashed border-ink/30 text-ink/45 transition-colors hover:border-oxblood hover:text-oxblood"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="text-[9px] font-semibold uppercase tracking-[0.12em]">
+              Add clip
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

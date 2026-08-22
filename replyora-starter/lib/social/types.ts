@@ -52,3 +52,10 @@ export const PILLARS = [
   "Tips",
   "Offer",
 ] as const;
+
+/**
+ * Most slides Instagram will accept in one carousel. Facebook allows more, so
+ * this is the binding limit. Lives here rather than in post-media.ts because
+ * the Grid (a client component) needs it, and post-media is server-only.
+ */
+export const MAX_SLIDES = 10;

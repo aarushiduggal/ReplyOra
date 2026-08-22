@@ -106,6 +106,13 @@ export function CalendlyEmbed({ url }: { url: string }) {
       <div
         ref={ref}
         className="calendly-inline-widget"
+        // widget.js auto-scans for `.calendly-inline-widget` the moment it
+        // loads and initialises every match from its `data-url` attribute. We
+        // have no data-url — the URL is passed to initInlineWidget above — so
+        // that scan read null and threw "Cannot read properties of null
+        // (reading 'split')" on every page that mounts this embed. This is
+        // Calendly's own opt-out: skip the element, we initialise it ourselves.
+        data-auto-load="false"
         style={{ minWidth: "320px", height: "700px" }}
       />
     </div>

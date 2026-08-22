@@ -31,6 +31,10 @@ export interface GridTile {
   scheduledFor: string | null;
   /** Why the last publish attempt failed. Null when it hasn't failed. */
   publishError: string | null;
+  /** "video" marks a Reel or a TikTok clip; the tile shows a play badge. */
+  mediaKind: "image" | "video" | null;
+  /** Slides on this post. >1 means a carousel, and the tile shows the count. */
+  mediaCount: number;
 }
 
 export interface ProfilePreview {
@@ -78,17 +82,23 @@ interface TileRow {
   media_url: string | null;
   scheduled_for: string | Date | null;
   publish_error?: string | null;
+  media_kind?: string | null;
+  media_count?: number | null;
 }
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   const workspaceId = await getCurrentWorkspaceId();
   if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
-    SELECT id, caption, status, platform, pillar, order_index, media_url, scheduled_for,
-           publish_error
-    FROM social_posts
-    WHERE workspace_id = ${workspaceId} AND client_id = ${clientId}
-    ORDER BY order_index ASC NULLS LAST, created_at DESC
+    SELECT p.id, p.caption, p.status, p.platform, p.pillar, p.order_index,
+           p.media_url, p.scheduled_for, p.publish_error, p.media_kind,
+           -- A tile needs to show "carousel of 4" without a second round trip
+           -- per tile, so the count is aggregated here.
+           COALESCE((SELECT count(*) FROM post_media m WHERE m.post_id = p.id), 0)::int
+             AS media_count
+    FROM social_posts p
+    WHERE p.workspace_id = ${workspaceId} AND p.client_id = ${clientId}
+    ORDER BY p.order_index ASC NULLS LAST, p.created_at DESC
   `) as TileRow[];
   return rows.map((r, i) => ({
     id: r.id,
@@ -100,6 +110,10 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
     mediaUrl: r.media_url ?? null,
     scheduledFor: r.scheduled_for ? new Date(r.scheduled_for).toISOString() : null,
     publishError: r.publish_error ?? null,
+    mediaKind: r.media_kind === "video" ? "video" : r.media_kind ? "image" : null,
+    // Older posts predate post_media; a post that has a media_url but no rows
+    // still counts as one piece of media, not zero.
+    mediaCount: r.media_count ?? (r.media_url ? 1 : 0),
   }));
 }
 

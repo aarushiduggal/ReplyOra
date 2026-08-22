@@ -38,6 +38,8 @@ export async function addEmptyTileAction(
     pillar: "",
     orderIndex: 0,
     mediaUrl: null,
+    mediaKind: null,
+    mediaCount: 0,
     scheduledFor: null,
     publishError: null,
   };

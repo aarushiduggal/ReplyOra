@@ -81,6 +81,9 @@ export function demoTiles(): GridTile[] {
         ? new Date(Date.now() + (i - 5) * 86_400_000).toISOString()
         : null,
     publishError: null,
+    // Demo data shows off the new marks: a couple of carousels and a reel.
+    mediaKind: i % 4 === 2 ? ("video" as const) : r[2] ? ("image" as const) : null,
+    mediaCount: r[2] ? (i % 3 === 0 ? 4 : 1) : 0,
   }));
 }
 
