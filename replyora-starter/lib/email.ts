@@ -19,6 +19,19 @@ export const HAS_EMAIL = Boolean(process.env.RESEND_API_KEY);
 
 const FROM = process.env.EMAIL_FROM ?? "Replyora <alerts@replyora.com>";
 
+/**
+ * Where replies go.
+ *
+ * We send FROM a domain address so the email looks like it comes from the
+ * business, but that address has no mailbox behind it — a tester who hits
+ * Reply would have their message vanish. Point replies at the first
+ * OWNER_EMAILS address, which is a real inbox someone reads.
+ */
+function replyTo(): string | undefined {
+  const owner = (process.env.OWNER_EMAILS ?? "").split(",")[0]?.trim();
+  return owner || undefined;
+}
+
 export interface EmailMessage {
   to: string;
   subject: string;
@@ -26,6 +39,8 @@ export interface EmailMessage {
   text: string;
   /** Optional HTML body; falls back to a simple wrap of `text`. */
   html?: string;
+  /** Override where replies go. Defaults to the first OWNER_EMAILS address. */
+  replyTo?: string;
 }
 
 export interface EmailResult {
@@ -62,13 +77,24 @@ export async function sendEmail(msg: EmailMessage): Promise<EmailResult> {
       body: JSON.stringify({
         from: FROM,
         to: msg.to,
+        reply_to: msg.replyTo ?? replyTo(),
         subject: msg.subject,
         text: msg.text,
         html: msg.html ?? wrapHtml(msg.subject, msg.text),
       }),
     });
     if (!res.ok) {
-      return { sent: false, reason: `provider ${res.status}` };
+      // The body says whether it's an unverified domain, a bad key, or a
+      // rejected address — "provider 403" sends you hunting for hours.
+      const body = await res.text().catch(() => "");
+      let detail = body.slice(0, 200);
+      try {
+        detail = (JSON.parse(body) as { message?: string }).message ?? detail;
+      } catch {
+        /* keep the raw snippet */
+      }
+      console.error(`[email] send failed (${res.status}): ${detail}`);
+      return { sent: false, reason: detail || `provider ${res.status}` };
     }
     return { sent: true };
   } catch (err) {

@@ -66,8 +66,17 @@ export default async function BetaEndedPage() {
         </div>
 
         <p className="mt-10 text-[13px] leading-relaxed text-ink/60">
-          Something not working, or a question about your account? Reply to any
-          email we&apos;ve sent you and it comes straight to us.
+          {/* Names the address that is actually monitored. Invites send FROM
+              hello@replyora.net, which has no mailbox behind it — telling
+              people to reply there would drop their message silently. */}
+          Something not working, or a question about your account? Email us at{" "}
+          <a
+            href="mailto:hello.replyora@gmail.com"
+            className="font-semibold text-ink underline underline-offset-4"
+          >
+            hello.replyora@gmail.com
+          </a>
+          .
         </p>
       </div>
     </div>
