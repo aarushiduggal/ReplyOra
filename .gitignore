@@ -16,7 +16,12 @@ REPLYORA - YOUNNIS/
 photos/
 highlights cover/
 Posts - Week of */
-*.JPG
+# Camera originals — huge, and we only ever ship processed web copies.
+# NOT a bare *.JPG: macOS is case-insensitive, so that pattern also swallowed
+# the optimised lowercase .jpg files in public/, and `git add -A` skipped them
+# silently. Scope it to where the originals actually live.
+/Marketing Website Photos/
+/photos/
 *.jpeg
 
 # Local editor/tooling config that points at machine-specific paths.
