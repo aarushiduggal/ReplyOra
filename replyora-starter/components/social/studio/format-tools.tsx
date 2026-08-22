@@ -19,6 +19,7 @@ import {
   reelScriptAction,
   replyPackAction,
   saveCarouselDraftAction,
+  saveStoryDraftAction,
   storySequenceAction,
 } from "@/app/(social)/clients/[id]/studio/actions";
 import type {
@@ -65,16 +66,21 @@ export function FormatTools({
   const [hooks, setHooks] = useState<HookSet | null>(null);
   const [story, setStory] = useState<StorySequence | null>(null);
   const [replies, setReplies] = useState<ReplyPack | null>(null);
-  // Hook rewriting works on an existing caption, not a topic.
+  // Hook rewriting prefers an existing caption but doesn't require one.
   const [caption, setCaption] = useState("");
+  // A situation the six defaults don't cover — every business has one.
+  const [extraScenario, setExtraScenario] = useState("");
 
   function run() {
-    const needsCaption = tool === "hooks";
-    if (needsCaption && !caption.trim()) {
-      toast({ title: "Paste the caption you want to rework.", type: "error" });
+    // Hooks work from either a caption or a topic, so it needs one of the two.
+    if (tool === "hooks" && !caption.trim() && !topic.trim()) {
+      toast({
+        title: "Paste a caption, or just tell me the topic.",
+        type: "error",
+      });
       return;
     }
-    if (!needsCaption && !topic.trim()) {
+    if (tool !== "hooks" && !topic.trim()) {
       toast({ title: "What's it about? Add a topic first.", type: "error" });
       return;
     }
@@ -88,6 +94,7 @@ export function FormatTools({
           tone,
           slides,
           caption,
+          extraScenarios: extraScenario.trim() ? [extraScenario.trim()] : [],
         };
         const res =
           tool === "reel"
@@ -148,6 +155,27 @@ export function FormatTools({
     });
   }
 
+  function saveStory() {
+    if (!story) return;
+    startSave(async () => {
+      try {
+        await saveStoryDraftAction(clientId, {
+          platform: "instagram",
+          pillar,
+          frames: story.frames,
+        });
+        router.refresh();
+        toast({
+          title: "Saved to the grid as a story draft",
+          body: "The frame plan is on the post, ready to film.",
+          type: "success",
+        });
+      } catch {
+        toast({ title: "Couldn't save that draft.", type: "error" });
+      }
+    });
+  }
+
   return (
     <div className="space-y-7">
       <p className="max-w-xl text-[12px] font-medium leading-relaxed text-ink/85">
@@ -182,15 +210,29 @@ export function FormatTools({
       {/* ── Brief ──────────────────────────────────────────────────────── */}
       <section className="space-y-5 rounded-2xl border border-ink/10 bg-white p-5">
         {tool === "hooks" ? (
-          <Field label="The caption to rework">
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              rows={4}
-              placeholder="Paste the caption whose opening line isn't landing…"
-              className="w-full resize-y rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm leading-relaxed text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
-            />
-          </Field>
+          <>
+            <Field label="The caption to rework (optional)">
+              <textarea
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                rows={4}
+                placeholder="Paste the caption whose opening line isn't landing…"
+                className="w-full resize-y rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm leading-relaxed text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
+              />
+            </Field>
+            <Field label="…or just the topic">
+              <input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g. why we always do a strand test first"
+                className="w-full rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
+              />
+            </Field>
+            <p className="-mt-2 text-[11px] leading-relaxed text-ink/55">
+              A caption gives sharper hooks because they can match what follows.
+              A topic alone is fine when you haven&apos;t written it yet.
+            </p>
+          </>
         ) : (
           <Field label={tool === "replies" ? "What does this client do?" : "What's it about?"}>
             <input
@@ -231,6 +273,21 @@ export function FormatTools({
             ))}
           </div>
         </Field>
+
+        {tool === "replies" && (
+          <Field label="A comment they get that we've missed (optional)">
+            <input
+              value={extraScenario}
+              onChange={(e) => setExtraScenario(e.target.value)}
+              placeholder="e.g. Asks if you take walk-ins"
+              className="w-full rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
+            />
+            <p className="mt-1.5 text-[11px] text-ink/55">
+              Price, bookings, compliments, location, complaints and technical
+              questions are covered already.
+            </p>
+          </Field>
+        )}
 
         {tool === "carousel" && (
           <Field label={`Slides (${slides})`}>
@@ -387,9 +444,22 @@ export function FormatTools({
       {/* ── Story sequence ─────────────────────────────────────────────── */}
       {tool === "story" && story && (
         <section>
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">
-            {story.frames.length} frames
-          </p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">
+              {story.frames.length} frames
+            </p>
+            <Button onClick={saveStory} disabled={savePending}>
+              {savePending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> Save to the grid
+                </>
+              )}
+            </Button>
+          </div>
           <ol className="flex gap-3 overflow-x-auto pb-2">
             {story.frames.map((f, i) => (
               <li

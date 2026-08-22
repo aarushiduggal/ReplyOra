@@ -24,10 +24,12 @@ import {
   generateReelScript,
   generateReplyPack,
   generateStorySequence,
+  storyToNotes,
   type CarouselOutline,
   type HookSet,
   type ReelScript,
   type ReplyPack,
+  type StoryFrame,
   type StorySequence,
   type ToolInput,
   type ToolResult,
@@ -300,4 +302,33 @@ export async function replyPackAction(
   input: ToolInput,
 ): Promise<ToolResult<ReplyPack>> {
   return generateReplyPack(input);
+}
+
+/**
+ * Save a planned Story as a draft.
+ *
+ * Same reasoning as the carousel: a plan that lives only on screen gets lost
+ * the moment the tab closes. Saved as a story-format draft, the frame plan is
+ * in front of whoever films it.
+ */
+export async function saveStoryDraftAction(
+  clientId: string,
+  input: { platform: Platform; pillar: string; frames: StoryFrame[] },
+): Promise<void> {
+  const notes = storyToNotes({ frames: input.frames });
+  const first = input.frames[0]?.text ?? "Story";
+  await createClientPost({
+    clientId,
+    platform: input.platform,
+    pillar: input.pillar,
+    format: "story",
+    topic: first.slice(0, 80),
+    caption: `Story plan\n\n${notes}`,
+    hashtags: [],
+    status: "draft",
+    scheduledFor: null,
+    mediaUrl: null,
+  });
+  revalidatePath(`/clients/${clientId}/studio`);
+  revalidatePath(`/clients/${clientId}/grid`);
 }

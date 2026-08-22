@@ -65,6 +65,11 @@ export interface ToolInput {
   slides?: number;
   /** Hook rewriter only — the caption whose opening line needs work. */
   caption?: string;
+  /**
+   * Reply pack only — extra situations this client actually gets. The six
+   * defaults cover most businesses; every business has one they don't.
+   */
+  extraScenarios?: string[];
 }
 
 /** Pull the readable sentence out of a Google API error body. */
@@ -297,12 +302,16 @@ export async function generateHooks(
     return { data: hookTemplate(input), source: "template", reason };
   };
 
+  // Works either way round: rewrite the opening of a caption you already have,
+  // or write openings from scratch for a topic. Requiring a finished caption
+  // made the tool useless at the point you most want hooks — before writing.
+  const hasCaption = Boolean(input.caption?.trim());
   const prompt = `You are a social media copywriter for "${input.businessName || "the brand"}".
-Here is a caption:
-"""
-${input.caption?.trim() || input.topic}
-"""
-Write 8 alternative OPENING LINES for it. Keep the caption's subject and voice — you are only replacing the first line.
+${
+    hasCaption
+      ? `Here is a caption:\n"""\n${input.caption!.trim()}\n"""\nWrite 8 alternative OPENING LINES for it. Keep the caption's subject and voice — you are only replacing the first line.`
+      : `Write 8 OPENING LINES for a post about: ${input.topic}.`
+  }
 Tone: ${input.tone ?? "warm"}. Each hook is one line, under 12 words, and makes someone stop scrolling.
 Vary the shape: a question, a bold claim, a mistake, a number, a confession, a direct address. No two the same pattern. No emoji.
 Return ONLY valid JSON: {"hooks": string[]}. No markdown.`;
@@ -326,6 +335,16 @@ export interface StoryFrame {
 
 export interface StorySequence {
   frames: StoryFrame[];
+}
+
+/** Flatten a sequence into something a draft post can carry. */
+export function storyToNotes(seq: StorySequence): string {
+  return seq.frames
+    .map(
+      (f, i) =>
+        `${i + 1}. ${f.text}${f.visual ? ` — ${f.visual}` : ""}${f.sticker ? ` [${f.sticker}]` : ""}`,
+    )
+    .join("\n");
 }
 
 function storyTemplate(input: ToolInput): StorySequence {
@@ -400,6 +419,10 @@ const SCENARIOS = [
 
 function replyTemplate(input: ToolInput): ReplyPack {
   const b = input.businessName || "us";
+  const extra = (input.extraScenarios ?? []).map((sc) => ({
+    scenario: sc,
+    reply: `Thanks for asking — send us a DM and the team at ${b} will help you with that.`,
+  }));
   return {
     replies: [
       { scenario: SCENARIOS[0]!, reply: "Great question — it depends on the length and what you're after. Send us a DM and we'll give you an exact number." },
@@ -408,6 +431,7 @@ function replyTemplate(input: ToolInput): ReplyPack {
       { scenario: SCENARIOS[3]!, reply: `We're easy to find — full address is in our bio, and there's parking right out front.` },
       { scenario: SCENARIOS[4]!, reply: "We're really sorry to hear that, and we'd like to fix it. Could you DM us so we can sort it properly?" },
       { scenario: SCENARIOS[5]!, reply: `Happy to explain — send us a DM and one of the team at ${b} will talk you through it.` },
+      ...extra,
     ],
   };
 }
@@ -433,7 +457,7 @@ export async function generateReplyPack(
 Tone: ${input.tone ?? "warm"} — sound like a person, never like a support macro.${
     input.voiceNotes?.trim() ? `\nBrand voice notes: ${input.voiceNotes.trim()}` : ""
   }
-Write one reply for each of these situations: ${SCENARIOS.join("; ")}.
+Write one reply for each of these situations: ${[...SCENARIOS, ...(input.extraScenarios ?? [])].join("; ")}.
 Each reply is 1-2 sentences. Never promise a specific price or date. For the unhappy one, take it to DMs without being defensive.
 Return ONLY valid JSON: {"replies": [{"scenario": string, "reply": string}]}. No markdown.`;
 
