@@ -64,9 +64,9 @@ export function StudioWorkspace({
   const [savePending, startSave] = useTransition();
   // "single" is the original one-topic flow; "month" batches and schedules a
   // whole month. Kept side by side so neither path loses anything.
-  const [mode, setMode] = useState<"single" | "month" | "reel" | "carousel">(
-    "single",
-  );
+  const [mode, setMode] = useState<
+    "single" | "month" | "reel" | "carousel" | "hooks" | "story" | "replies"
+  >("single");
 
   function generate() {
     if (!topic.trim()) return;
@@ -175,7 +175,22 @@ export function StudioWorkspace({
         </div>
       </div>
       <p className="mb-4 text-[12px] font-medium text-ink/85">
-        {mode === "reel" ? (
+        {mode === "hooks" ? (
+          <>
+            Swap the opening line on a caption for {clientName} — the first line
+            is what decides whether the rest gets read.
+          </>
+        ) : mode === "story" ? (
+          <>
+            Plan a Story sequence for {clientName} — what to film, the text on
+            each frame, and where a poll earns its place.
+          </>
+        ) : mode === "replies" ? (
+          <>
+            Ready replies for the comments {clientName} actually gets, written
+            in their voice.
+          </>
+        ) : mode === "reel" ? (
           <>
             Write a short-form video for {clientName} — a hook, the shots to
             film, and the text on screen.
@@ -199,13 +214,16 @@ export function StudioWorkspace({
       </p>
 
       {/* Mode switch — one post at a time, or the whole month. */}
-      <div className="mb-6 inline-flex rounded-full border border-ink/15 p-1">
+      <div className="mb-6 inline-flex max-w-full flex-wrap gap-1 rounded-2xl border border-ink/15 p-1">
         {(
           [
             ["single", "One post"],
             ["month", "Whole month"],
             ["reel", "Reel script"],
             ["carousel", "Carousel"],
+            ["hooks", "Hooks"],
+            ["story", "Story"],
+            ["replies", "Replies"],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -227,7 +245,7 @@ export function StudioWorkspace({
 
       {mode === "month" ? (
         <MonthBatch clientId={clientId} businessName={businessName || clientName} />
-      ) : mode === "reel" || mode === "carousel" ? (
+      ) : mode !== "single" ? (
         <FormatTools
           clientId={clientId}
           businessName={businessName || clientName}

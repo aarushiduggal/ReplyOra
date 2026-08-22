@@ -2,14 +2,32 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Clapperboard, Images, Loader2, Sparkles } from "lucide-react";
+import {
+  Check,
+  CircleDashed,
+  Clapperboard,
+  Images,
+  Loader2,
+  MessageCircle,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 
 import {
   carouselOutlineAction,
+  hooksAction,
   reelScriptAction,
+  replyPackAction,
   saveCarouselDraftAction,
+  storySequenceAction,
 } from "@/app/(social)/clients/[id]/studio/actions";
-import type { CarouselOutline, ReelScript } from "@/lib/social/formats";
+import type {
+  CarouselOutline,
+  HookSet,
+  ReelScript,
+  ReplyPack,
+  StorySequence,
+} from "@/lib/social/formats";
 import { TONES, type Tone } from "@/lib/social/generate";
 import { PILLARS, type Platform } from "@/lib/social/types";
 import { Button } from "@/components/ui/button";
@@ -23,6 +41,8 @@ import { cn } from "@/lib/utils";
  * carousel editor had nothing feeding them. A reel needs a structure and a
  * carousel needs slide-by-slide copy — different jobs, not longer paragraphs.
  */
+export type FormatTool = "reel" | "carousel" | "hooks" | "story" | "replies";
+
 export function FormatTools({
   clientId,
   businessName,
@@ -30,7 +50,7 @@ export function FormatTools({
 }: {
   clientId: string;
   businessName: string;
-  tool: "reel" | "carousel";
+  tool: FormatTool;
 }) {
   const router = useRouter();
   const [topic, setTopic] = useState("");
@@ -42,22 +62,49 @@ export function FormatTools({
   const [savePending, startSave] = useTransition();
   const [reel, setReel] = useState<ReelScript | null>(null);
   const [carousel, setCarousel] = useState<CarouselOutline | null>(null);
+  const [hooks, setHooks] = useState<HookSet | null>(null);
+  const [story, setStory] = useState<StorySequence | null>(null);
+  const [replies, setReplies] = useState<ReplyPack | null>(null);
+  // Hook rewriting works on an existing caption, not a topic.
+  const [caption, setCaption] = useState("");
 
   function run() {
-    if (!topic.trim()) {
+    const needsCaption = tool === "hooks";
+    if (needsCaption && !caption.trim()) {
+      toast({ title: "Paste the caption you want to rework.", type: "error" });
+      return;
+    }
+    if (!needsCaption && !topic.trim()) {
       toast({ title: "What's it about? Add a topic first.", type: "error" });
       return;
     }
     start(async () => {
       try {
-        const input = { businessName, platform, pillar, topic, tone, slides };
+        const input = {
+          businessName,
+          platform,
+          pillar,
+          topic,
+          tone,
+          slides,
+          caption,
+        };
         const res =
           tool === "reel"
             ? await reelScriptAction(input)
-            : await carouselOutlineAction(input);
+            : tool === "carousel"
+              ? await carouselOutlineAction(input)
+              : tool === "hooks"
+                ? await hooksAction(input)
+                : tool === "story"
+                  ? await storySequenceAction(input)
+                  : await replyPackAction(input);
 
         if (tool === "reel") setReel(res.data as ReelScript);
-        else setCarousel(res.data as CarouselOutline);
+        else if (tool === "carousel") setCarousel(res.data as CarouselOutline);
+        else if (tool === "hooks") setHooks(res.data as HookSet);
+        else if (tool === "story") setStory(res.data as StorySequence);
+        else setReplies(res.data as ReplyPack);
 
         // Same rule as captions: never let templates pass as AI silently.
         if (res.source === "template") {
@@ -65,7 +112,7 @@ export function FormatTools({
             title: "Written with the built-in template",
             body:
               res.reason === "no key"
-                ? "Add GEMINI_API_KEY in Netlify for AI-written scripts."
+                ? "Add GEMINI_API_KEY in Netlify for AI-written copy."
                 : `AI unavailable: ${res.reason ?? "unknown"}`,
             type: "info",
           });
@@ -109,29 +156,61 @@ export function FormatTools({
             A reel or TikTok needs a shape, not a paragraph — a hook that earns
             the first two seconds, then beats you can actually film.
           </>
-        ) : (
+        ) : tool === "carousel" ? (
           <>
             Plan a carousel slide by slide, then save it to the Grid and attach
             the images.
+          </>
+        ) : tool === "hooks" ? (
+          <>
+            The first line decides whether the rest gets read. Paste a caption
+            you already like and swap only its opening.
+          </>
+        ) : tool === "story" ? (
+          <>
+            Stories are a sequence, not a post — what to film, the text on each
+            frame, and where a poll earns its place.
+          </>
+        ) : (
+          <>
+            Replies for the comments this client actually gets, in their voice
+            rather than whoever happens to be on the phone.
           </>
         )}
       </p>
 
       {/* ── Brief ──────────────────────────────────────────────────────── */}
       <section className="space-y-5 rounded-2xl border border-ink/10 bg-white p-5">
-        <Field label="What's it about?">
-          <input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder={
-              tool === "reel"
-                ? "e.g. why we always do a strand test first"
-                : "e.g. how to make a blonde last between appointments"
-            }
-            className="w-full rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
-          />
-        </Field>
+        {tool === "hooks" ? (
+          <Field label="The caption to rework">
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={4}
+              placeholder="Paste the caption whose opening line isn't landing…"
+              className="w-full resize-y rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm leading-relaxed text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
+            />
+          </Field>
+        ) : (
+          <Field label={tool === "replies" ? "What does this client do?" : "What's it about?"}>
+            <input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder={
+                tool === "reel"
+                  ? "e.g. why we always do a strand test first"
+                  : tool === "carousel"
+                    ? "e.g. how to make a blonde last between appointments"
+                    : tool === "story"
+                      ? "e.g. a colour appointment start to finish"
+                      : "e.g. a hair salon in Sydney doing colour and extensions"
+              }
+              className="w-full rounded-lg border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-ink/40"
+            />
+          </Field>
+        )}
 
+        {tool !== "hooks" && tool !== "replies" && (
         <Field label="Content pillar">
           <div className="flex flex-wrap gap-2">
             {PILLARS.map((p) => (
@@ -141,6 +220,7 @@ export function FormatTools({
             ))}
           </div>
         </Field>
+        )}
 
         <Field label="Tone">
           <div className="flex flex-wrap gap-2">
@@ -173,10 +253,24 @@ export function FormatTools({
             <>
               {tool === "reel" ? (
                 <Clapperboard className="h-4 w-4" />
-              ) : (
+              ) : tool === "carousel" ? (
                 <Images className="h-4 w-4" />
+              ) : tool === "hooks" ? (
+                <Wand2 className="h-4 w-4" />
+              ) : tool === "story" ? (
+                <CircleDashed className="h-4 w-4" />
+              ) : (
+                <MessageCircle className="h-4 w-4" />
               )}
-              {tool === "reel" ? "Write the script" : "Plan the carousel"}
+              {tool === "reel"
+                ? "Write the script"
+                : tool === "carousel"
+                  ? "Plan the carousel"
+                  : tool === "hooks"
+                    ? "Give me 8 hooks"
+                    : tool === "story"
+                      ? "Plan the story"
+                      : "Write the replies"}
             </>
           )}
         </Button>
@@ -254,6 +348,110 @@ export function FormatTools({
               Copy the whole script
             </button>
           </div>
+        </section>
+      )}
+
+      {/* ── Hooks ──────────────────────────────────────────────────────── */}
+      {tool === "hooks" && hooks && (
+        <section className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">
+            Tap one to copy it
+          </p>
+          <ul className="space-y-2">
+            {hooks.hooks.map((h, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigator.clipboard
+                      .writeText(h)
+                      .then(() => toast({ title: "Hook copied", type: "success" }))
+                      .catch(() =>
+                        toast({ title: "Couldn't copy that.", type: "error" }),
+                      )
+                  }
+                  className="group flex w-full items-start gap-3 rounded-xl border border-ink/10 bg-white p-4 text-left transition-colors hover:border-ink/40"
+                >
+                  <span className="mt-0.5 text-[11px] font-semibold tabular-nums text-ink/35">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="flex-1 text-[14px] leading-snug text-ink">{h}</span>
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/0 transition-colors group-hover:text-ink/40" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── Story sequence ─────────────────────────────────────────────── */}
+      {tool === "story" && story && (
+        <section>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">
+            {story.frames.length} frames
+          </p>
+          <ol className="flex gap-3 overflow-x-auto pb-2">
+            {story.frames.map((f, i) => (
+              <li
+                key={i}
+                className="w-[168px] shrink-0 overflow-hidden rounded-2xl border border-ink/10 bg-white"
+              >
+                {/* 9:16, because that's the only shape a Story is */}
+                <div className="relative flex aspect-[9/16] flex-col justify-between bg-oat/60 p-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/40">
+                    {i + 1}
+                  </span>
+                  <p className="text-center font-display text-[15px] leading-snug text-ink">
+                    {f.text}
+                  </p>
+                  {f.sticker ? (
+                    <p className="rounded-lg bg-ink px-2 py-1 text-center text-[9px] font-semibold uppercase tracking-[0.1em] text-cream">
+                      {f.sticker}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                </div>
+                <p className="border-t border-ink/8 p-3 text-[11px] leading-relaxed text-ink/70">
+                  {f.visual}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {/* ── Reply pack ─────────────────────────────────────────────────── */}
+      {tool === "replies" && replies && (
+        <section className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">
+            Tap a reply to copy it
+          </p>
+          <ul className="space-y-2">
+            {replies.replies.map((r, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigator.clipboard
+                      .writeText(r.reply)
+                      .then(() => toast({ title: "Reply copied", type: "success" }))
+                      .catch(() =>
+                        toast({ title: "Couldn't copy that.", type: "error" }),
+                      )
+                  }
+                  className="group w-full rounded-xl border border-ink/10 bg-white p-4 text-left transition-colors hover:border-ink/40"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/45">
+                    {r.scenario}
+                  </span>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
+                    {r.reply}
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

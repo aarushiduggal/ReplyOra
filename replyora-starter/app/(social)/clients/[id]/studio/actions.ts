@@ -20,9 +20,15 @@ import {
 import { computeRecommendedTimes } from "@/lib/social/best-times";
 import {
   generateCarouselOutline,
+  generateHooks,
   generateReelScript,
+  generateReplyPack,
+  generateStorySequence,
   type CarouselOutline,
+  type HookSet,
   type ReelScript,
+  type ReplyPack,
+  type StorySequence,
   type ToolInput,
   type ToolResult,
 } from "@/lib/social/formats";
@@ -275,4 +281,23 @@ export async function saveCarouselDraftAction(
   });
   revalidatePath(`/clients/${clientId}/studio`);
   revalidatePath(`/clients/${clientId}/grid`);
+}
+
+/** Eight alternative opening lines for an existing caption. */
+export async function hooksAction(input: ToolInput): Promise<ToolResult<HookSet>> {
+  return generateHooks(input);
+}
+
+/** Plan a Story sequence — frames, text and stickers. */
+export async function storySequenceAction(
+  input: ToolInput,
+): Promise<ToolResult<StorySequence>> {
+  return generateStorySequence(input);
+}
+
+/** Ready replies for the comments a client actually gets. */
+export async function replyPackAction(
+  input: ToolInput,
+): Promise<ToolResult<ReplyPack>> {
+  return generateReplyPack(input);
 }

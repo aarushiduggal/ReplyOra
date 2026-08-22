@@ -63,6 +63,8 @@ export interface ToolInput {
   voiceNotes?: string;
   /** Carousel only — how many slides to plan. */
   slides?: number;
+  /** Hook rewriter only — the caption whose opening line needs work. */
+  caption?: string;
 }
 
 /** Pull the readable sentence out of a Google API error body. */
@@ -252,6 +254,200 @@ Return ONLY valid JSON: {"slides": [{"headline": string, "body": string}], "capt
       })),
       caption: String(j.caption ?? ""),
       hashtags: Array.isArray(j.hashtags) ? j.hashtags.map(String).slice(0, 8) : [],
+    },
+    source: "ai",
+  };
+}
+
+
+// ── Hook rewriter ──────────────────────────────────────────────────────────
+
+export interface HookSet {
+  hooks: string[];
+}
+
+function hookTemplate(input: ToolInput): HookSet {
+  const t = input.topic || input.caption?.split(/[.!?]/)[0] || "this";
+  return {
+    hooks: [
+      `Nobody tells you this about ${t}.`,
+      `We get asked about ${t} every single week.`,
+      `The mistake almost everyone makes with ${t}:`,
+      `If you only remember one thing about ${t}, make it this.`,
+      `Stop doing this with ${t}.`,
+      `Here's what ${t} actually looks like up close.`,
+      `Three years in, this is what we've learned about ${t}.`,
+      `${t.charAt(0).toUpperCase()}${t.slice(1)} — the honest version.`,
+    ],
+  };
+}
+
+/**
+ * Eight alternative opening lines for a caption.
+ *
+ * The first line decides whether the rest gets read at all, and it's the part
+ * people rewrite most. Regenerating a whole caption to fix one line loses
+ * everything that was already good.
+ */
+export async function generateHooks(
+  input: ToolInput,
+): Promise<ToolResult<HookSet>> {
+  const fall = (reason: string): ToolResult<HookSet> => {
+    if (reason !== "no key") console.error(`[formats] hooks fell back: ${reason}`);
+    return { data: hookTemplate(input), source: "template", reason };
+  };
+
+  const prompt = `You are a social media copywriter for "${input.businessName || "the brand"}".
+Here is a caption:
+"""
+${input.caption?.trim() || input.topic}
+"""
+Write 8 alternative OPENING LINES for it. Keep the caption's subject and voice — you are only replacing the first line.
+Tone: ${input.tone ?? "warm"}. Each hook is one line, under 12 words, and makes someone stop scrolling.
+Vary the shape: a question, a bold claim, a mistake, a number, a confession, a direct address. No two the same pattern. No emoji.
+Return ONLY valid JSON: {"hooks": string[]}. No markdown.`;
+
+  const res = await askGemini(prompt);
+  if ("error" in res) return fall(res.error);
+  const j = res.json as Partial<HookSet>;
+  const hooks = Array.isArray(j.hooks) ? j.hooks.map(String).filter(Boolean) : [];
+  if (hooks.length === 0) return fall("Gemini returned no hooks");
+  return { data: { hooks: hooks.slice(0, 10) }, source: "ai" };
+}
+
+// ── Story sequence ─────────────────────────────────────────────────────────
+
+export interface StoryFrame {
+  visual: string;
+  text: string;
+  /** Poll, question or quiz prompt. Empty when the frame has no sticker. */
+  sticker: string;
+}
+
+export interface StorySequence {
+  frames: StoryFrame[];
+}
+
+function storyTemplate(input: ToolInput): StorySequence {
+  const t = input.topic || "today";
+  const b = input.businessName || "us";
+  return {
+    frames: [
+      { visual: "Open on the space or the product, no text for a beat", text: `A quick one about ${t}`, sticker: "" },
+      { visual: "Close up on the detail that makes the point", text: "This is the bit that matters", sticker: "" },
+      { visual: "Show the result", text: "And this is why", sticker: "Poll: worth it / not for me" },
+      { visual: "Back to camera", text: `Questions? Ask us anything about ${t}`, sticker: "Question box: ask us anything" },
+      { visual: `${b} logo or storefront`, text: "Link in bio to book", sticker: "" },
+    ],
+  };
+}
+
+/**
+ * A story sequence — frames, not a caption.
+ *
+ * Stories are the format Studio ignored entirely, and they're where most
+ * agencies spend their daily effort. Each frame carries what to show, the text
+ * on it, and any sticker, because a story is a sequence rather than a post.
+ */
+export async function generateStorySequence(
+  input: ToolInput,
+): Promise<ToolResult<StorySequence>> {
+  const fall = (reason: string): ToolResult<StorySequence> => {
+    if (reason !== "no key") console.error(`[formats] story fell back: ${reason}`);
+    return { data: storyTemplate(input), source: "template", reason };
+  };
+
+  const prompt = `You are a social media manager planning an Instagram Story sequence for "${input.businessName || "the brand"}".
+Topic: ${input.topic || "the business"}. Content pillar: ${input.pillar}.
+Tone: ${input.tone ?? "warm"}.${
+    input.voiceNotes?.trim() ? `\nBrand voice notes: ${input.voiceNotes.trim()}` : ""
+  }
+Plan 4-5 frames. Each frame: what to film or show, the text on screen (under 8 words — it's a phone screen), and a sticker if one fits (poll, question box or quiz). Most frames should have no sticker.
+The last frame asks for one clear action.
+Return ONLY valid JSON: {"frames": [{"visual": string, "text": string, "sticker": string}]}. Use an empty string for no sticker. No markdown.`;
+
+  const res = await askGemini(prompt);
+  if ("error" in res) return fall(res.error);
+  const j = res.json as Partial<StorySequence>;
+  const frames = Array.isArray(j.frames) ? j.frames.filter((f) => f?.text || f?.visual) : [];
+  if (frames.length === 0) return fall("Gemini returned no frames");
+  return {
+    data: {
+      frames: frames.slice(0, 6).map((f) => ({
+        visual: String(f.visual ?? ""),
+        text: String(f.text ?? ""),
+        sticker: String(f.sticker ?? ""),
+      })),
+    },
+    source: "ai",
+  };
+}
+
+// ── Reply pack ─────────────────────────────────────────────────────────────
+
+export interface ReplyPack {
+  replies: { scenario: string; reply: string }[];
+}
+
+const SCENARIOS = [
+  "Asks the price",
+  "Asks if you're taking bookings",
+  "Leaves a compliment",
+  "Asks where you are",
+  "Unhappy with something",
+  "Asks a technical question",
+];
+
+function replyTemplate(input: ToolInput): ReplyPack {
+  const b = input.businessName || "us";
+  return {
+    replies: [
+      { scenario: SCENARIOS[0]!, reply: "Great question — it depends on the length and what you're after. Send us a DM and we'll give you an exact number." },
+      { scenario: SCENARIOS[1]!, reply: "We are! Booking link is in our bio, and if nothing suits just message us and we'll find you a time." },
+      { scenario: SCENARIOS[2]!, reply: "Thank you — that genuinely made our day. 🤍" },
+      { scenario: SCENARIOS[3]!, reply: `We're easy to find — full address is in our bio, and there's parking right out front.` },
+      { scenario: SCENARIOS[4]!, reply: "We're really sorry to hear that, and we'd like to fix it. Could you DM us so we can sort it properly?" },
+      { scenario: SCENARIOS[5]!, reply: `Happy to explain — send us a DM and one of the team at ${b} will talk you through it.` },
+    ],
+  };
+}
+
+/**
+ * Ready replies for the comments a client actually gets.
+ *
+ * Answering comments is billable agency work that nobody has tooling for, and
+ * it's where a client's voice slips most — it's done fast, on a phone, by
+ * whoever is free.
+ */
+export async function generateReplyPack(
+  input: ToolInput,
+): Promise<ToolResult<ReplyPack>> {
+  const fall = (reason: string): ToolResult<ReplyPack> => {
+    if (reason !== "no key") console.error(`[formats] replies fell back: ${reason}`);
+    return { data: replyTemplate(input), source: "template", reason };
+  };
+
+  const prompt = `You are replying to Instagram comments as "${input.businessName || "the brand"}"${
+    input.topic ? `, a business that does: ${input.topic}` : ""
+  }.
+Tone: ${input.tone ?? "warm"} — sound like a person, never like a support macro.${
+    input.voiceNotes?.trim() ? `\nBrand voice notes: ${input.voiceNotes.trim()}` : ""
+  }
+Write one reply for each of these situations: ${SCENARIOS.join("; ")}.
+Each reply is 1-2 sentences. Never promise a specific price or date. For the unhappy one, take it to DMs without being defensive.
+Return ONLY valid JSON: {"replies": [{"scenario": string, "reply": string}]}. No markdown.`;
+
+  const res = await askGemini(prompt);
+  if ("error" in res) return fall(res.error);
+  const j = res.json as Partial<ReplyPack>;
+  const replies = Array.isArray(j.replies) ? j.replies.filter((r) => r?.reply) : [];
+  if (replies.length === 0) return fall("Gemini returned no replies");
+  return {
+    data: {
+      replies: replies.slice(0, 8).map((r) => ({
+        scenario: String(r.scenario ?? ""),
+        reply: String(r.reply ?? ""),
+      })),
     },
     source: "ai",
   };
