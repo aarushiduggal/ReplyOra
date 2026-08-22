@@ -39,6 +39,12 @@ type Frame = {
   /** optional crop controls */
   bgSize?: string;
   bgPos?: string;
+  /**
+   * Live content instead of a photograph. Used for the product frame: a real
+   * screenshot goes stale the moment the UI changes and blurs on retina, and a
+   * 1MB JPEG in the hero is the single heaviest thing on the page.
+   */
+  render?: React.ReactNode;
 };
 
 const PHOTOS: Frame[] = [
@@ -67,14 +73,16 @@ const PHOTOS: Frame[] = [
     bgPos: "top",
   },
   {
-    // Styled flatlay, upper-left. Given its own clear zone — when it sat
-    // between the other two it showed only a sliver and read as a smudge.
-    src: "hero-center.png",
-    alt: "Styled content flatlay",
-    className: "left-0 top-[4%] w-[34%] z-20",
+    // The product itself, rendered live rather than screenshotted. Upper-left,
+    // in its own clear zone — when it sat between the other two it showed only
+    // a sliver and read as a smudge.
+    src: "mini-grid",
+    alt: "A client's planned feed in Replyora",
+    className: "left-0 top-[4%] w-[36%] z-20",
     rotate: 6,
     depth: 0.4,
     delay: 0.36,
+    render: <MiniGrid />,
   },
 ];
 
@@ -230,11 +238,15 @@ function SplitFrame({
           role="img"
           aria-label={frame.alt}
           className="h-full w-full overflow-hidden rounded-[1.4rem] border-[6px] border-cream bg-oat shadow-2xl shadow-oxblood/20 ring-1 ring-oxblood/10"
-          style={{
-            backgroundImage: `url(/marketing/${frame.src}), linear-gradient(150deg,#5C1A1A,#B26B62)`,
-            backgroundSize: frame.bgSize ?? "cover",
-            backgroundPosition: frame.bgPos ?? "center",
-          }}
+          style={
+            frame.render
+              ? undefined
+              : {
+                  backgroundImage: `url(/marketing/${frame.src}), linear-gradient(150deg,#5C1A1A,#B26B62)`,
+                  backgroundSize: frame.bgSize ?? "cover",
+                  backgroundPosition: frame.bgPos ?? "center",
+                }
+          }
           whileHover={
             reduce
               ? undefined
@@ -245,8 +257,64 @@ function SplitFrame({
                   transition: { type: "spring", stiffness: 260, damping: 18 },
                 }
           }
-        />
+        >
+          {frame.render}
+        </motion.div>
       </motion.div>
     </motion.div>
+  );
+}
+
+/**
+ * A client's planned feed, rendered live in the hero.
+ *
+ * Deliberately not a screenshot: this stays sharp on retina, weighs nothing
+ * next to a photograph, and can't drift out of date when the Grid changes.
+ * The sample client is invented — showing Replyora's own account here would
+ * ask an agency to picture the wrong thing.
+ */
+function MiniGrid() {
+  const tiles = [
+    { src: "grid-1.jpg", badge: "4" },
+    { src: "grid-2.jpg", badge: null },
+    { src: "grid-3.jpg", badge: null },
+    { src: "grid-4.jpg", badge: null },
+    { src: "grid-5.jpg", badge: "3" },
+    { src: "grid-6.jpg", badge: null },
+  ];
+  return (
+    <div className="flex h-full w-full flex-col bg-porcelain">
+      <div className="border-b border-ink/15 px-2.5 pb-1.5 pt-2 text-center">
+        <p className="text-[4.5px] font-semibold uppercase tracking-[0.18em] text-ink/45">
+          The Grid
+        </p>
+        <p className="mt-0.5 font-display text-[11px] leading-none text-ink">
+          Marie Beers
+        </p>
+        <div className="mt-1 flex justify-center gap-2 text-[4px] font-semibold uppercase tracking-[0.14em]">
+          <span className="border-b border-ink pb-0.5 text-ink">Instagram</span>
+          <span className="text-ink/30">TikTok</span>
+        </div>
+      </div>
+      <div className="flex justify-between border-b border-ink/15 px-2.5 py-1 text-[4px] font-semibold uppercase tracking-[0.14em] text-ink/60">
+        <span>9 planned</span>
+        <span>Harmony 71%</span>
+      </div>
+      <div className="grid flex-1 grid-cols-3 gap-[2px] p-1.5">
+        {tiles.map((t) => (
+          <div
+            key={t.src}
+            className="relative bg-oat bg-cover bg-center"
+            style={{ backgroundImage: `url(/marketing/${t.src})` }}
+          >
+            {t.badge && (
+              <span className="absolute right-0.5 top-0.5 rounded-[1px] bg-ink/75 px-[2px] text-[4px] font-bold leading-[1.4] text-cream">
+                ▤{t.badge}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
