@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 import { getCurrentWorkspaceId } from "@/lib/auth/session";
 import { DEMO_CLIENT_ID, DEMO_PROFILE, demoTiles } from "@/lib/social/demo";
-import type { Platform } from "@/lib/social/types";
+import type { Platform, PostFormat } from "@/lib/social/types";
 
 /**
  * ReplyOra Social — Grid data layer (client-scoped).
@@ -35,6 +35,8 @@ export interface GridTile {
   mediaKind: "image" | "video" | null;
   /** Slides on this post. >1 means a carousel, and the tile shows the count. */
   mediaCount: number;
+  /** post | reel | carousel | story — what this is being published AS. */
+  format: PostFormat;
 }
 
 export interface ProfilePreview {
@@ -84,6 +86,7 @@ interface TileRow {
   publish_error?: string | null;
   media_kind?: string | null;
   media_count?: number | null;
+  format?: string | null;
 }
 
 export async function listClientTiles(clientId: string): Promise<GridTile[]> {
@@ -91,7 +94,7 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
   if (!hasDb()) return clientId === DEMO_CLIENT_ID ? demoTiles() : [];
   const rows = (await sql()`
     SELECT p.id, p.caption, p.status, p.platform, p.pillar, p.order_index,
-           p.media_url, p.scheduled_for, p.publish_error, p.media_kind,
+           p.media_url, p.scheduled_for, p.publish_error, p.media_kind, p.format,
            -- A tile needs to show "carousel of 4" without a second round trip
            -- per tile, so the count is aggregated here.
            COALESCE((SELECT count(*) FROM post_media m WHERE m.post_id = p.id), 0)::int
@@ -114,6 +117,12 @@ export async function listClientTiles(clientId: string): Promise<GridTile[]> {
     // Older posts predate post_media; a post that has a media_url but no rows
     // still counts as one piece of media, not zero.
     mediaCount: r.media_count ?? (r.media_url ? 1 : 0),
+    // A post with several slides IS a carousel, whatever the stored value says
+    // — the two can drift when slides are added after the post was created.
+    format:
+      (r.media_count ?? 0) > 1
+        ? "carousel"
+        : ((r.format as PostFormat) ?? "post"),
   }));
 }
 

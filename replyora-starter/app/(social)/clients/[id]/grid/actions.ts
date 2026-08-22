@@ -45,6 +45,7 @@ export async function addEmptyTileAction(
     mediaUrl: null,
     mediaKind: null,
     mediaCount: 0,
+    format: "post" as const,
     scheduledFor: null,
     publishError: null,
   };

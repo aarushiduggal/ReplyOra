@@ -40,8 +40,10 @@ import type { FeedAnalysis } from "@/lib/social/feed-analysis";
 import {
   MAX_SLIDES,
   PLATFORM_LABEL,
+  POST_FORMAT_LABEL,
   shapeOf as shapeOfSlides,
   type Platform,
+  type PostFormat,
   type PostMedia,
 } from "@/lib/social/types";
 import { GuideTrigger } from "@/components/social/guide";
@@ -265,11 +267,19 @@ export function GridWorkspace({
   const liveP = live ? liveFeed?.profile ?? null : null;
 
   // "+" on the mock → create an empty planned tile at the top, ready for a photo.
+  /**
+   * Create a post and open it straight away.
+   *
+   * "Add post" used to link to Studio, which is a different job (writing a
+   * batch of captions). Someone planning a grid wants the post itself: media,
+   * format, caption, time. Opening the editor here means the button does what
+   * it says.
+   */
   function addEmptyTile() {
     startTransition(async () => {
       const tile = await addEmptyTileAction(clientId, platform);
       setTiles((ts) => [tile, ...ts]);
-      toast({ title: "Empty tile added — drag a photo onto it", type: "info" });
+      setActionTile(tile);
     });
   }
   function removeTile(id: string) {
@@ -456,12 +466,13 @@ export function GridWorkspace({
             >
               Approvals
             </Link>
-            <Link
-              href={`${base}/studio`}
+            <button
+              type="button"
+              onClick={addEmptyTile}
               className="inline-flex items-center gap-1.5 bg-ink px-3.5 py-1.5 tracking-[0.16em] text-cream transition-opacity hover:opacity-90"
             >
               <Plus className="h-3 w-3" /> {isTikTok ? "Add clip" : "Add post"}
-            </Link>
+            </button>
           </div>
         </div>
         <h2 className="mt-2 text-center font-display text-[34px] font-light leading-[0.95] tracking-tight text-ink sm:text-[42px]">
@@ -1177,6 +1188,7 @@ function PostEditorModal({
 }) {
   const [caption, setCaption] = useState(tile.caption);
   const [platform, setPlatform] = useState<Platform>(tile.platform);
+  const [format, setFormat] = useState<PostFormat>(tile.format ?? "post");
   const [mediaUrl, setMediaUrl] = useState<string | null>(tile.mediaUrl);
   const initial = tile.scheduledFor ? new Date(tile.scheduledFor) : null;
   const [date, setDate] = useState(initial ? initial.toISOString().slice(0, 10) : "");
@@ -1232,10 +1244,19 @@ function PostEditorModal({
 
   const shape = shapeOfSlides(slides);
 
+  // The slide list is the source of truth: two or more slides IS a carousel,
+  // and a lone video IS a reel. Letting the buttons disagree with the media
+  // would mean publishing something other than what's on screen.
+  useEffect(() => {
+    if (!slidesLoaded) return;
+    if (shape.kind === "carousel") setFormat("carousel");
+    else if (shape.kind === "video") setFormat((f) => (f === "story" ? f : "reel"));
+  }, [shape.kind, slidesLoaded]);
+
   function persist(extra?: { status?: TileStatus; scheduledFor?: string | null }) {
-    onLocalChange({ caption, platform, mediaUrl, ...extra });
+    onLocalChange({ caption, platform, format, mediaUrl, ...extra });
     startTransition(async () => {
-      await updateCalendarPostAction(clientId, tile.id, { caption, platform });
+      await updateCalendarPostAction(clientId, tile.id, { caption, platform, format });
     });
   }
 
@@ -1247,9 +1268,9 @@ function PostEditorModal({
   function schedule() {
     if (!date) return;
     const iso = new Date(`${date}T${time}:00`).toISOString();
-    onLocalChange({ caption, platform, mediaUrl, status: "scheduled", scheduledFor: iso });
+    onLocalChange({ caption, platform, format, mediaUrl, status: "scheduled", scheduledFor: iso });
     startTransition(async () => {
-      await updateCalendarPostAction(clientId, tile.id, { caption, platform, scheduledFor: iso, status: "scheduled" });
+      await updateCalendarPostAction(clientId, tile.id, { caption, platform, format, scheduledFor: iso, status: "scheduled" });
     });
     toast({ title: `Scheduled for ${date}, ${time}`, type: "success" });
     onClose();
@@ -1433,6 +1454,39 @@ function PostEditorModal({
         )}
 
         <div className="space-y-4 p-5">
+          <div>
+            <label className={editLabel}>Content type</label>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {(["post", "reel", "carousel", "story"] as PostFormat[]).map((f) => {
+                // Derived from the media, so it reads as a consequence of what
+                // you attached rather than a setting you can contradict.
+                const forced =
+                  (shape.kind === "carousel" && f !== "carousel") ||
+                  (shape.kind === "video" && f === "carousel");
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    disabled={forced}
+                    onClick={() => setFormat(f)}
+                    className={`rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+                      format === f
+                        ? "bg-oxblood text-cream"
+                        : "border border-ink/20 text-ink/70 hover:border-oxblood/50"
+                    } ${forced ? "cursor-not-allowed opacity-35" : ""}`}
+                  >
+                    {POST_FORMAT_LABEL[f]}
+                  </button>
+                );
+              })}
+            </div>
+            {shape.kind === "carousel" && (
+              <p className="mt-1.5 text-[11px] text-ink/55">
+                {slides.length} slides attached, so this publishes as a carousel.
+              </p>
+            )}
+          </div>
+
           <div>
             <label className={editLabel}>Publish to</label>
             <div className="mt-1 flex gap-2">
