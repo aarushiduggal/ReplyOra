@@ -18,6 +18,14 @@ import {
   type PlannedSlot,
 } from "@/lib/social/batch";
 import { computeRecommendedTimes } from "@/lib/social/best-times";
+import {
+  generateCarouselOutline,
+  generateReelScript,
+  type CarouselOutline,
+  type ReelScript,
+  type ToolInput,
+  type ToolResult,
+} from "@/lib/social/formats";
 import type { Platform, PostFormat } from "@/lib/social/types";
 
 /**
@@ -216,4 +224,55 @@ export async function saveDraftsAction(
   revalidatePath(`/clients/${clientId}/studio`);
   revalidatePath(`/clients/${clientId}/grid`);
   revalidatePath(`/clients/${clientId}/calendar`);
+}
+
+/* ── Format tools ─────────────────────────────────────────────────────── */
+
+/** Write a short-form video script — hook, beats, on-screen text, CTA. */
+export async function reelScriptAction(
+  input: ToolInput,
+): Promise<ToolResult<ReelScript>> {
+  return generateReelScript(input);
+}
+
+/** Plan a carousel slide by slide. */
+export async function carouselOutlineAction(
+  input: ToolInput,
+): Promise<ToolResult<CarouselOutline>> {
+  return generateCarouselOutline(input);
+}
+
+/**
+ * Save a planned carousel as a real draft post.
+ *
+ * The outline is copy, not media — the slides still need images attached in the
+ * Grid. Saving it as a draft with the caption means the plan doesn't live in a
+ * screenshot; it becomes the post you then drag photos onto.
+ */
+export async function saveCarouselDraftAction(
+  clientId: string,
+  input: {
+    platform: Platform;
+    pillar: string;
+    caption: string;
+    hashtags: string[];
+    slideNotes: string;
+  },
+): Promise<void> {
+  await createClientPost({
+    clientId,
+    platform: input.platform,
+    pillar: input.pillar,
+    format: "carousel",
+    topic: input.caption.slice(0, 80),
+    // The slide plan rides along in the caption so it's in front of whoever
+    // builds the post, rather than lost in a tab they closed.
+    caption: `${input.caption}\n\n— slides —\n${input.slideNotes}`,
+    hashtags: input.hashtags,
+    status: "draft",
+    scheduledFor: null,
+    mediaUrl: null,
+  });
+  revalidatePath(`/clients/${clientId}/studio`);
+  revalidatePath(`/clients/${clientId}/grid`);
 }

@@ -24,6 +24,7 @@ import {
 import { GuideTrigger } from "@/components/social/guide";
 import { ImageEditor } from "@/components/social/studio/image-editor";
 import { MonthBatch } from "@/components/social/studio/month-batch";
+import { FormatTools } from "@/components/social/studio/format-tools";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,9 @@ export function StudioWorkspace({
   const [savePending, startSave] = useTransition();
   // "single" is the original one-topic flow; "month" batches and schedules a
   // whole month. Kept side by side so neither path loses anything.
-  const [mode, setMode] = useState<"single" | "month">("single");
+  const [mode, setMode] = useState<"single" | "month" | "reel" | "carousel">(
+    "single",
+  );
 
   function generate() {
     if (!topic.trim()) return;
@@ -172,7 +175,17 @@ export function StudioWorkspace({
         </div>
       </div>
       <p className="mb-4 text-[12px] font-medium text-ink/85">
-        {mode === "single" ? (
+        {mode === "reel" ? (
+          <>
+            Write a short-form video for {clientName} — a hook, the shots to
+            film, and the text on screen.
+          </>
+        ) : mode === "carousel" ? (
+          <>
+            Plan a carousel for {clientName} slide by slide, then save it to the
+            Grid and attach the images.
+          </>
+        ) : mode === "single" ? (
           <>
             Create a batch of posts for {clientName} — follow the steps: write a brief, generate
             captions, attach photos, then save. They land on the Grid &amp; Calendar as drafts.
@@ -191,6 +204,8 @@ export function StudioWorkspace({
           [
             ["single", "One post"],
             ["month", "Whole month"],
+            ["reel", "Reel script"],
+            ["carousel", "Carousel"],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -212,6 +227,12 @@ export function StudioWorkspace({
 
       {mode === "month" ? (
         <MonthBatch clientId={clientId} businessName={businessName || clientName} />
+      ) : mode === "reel" || mode === "carousel" ? (
+        <FormatTools
+          clientId={clientId}
+          businessName={businessName || clientName}
+          tool={mode}
+        />
       ) : (
         <SinglePost />
       )}
