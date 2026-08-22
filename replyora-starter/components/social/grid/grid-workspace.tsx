@@ -55,6 +55,10 @@ import {
 export interface GridAsset {
   id: string;
   url: string;
+  /** Video assets are what Reels and every TikTok post are made of. Without
+      this the tray can't mark them, and publish.ts has to guess from the file
+      extension. */
+  kind?: "image" | "video";
 }
 
 const TINTS = ["#5C1A1A", "#7A2E2A", "#B26B62", "#3F1011", "#8A4A42", "#D9AFA6"];

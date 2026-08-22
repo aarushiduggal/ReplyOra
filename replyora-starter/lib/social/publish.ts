@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
+import { listPostMedia, shapeOf } from "@/lib/social/post-media";
+
 /**
  * ReplyOra Social — publishing engine (Instagram + TikTok, direct APIs).
  *
@@ -241,22 +243,83 @@ async function publishInstagram(
   const target = HAS_INSTAGRAM_LOGIN ? "me" : igUser;
 
   const caption = fullCaption(post);
-  const isVideo = isVideoPost(post);
-  const createParams = new URLSearchParams({ caption, access_token: token });
-  if (isVideo) {
-    createParams.set("media_type", "REELS");
-    createParams.set("video_url", post.media_url!);
-  } else {
-    createParams.set("image_url", post.media_url!);
-  }
 
-  const createRes = await fetch(`${base}/${target}/media`, {
-    method: "POST",
-    body: createParams,
-  });
-  const created = (await createRes.json()) as { id?: string; error?: { message?: string } };
-  if (!createRes.ok || !created.id) {
-    return { ok: false, error: created.error?.message ?? "ig_container_failed" };
+  // Carousels: build one child container per slide, then a parent CAROUSEL
+  // container holding their ids. Instagram has no single-shot carousel call.
+  const slides = await listPostMedia(post.id);
+  const shape = shapeOf(slides);
+  if (shape.kind === "invalid") return { ok: false, error: shape.reason };
+
+  let containerId: string | null = null;
+
+  if (shape.kind === "carousel") {
+    const childIds: string[] = [];
+    for (const slide of slides) {
+      const childParams = new URLSearchParams({
+        access_token: token,
+        is_carousel_item: "true",
+      });
+      if (slide.kind === "video") {
+        childParams.set("media_type", "VIDEO");
+        childParams.set("video_url", slide.url);
+      } else {
+        childParams.set("image_url", slide.url);
+      }
+      const childRes = await fetch(`${base}/${target}/media`, {
+        method: "POST",
+        body: childParams,
+      });
+      const child = (await childRes.json()) as {
+        id?: string;
+        error?: { message?: string };
+      };
+      if (!childRes.ok || !child.id) {
+        // Name the slide — "carousel failed" is useless when one of nine images
+        // is a broken URL.
+        return {
+          ok: false,
+          error: `Slide ${slide.position + 1}: ${child.error?.message ?? "upload failed"}`,
+        };
+      }
+      childIds.push(child.id);
+    }
+
+    const parentRes = await fetch(`${base}/${target}/media`, {
+      method: "POST",
+      body: new URLSearchParams({
+        access_token: token,
+        caption,
+        media_type: "CAROUSEL",
+        children: childIds.join(","),
+      }),
+    });
+    const parent = (await parentRes.json()) as {
+      id?: string;
+      error?: { message?: string };
+    };
+    if (!parentRes.ok || !parent.id) {
+      return { ok: false, error: parent.error?.message ?? "ig_carousel_failed" };
+    }
+    containerId = parent.id;
+  } else {
+    const isVideo = isVideoPost(post);
+    const createParams = new URLSearchParams({ caption, access_token: token });
+    if (isVideo) {
+      createParams.set("media_type", "REELS");
+      createParams.set("video_url", post.media_url!);
+    } else {
+      createParams.set("image_url", post.media_url!);
+    }
+
+    const createRes = await fetch(`${base}/${target}/media`, {
+      method: "POST",
+      body: createParams,
+    });
+    const created = (await createRes.json()) as { id?: string; error?: { message?: string } };
+    if (!createRes.ok || !created.id) {
+      return { ok: false, error: created.error?.message ?? "ig_container_failed" };
+    }
+    containerId = created.id;
   }
 
   // Instagram ingests the image URL into the container asynchronously. Publishing
@@ -266,7 +329,7 @@ async function publishInstagram(
   for (let attempt = 0; attempt < 5; attempt++) {
     const pubRes = await fetch(`${base}/${target}/media_publish`, {
       method: "POST",
-      body: new URLSearchParams({ creation_id: created.id, access_token: token }),
+      body: new URLSearchParams({ creation_id: containerId, access_token: token }),
     });
     const published = (await pubRes.json()) as { id?: string; error?: { message?: string } };
     if (pubRes.ok && published.id) {
@@ -290,6 +353,63 @@ async function publishFacebook(
   if (!pageId) return { ok: false, error: "no_fb_page" };
 
   const caption = fullCaption(post);
+
+  // Facebook has no carousel endpoint. The pattern is: upload each photo
+  // UNPUBLISHED to /photos, collect the ids, then create one feed post that
+  // attaches them. Completely different shape to Instagram's children flow.
+  const slides = await listPostMedia(post.id);
+  const shape = shapeOf(slides);
+  if (shape.kind === "invalid") return { ok: false, error: shape.reason };
+
+  if (shape.kind === "carousel") {
+    const mediaIds: string[] = [];
+    for (const slide of slides) {
+      if (slide.kind === "video") {
+        // A Facebook feed post can attach many photos but only one video.
+        return {
+          ok: false,
+          error: "Facebook can't post video inside a multi-photo post.",
+        };
+      }
+      const upRes = await fetch(`${GRAPH}/${pageId}/photos`, {
+        method: "POST",
+        body: new URLSearchParams({
+          access_token: token,
+          url: slide.url,
+          published: "false",
+        }),
+      });
+      const up = (await upRes.json()) as {
+        id?: string;
+        error?: { message?: string };
+      };
+      if (!upRes.ok || !up.id) {
+        return {
+          ok: false,
+          error: `Slide ${slide.position + 1}: ${up.error?.message ?? "upload failed"}`,
+        };
+      }
+      mediaIds.push(up.id);
+    }
+
+    const feedParams = new URLSearchParams({ access_token: token, message: caption });
+    mediaIds.forEach((id, i) => {
+      feedParams.set(`attached_media[${i}]`, JSON.stringify({ media_fbid: id }));
+    });
+    const feedRes = await fetch(`${GRAPH}/${pageId}/feed`, {
+      method: "POST",
+      body: feedParams,
+    });
+    const feed = (await feedRes.json()) as {
+      id?: string;
+      error?: { message?: string };
+    };
+    if (!feedRes.ok || !feed.id) {
+      return { ok: false, error: feed.error?.message ?? "fb_carousel_failed" };
+    }
+    return { ok: true, externalId: feed.id };
+  }
+
   const isVideo = isVideoPost(post);
   const endpoint = isVideo ? "videos" : "photos";
   const params = new URLSearchParams({ access_token: token, published: "true" });

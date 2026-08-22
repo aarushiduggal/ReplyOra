@@ -56,7 +56,10 @@ export default async function ClientGridPage({
       clientName={name}
       tiles={tiles}
       profile={profile}
-      assets={assets.filter((a) => a.kind === "image").map((a) => ({ id: a.id, url: a.url }))}
+      // Videos used to be filtered out here, which is why a Reel or a TikTok
+      // could be scheduled but never actually given a file. The tray shows
+      // both now and marks which is which.
+      assets={assets.map((a) => ({ id: a.id, url: a.url, kind: a.kind }))}
       connectedPlatforms={connectedPlatforms}
       liveFeed={liveFeed}
       feedAnalysis={null}
