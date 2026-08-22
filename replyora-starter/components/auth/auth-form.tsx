@@ -66,7 +66,14 @@ function errorMessage(code: string): string {
  * provisions the workspace + owner + assistant + usage.
  * MOCK (local dev, no Supabase env): routes straight into the app.
  */
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+export function AuthForm({
+  mode,
+  /** Beta invite code, validated server-side by the signup page. */
+  invite,
+}: {
+  mode: "login" | "signup";
+  invite?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +143,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify({ email, password, name, invite }),
         });
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as {
@@ -399,10 +406,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {isSignup ? "Already have an account? " : "New to replyora? "}
         <Link
-          href={isSignup ? "/login" : "/signup"}
+          href={isSignup ? "/login" : "/waitlist"}
           className="font-medium text-oxblood hover:underline"
         >
-          {isSignup ? "Log in" : "Create one free"}
+          {isSignup ? "Log in" : "Join the waitlist"}
         </Link>
       </p>
     </div>

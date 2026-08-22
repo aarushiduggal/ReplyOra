@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { getCurrentWorkspaceId, getCurrentUser } from "@/lib/auth/session";
 import { isOwner } from "@/lib/auth/owner";
+import { betaWindowFor, type BetaWindow } from "@/lib/beta";
 import {
   EMPTY_ADDONS,
   EMPTY_ADDRESS,
@@ -174,17 +175,35 @@ export async function currentEntitlements(): Promise<{
   billing: WorkspaceBilling;
   type: SocialPlan;
   ent: Entitlements;
+  beta: BetaWindow;
 }> {
   const billing = await getWorkspaceBilling();
   let type: SocialPlan | null = effectiveAccountType(billing);
+  let beta: BetaWindow = {
+    isBeta: false,
+    active: false,
+    expiresAt: null,
+    daysLeft: 0,
+  };
   try {
     const user = await getCurrentUser();
     if (isOwner(user.email)) type = "agency";
+    beta = await betaWindowFor(user.email);
+    // Beta testers get the WHOLE product for their 30 days, whatever they
+    // picked at onboarding. We asked them to judge Replyora; judging a
+    // cut-down version of it would tell us nothing. A real paid subscription
+    // still wins, so someone who converts mid-beta keeps what they bought.
+    if (beta.active && !billing.hasStripeSubscription) type = "agency";
   } catch {
     /* not signed in — keep resolved type */
   }
   const resolved: SocialPlan = type ?? "agency";
-  return { billing, type: resolved, ent: entitlementsFor(resolved, billing.addons) };
+  return {
+    billing,
+    type: resolved,
+    ent: entitlementsFor(resolved, billing.addons),
+    beta,
+  };
 }
 
 export async function saveWorkspaceBilling(

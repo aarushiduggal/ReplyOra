@@ -6,6 +6,7 @@ import { isOwner } from "@/lib/auth/owner";
 import { readImpersonation } from "@/lib/admin/impersonate";
 import { getWorkspaceById } from "@/lib/auth/users";
 import { getWorkspaceBilling } from "@/lib/social/billing";
+import { betaWindowFor, type BetaWindow } from "@/lib/beta";
 import { listClients } from "@/lib/social/clients";
 import type { SocialPlan } from "@/lib/social/plans";
 
@@ -17,6 +18,7 @@ import { ClientNameProvider } from "@/components/social/client-name-context";
 import { GuideProvider } from "@/components/social/guide";
 import { OwnerPanel } from "@/components/social/owner-panel";
 import { ImpersonationBanner } from "@/components/social/impersonation-banner";
+import { BetaBanner } from "@/components/social/beta-banner";
 import { Toaster } from "@/components/ui/toaster";
 
 /**
@@ -38,6 +40,7 @@ export default async function SocialPortalLayout({
   const clientsPromise = listClients().catch(() => []);
 
   let impersonatingName: string | null = null;
+  let beta: BetaWindow | null = null;
   let owner = false;
   let ownerAccountType: SocialPlan | null = null;
 
@@ -60,6 +63,16 @@ export default async function SocialPortalLayout({
       if (!owner && billing.planStatus === "canceled") {
         redirect("/onboarding?reactivate=1");
       }
+
+      // Closed beta: 30 days of full access, then the door closes unless they
+      // subscribe. Checked AFTER the canceled check so a beta tester who paid
+      // and later cancelled follows the normal reactivate path.
+      if (!owner) {
+        beta = await betaWindowFor(user.email);
+        if (beta.isBeta && !beta.active && !billing.hasStripeSubscription) {
+          redirect("/beta-ended");
+        }
+      }
       ownerAccountType = billing.accountType;
     }
   }
@@ -75,6 +88,9 @@ export default async function SocialPortalLayout({
         <div className="flex min-h-screen flex-col bg-cream text-ink">
           {impersonatingName && (
             <ImpersonationBanner workspaceName={impersonatingName} />
+          )}
+          {beta?.active && (
+            <BetaBanner daysLeft={beta.daysLeft} expiresAt={beta.expiresAt} />
           )}
           <PortalTopNav />
           <main className="flex-1">{children}</main>

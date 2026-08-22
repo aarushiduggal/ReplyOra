@@ -54,10 +54,15 @@ export function AccountTypeChooser({
   name,
   preselect,
   stripeReady,
+  /** Inside the free 30-day beta window: choose a plan, no card, no Stripe. */
+  beta = false,
+  betaDaysLeft = 0,
 }: {
   name: string;
   preselect?: SocialPlan;
   stripeReady?: boolean;
+  beta?: boolean;
+  betaDaysLeft?: number;
 }) {
   const [selected, setSelected] = useState<SocialPlan>(preselect ?? "studio");
   const [cycle, setCycle] = useState<BillingInterval>("monthly");
@@ -71,7 +76,10 @@ export function AccountTypeChooser({
     // When Stripe is live, collect the card up front via Checkout (7-day trial).
     // Dashboard access is only granted after /onboarding/complete verifies it —
     // and a hiccup NEVER grants free access; the user just retries.
-    if (stripeReady) {
+    // Beta testers were promised 30 days with no card. Sending them into
+    // Stripe Checkout here would break that promise on the very first screen,
+    // which is also the screen where they decide whether to bother at all.
+    if (stripeReady && !beta) {
       setBusy(true);
       try {
         const res = await fetch("/api/social/checkout", {
@@ -103,15 +111,28 @@ export function AccountTypeChooser({
         Welcome{name ? `, ${name}` : ""}
       </p>
       <h1 className="mt-3 font-display text-4xl text-oxblood">
-        Pick the plan to start your free trial
+        {beta ? "Pick how you'll use Replyora" : "Pick the plan to start your free trial"}
       </h1>
       <p className="mt-2 max-w-lg text-sm font-medium text-ink/85">
-        7 days free on any plan — a card is collected up front and it auto-converts,
-        cancel anytime. You can switch plans later in Settings.
+        {beta ? (
+          <>
+            You&apos;re on the beta — everything is unlocked free for{" "}
+            {betaDaysLeft > 0 ? `${betaDaysLeft} more days` : "30 days"}, and no
+            card is needed. This just sets up your workspace; you can change it
+            later in Settings.
+          </>
+        ) : (
+          <>
+            7 days free on any plan — a card is collected up front and it
+            auto-converts, cancel anytime. You can switch plans later in
+            Settings.
+          </>
+        )}
       </p>
 
-      {/* Monthly / Annual toggle (annual = 2 months free) */}
-      <div className="mt-6 flex items-center gap-3">
+      {/* Monthly / Annual toggle (annual = 2 months free). Meaningless during
+          the beta — nothing is being charged on either cycle. */}
+      <div className={`mt-6 flex items-center gap-3 ${beta ? "hidden" : ""}`}>
         <div className="inline-flex items-center gap-1 rounded-full border border-oxblood/15 bg-white p-1">
           {(["monthly", "yearly"] as BillingInterval[]).map((c) => (
             <button
@@ -195,9 +216,13 @@ export function AccountTypeChooser({
         className="mt-8 inline-flex items-center gap-2 rounded-full bg-oxblood px-7 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-cream transition-colors hover:bg-oxblood/90 disabled:opacity-70"
       >
         {working && <Loader2 className="h-4 w-4 animate-spin" />}
-        {stripeReady ? "Start 7-day free trial — add card" : "Start 7-day free trial"}
+        {beta
+          ? "Open my workspace →"
+          : stripeReady
+            ? "Start 7-day free trial — add card"
+            : "Start 7-day free trial"}
       </button>
-      {stripeReady && (
+      {stripeReady && !beta && (
         <p className="mt-2 text-xs text-ink/55">
           You&apos;ll add a card on the next screen. It&apos;s free for 7 days and
           auto-converts — cancel anytime.

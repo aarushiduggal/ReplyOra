@@ -179,13 +179,13 @@ export default function AboutPage() {
               Let&apos;s give your feed the team it deserves.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-cream/80">
-              Start free, or book a demo and say hi — I&apos;d love to show you
-              around.
+              Join the waitlist, or book a demo and say hi — I&apos;d love to
+              show you around.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="rounded-full bg-cream text-oxblood hover:bg-cream/90">
-                <Link href="/signup">
-                  Start free <ArrowRight className="h-4 w-4" />
+                <Link href="/waitlist">
+                  Join the waitlist <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button

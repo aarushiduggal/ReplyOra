@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { label: "Command center", href: "/admin" },
   { label: "Accounts", href: "/admin/accounts" },
+  { label: "Beta & waitlist", href: "/admin/waitlist" },
   { label: "Revenue", href: "/admin/billing" },
   { label: "Staff & audit", href: "/admin/staff" },
   { label: "Broadcast", href: "/admin/broadcast" },
@@ -22,10 +23,14 @@ const NAV = [
 export function StaffShell({
   staffName,
   staffRole,
+  /** People waiting for a beta invite — badged on the nav so a new signup is
+      visible the moment you open the portal, without opening every tab. */
+  waitlistCount = 0,
   children,
 }: {
   staffName: string;
   staffRole: string;
+  waitlistCount?: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -63,6 +68,14 @@ export function StaffShell({
                   )}
                 >
                   {item.label}
+                  {item.href === "/admin/waitlist" && waitlistCount > 0 && (
+                    <span
+                      className="ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-cream px-1.5 py-0.5 text-[10px] font-bold text-oxblood"
+                      aria-label={`${waitlistCount} waiting for an invite`}
+                    >
+                      {waitlistCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

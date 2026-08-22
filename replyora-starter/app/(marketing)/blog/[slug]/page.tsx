@@ -128,7 +128,7 @@ export default async function BlogPostPage({
           Try it on your business
         </h2>
         <Button asChild className="mt-4">
-          <Link href="/signup">Start your free trial</Link>
+          <Link href="/waitlist">Join the waitlist</Link>
         </Button>
       </div>
     </article>

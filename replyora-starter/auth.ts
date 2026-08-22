@@ -9,6 +9,9 @@ import {
   upsertOAuthUser,
   verifyPassword,
 } from "@/lib/auth/users";
+import { mayCreateAccount, redeemInvite } from "@/lib/beta";
+import { clearInviteCookie, readInviteCookie } from "@/lib/beta-cookie";
+import { isStaff } from "@/lib/auth/owner";
 
 /**
  * Auth.js (Milestone 2) — email+password + Google, backed by Neon.
@@ -79,6 +82,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider !== "google") return true;
       if (!user.email) return "/login?error=NoGoogleEmail";
+
+      // CLOSED BETA — this is the door people forget. Gating only the signup
+      // form would be theatre: "Continue with Google" creates an account all by
+      // itself via upsertOAuthUser below, so anyone with a Gmail would be in.
+      // Existing users and staff always pass; a newcomer needs an invite, which
+      // reached us in a cookie set by /join/<code> before the Google redirect.
+      const code = await readInviteCookie();
+      if (!isStaff(user.email)) {
+        let allowed = false;
+        try {
+          allowed = await mayCreateAccount(user.email, code);
+        } catch (err) {
+          console.error("[auth] beta gate check failed", err);
+        }
+        if (!allowed) return "/login?error=BetaOnly";
+      }
+
       try {
         const dbUser = await upsertOAuthUser({
           email: user.email,
@@ -86,6 +106,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image ?? null,
         });
         user.id = dbUser.id;
+        // Spend the invite only once the account really exists. Doing it before
+        // upsert would burn the code on a database blip and leave the person
+        // holding a dead link.
+        if (code) {
+          try {
+            await redeemInvite(code, user.email, dbUser.id);
+          } catch (err) {
+            console.error("[auth] invite redeem failed after sign-in", err);
+          }
+          await clearInviteCookie();
+        }
       } catch (err) {
         // Surfaces in the Netlify function log with the real cause.
         console.error("[auth] google sign-in: upsertOAuthUser failed", err);

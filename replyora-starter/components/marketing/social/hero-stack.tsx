@@ -274,8 +274,8 @@ export function HeroStack() {
           className="mt-8 flex flex-wrap items-center justify-center gap-3"
         >
           <Button asChild size="lg" className="rounded-full">
-            <Link href="/signup">
-              Start free <ArrowRight className="h-4 w-4" />
+            <Link href="/waitlist">
+              Join the waitlist <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="link" className="text-ink">

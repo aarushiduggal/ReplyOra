@@ -164,8 +164,8 @@ export function Pricing() {
                 variant={highlighted ? "default" : "outline"}
                 onClick={() => track("cta_pricing", { plan })}
               >
-                <Link href={`/signup?plan=${plan}`}>
-                  Start {TRIAL_DAYS}-day trial
+                <Link href="/waitlist">
+                  Join the waitlist
                 </Link>
               </Button>
               <p className="mt-2 text-center text-xs text-ink/60">

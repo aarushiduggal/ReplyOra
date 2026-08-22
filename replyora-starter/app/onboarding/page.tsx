@@ -8,6 +8,7 @@ import { USE_AUTHJS } from "@/lib/data/mode";
 import { isOwner } from "@/lib/auth/owner";
 import { getWorkspaceBilling } from "@/lib/social/billing";
 import { HAS_STRIPE } from "@/lib/stripe/server";
+import { betaWindowFor } from "@/lib/beta";
 import { ACCOUNT_INTENT_COOKIE, normalizeAccountSlug } from "@/lib/plan-intent";
 
 export const dynamic = "force-dynamic";
@@ -37,9 +38,18 @@ export default async function OnboardingPage() {
   const preselect =
     normalizeAccountSlug((await cookies()).get(ACCOUNT_INTENT_COOKIE)?.value) ??
     undefined;
+  // A beta tester must never be asked for a card here — it's the first screen
+  // they see and it would contradict what we told them to get them in.
+  const beta = await betaWindowFor(user.email);
   return (
     <div className="min-h-screen bg-white text-ink">
-      <AccountTypeChooser name={first} preselect={preselect} stripeReady={HAS_STRIPE} />
+      <AccountTypeChooser
+        name={first}
+        preselect={preselect}
+        stripeReady={HAS_STRIPE}
+        beta={beta.active}
+        betaDaysLeft={beta.daysLeft}
+      />
     </div>
   );
 }

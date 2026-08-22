@@ -33,12 +33,12 @@ About replyora:
 - Tools: grid planner, content calendar, AI captions & post ideas, studio batching, approvals + client portal, branded reports and invoicing.
 - Covers Instagram, Facebook and TikTok.
 - Pricing (AUD): Personal $49/mo (1 brand); Studio $79/mo (up to 3 brands); Agency $249/mo (up to 8 client brands). Every plan has a 7-day free trial (a card is collected up front and it auto-converts). Annual billing gets 2 months free. Pricing page: /pricing.
-- Start a free trial at /signup. Book a demo call at ${CALENDLY_URL}.
+- Replyora is in CLOSED BETA: signup is invite-only. Point people to the waitlist at /waitlist. Book a demo call at ${CALENDLY_URL}. Never tell anyone they can start a trial or sign up right now — they can't.
 - Also offers an AI WEBSITE CHATBOX (exactly like this one) that answers FAQs 24/7, captures leads and books enquiries, trained on the business.
 
 How to reply:
 - Be warm, concise and genuinely helpful. Two to four short sentences.
-- Lead with the answer, then gently funnel toward starting a free trial (/signup) or booking a demo (${CALENDLY_URL}) when it fits.
+- Lead with the answer, then gently funnel toward joining the beta waitlist (/waitlist) or booking a demo (${CALENDLY_URL}) when it fits.
 - Use the conversation so far — never repeat the same message twice; move the conversation forward.
 - If the visitor agrees or says yes, give them the concrete next step (trial link and/or the demo booking link).
 - If you don't know a specific detail, say so briefly and suggest booking a demo.
@@ -56,10 +56,10 @@ function cannedReply(message: string): string {
     return "Plans (AUD): Personal $49/mo for 1 brand, Studio $79/mo for up to 3 brands, and Agency $249/mo for up to 8 client brands. Every plan starts with a 7-day free trial. See them here: /pricing";
 
   if (/(demo|book|call|meeting|talk to|speak)/.test(m))
-    return `Happy to! You can grab a time that suits you here: ${CALENDLY_URL} 📅 Prefer to just dive in? Start a free trial (no card): /signup`;
+    return `Happy to! You can grab a time that suits you here: ${CALENDLY_URL} 📅 We're also in closed beta right now — put your name down at /waitlist and we'll be in touch.`;
 
   if (/(trial|free|start|sign ?up|get started|try it)/.test(m))
-    return "You can start free in under a minute — no card needed: /signup. Want me to book you a quick walkthrough call instead?";
+    return "We're in closed beta at the moment — a small group of agencies testing it free for a month. Add your name at /waitlist and we'll be in touch. Want me to book you a walkthrough call in the meantime?";
 
   if (/(chatbox|chat box|website|widget|24\/7|this chat)/.test(m))
     return "This chat is the replyora website chatbox — an AI assistant you add to your own site in minutes. It answers FAQs, captures leads and books enquiries 24/7, trained on your business.";
@@ -68,7 +68,7 @@ function cannedReply(message: string): string {
     return "replyora covers Instagram, Facebook & TikTok — you plan, create and schedule posts, carousels and reels from one workspace, with AI captions and a visual grid planner.";
 
   if (/(agency|client|multiple|manage clients|portal|approval)/.test(m))
-    return `Yes — the Agency plan ($249/mo AUD) handles up to 8 client brands with a client portal, two-tap approvals, branded reports and invoicing. Want to see it? /signup or book a demo: ${CALENDLY_URL}`;
+    return `Yes — the Agency plan ($249/mo AUD) handles up to 8 client brands with a client portal, two-tap approvals, branded reports and invoicing. Want to see it? Join the beta waitlist at /waitlist, or book a demo: ${CALENDLY_URL}`;
 
   if (/(what|who|do you do|about|how does|explain|tell me)/.test(m))
     return "replyora is one workspace to plan your content, manage your clients and never miss a conversation — a grid planner, content calendar, AI captions and scheduling for Instagram & TikTok, plus an AI website chatbox. Want a free trial or a quick demo?";
@@ -77,15 +77,15 @@ function cannedReply(message: string): string {
     return "Hey! 👋 I'm the replyora assistant. Ask me anything about planning your socials — or say the word and I'll point you to a free trial or a quick demo.";
 
   if (/^(y|ye|yes|yeah|yep|yup|sure|ok|okay|sounds good|go on|please|definitely|yes please)\b/.test(m))
-    return `Amazing! Two easy options: start a free trial (no card) at /signup, or grab a quick demo call here: ${CALENDLY_URL}. Which would you like?`;
+    return `Amazing! We're in closed beta right now, so two options: put your name down at /waitlist, or grab a quick demo call here: ${CALENDLY_URL}. Which would you like?`;
 
   if (/(no|not now|maybe later|nah)\b/.test(m))
     return "No worries at all! I'm here whenever you're ready — feel free to ask me anything about replyora, or peek at /pricing when you have a sec.";
 
   if (/(thank|thanks|cheers|ta)\b/.test(m))
-    return "Anytime! 🌹 If you'd like to see it in action, you can start free at /signup or book a quick demo — just say the word.";
+    return "Anytime! 🌹 If you'd like to see it in action, join the beta waitlist at /waitlist or book a quick demo — just say the word.";
 
-  return "Great question! replyora plans, creates and schedules your Instagram & TikTok content from one workspace, and can even answer your website 24/7 like I'm doing now. You can start free at /signup or book a quick demo — what would help most?";
+  return "Great question! replyora plans, creates and schedules your Instagram & TikTok content from one workspace, and can even answer your website 24/7 like I'm doing now. We're in closed beta — join the waitlist at /waitlist, or book a quick demo. What would help most?";
 }
 
 export async function POST(request: Request) {

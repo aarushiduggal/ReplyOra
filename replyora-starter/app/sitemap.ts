@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/terms",
     "/security",
     "/login",
-    "/signup",
+    "/waitlist",
   ];
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({

@@ -35,8 +35,8 @@ export default function ProductPage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="rounded-full">
-                <Link href="/signup">
-                  Start free <ArrowRight className="h-4 w-4" />
+                <Link href="/waitlist">
+                  Join the waitlist <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button
@@ -68,8 +68,8 @@ export default function ProductPage() {
                 size="lg"
                 className="rounded-full bg-cream text-oxblood hover:bg-cream/90"
               >
-                <Link href="/signup">
-                  Start free <ArrowRight className="h-4 w-4" />
+                <Link href="/waitlist">
+                  Join the waitlist <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button

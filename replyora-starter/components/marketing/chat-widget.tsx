@@ -30,7 +30,7 @@ const SUGGESTIONS = [
 
 /** Friendly labels for links the assistant mentions. */
 const LINK_LABELS: Record<string, string> = {
-  "/signup": "start a free trial",
+  "/waitlist": "join the beta waitlist",
   "/pricing": "see pricing",
   "/demo": "book a demo",
   "/product": "the product",

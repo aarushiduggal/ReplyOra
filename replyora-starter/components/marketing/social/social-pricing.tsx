@@ -158,7 +158,7 @@ export function SocialPricing() {
                 className={`mt-7 rounded-full ${plan.featured ? "bg-cream text-oxblood hover:bg-cream/90" : ""}`}
                 variant={plan.featured ? "default" : "outline"}
               >
-                <Link href={`/signup?plan=${plan.key}`}>Start 7-day free trial</Link>
+                <Link href="/waitlist">Join the waitlist</Link>
               </Button>
               {plan.key === "agency" && (
                 <a
@@ -174,7 +174,7 @@ export function SocialPricing() {
       </div>
 
       <p className="mt-6 text-center text-sm text-ink/50">
-        7-day free trial on every plan (card required, auto-converts) · cancel anytime.
+        Replyora is in closed beta — pricing shown is what you'll pay when it opens. Beta testers get 30 days free, no card.
         Add the <strong>AI website chatbox</strong> for ${CHATBOX_ADDON_PRICE}/mo {CURRENCY} per site.
       </p>
 
@@ -232,14 +232,14 @@ export function SocialPricing() {
                 {PLANS.map((p) => (
                   <td key={p.key} className="px-2 py-3 text-center">
                     <Link
-                      href={`/signup?plan=${p.key}`}
+                      href="/waitlist"
                       className={`inline-flex rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${
                         p.featured
                           ? "bg-oxblood text-cream hover:bg-oxblood/90"
                           : "border border-oxblood/30 text-oxblood hover:bg-oxblood/5"
                       }`}
                     >
-                      Start trial
+                      Join waitlist
                     </Link>
                   </td>
                 ))}

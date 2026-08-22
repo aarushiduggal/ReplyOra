@@ -356,10 +356,10 @@ export function HeroDemo() {
           <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-7">
             <Magnetic strength={0.35}>
               <Link
-                href="/signup"
+                href="/waitlist"
                 className="inline-flex items-center gap-2 rounded-xl bg-oxblood px-6 py-3.5 text-sm font-semibold text-cream shadow-[0_10px_24px_rgba(92,26,26,.24)] transition-shadow hover:shadow-[0_14px_30px_rgba(92,26,26,.34)]"
               >
-                Start 7-day trial <ArrowRight className="h-4 w-4" />
+                Join the waitlist <ArrowRight className="h-4 w-4" />
               </Link>
             </Magnetic>
             <Link

@@ -76,8 +76,8 @@ export function ChatboxFeature() {
               size="lg"
               className="rounded-full bg-cream text-oxblood hover:bg-cream/90"
             >
-              <Link href="/signup">
-                Add the chatbox <ArrowRight className="h-4 w-4" />
+              <Link href="/waitlist">
+                Join the waitlist <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <p className="text-sm text-cream/70">Try it now — bottom-right corner ↘</p>

@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 
 import { createUser, getUserByEmail } from "@/lib/auth/users";
 import { USE_AUTHJS } from "@/lib/data/mode";
+import {
+  betaGateOn,
+  checkInvite,
+  mayCreateAccount,
+  redeemInvite,
+} from "@/lib/beta";
+import { isStaff } from "@/lib/auth/owner";
 
 /**
  * Email + password sign-up (Auth.js Credentials doesn't create accounts).
@@ -41,7 +48,12 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { email?: unknown; password?: unknown; name?: unknown };
+  let body: {
+    email?: unknown;
+    password?: unknown;
+    name?: unknown;
+    invite?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -54,6 +66,8 @@ export async function POST(req: Request) {
     typeof body.name === "string" && body.name.trim()
       ? body.name.trim()
       : email.split("@")[0] || null;
+
+  const invite = typeof body.invite === "string" ? body.invite.trim() : "";
 
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Enter a valid email." }, { status: 400 });
@@ -73,7 +87,39 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-    await createUser({ email, password, name });
+
+    // CLOSED BETA — the other half of the gate (the Google door is in auth.ts).
+    if (betaGateOn() && !isStaff(email)) {
+      const allowed = await mayCreateAccount(email, invite);
+      if (!allowed) {
+        // Say which thing is wrong. "Invalid" on a link that's merely tied to
+        // another address sends people back to you for a replacement they
+        // don't need — they just used the wrong email.
+        let error =
+          "Replyora is invite-only while we're in beta. Join the waitlist and we'll be in touch.";
+        if (invite) {
+          const check = await checkInvite(invite, email).catch(() => null);
+          error =
+            check?.ok === false && check.reason === "wrong-email"
+              ? "That invite was sent to a different email address. Use that one, or ask us for a new link."
+              : check?.ok === false && check.reason === "used"
+                ? "That invite has already been used. If that was you, log in instead."
+                : "That invite link isn't valid. Ask us for a new one.";
+        }
+        return NextResponse.json({ error, code: "beta_only" }, { status: 403 });
+      }
+    }
+
+    const user = await createUser({ email, password, name });
+    // Spend the invite only after the account exists, so a failure here never
+    // burns the code and leaves someone with a dead link.
+    if (invite) {
+      try {
+        await redeemInvite(invite, email, (user as { id?: string })?.id ?? null);
+      } catch (err) {
+        console.error("[register] invite redeem failed", err);
+      }
+    }
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(
